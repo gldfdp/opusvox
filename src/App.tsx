@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
-import { ClockCounterClockwise, SpeakerHigh } from '@phosphor-icons/react'
+import { ClockCounterClockwise, SpeakerHigh, Gear } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
@@ -9,6 +9,7 @@ import { CustomResponseDialog } from '@/components/CustomResponseDialog'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { VoiceCloning } from '@/components/VoiceCloning'
+import { SettingsPage } from '@/components/SettingsPage'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ function AppContent() {
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [currentVoiceProfile, setCurrentVoiceProfile] = useState<VoiceProfile | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -36,6 +38,10 @@ function AppContent() {
   useEffect(() => {
     loadVoices()
   }, [])
+
+  if (settingsOpen) {
+    return <SettingsPage onClose={() => setSettingsOpen(false)} />
+  }
 
   const handleStartRecording = async () => {
     try {
@@ -187,6 +193,10 @@ function AppContent() {
             <div className="flex gap-3">
               <VoiceCloning onVoiceProfileChange={handleVoiceProfileChange} />
               <LanguageSwitcher />
+              <Button variant="outline" size="lg" onClick={() => setSettingsOpen(true)}>
+                <Gear size={20} className="mr-2" />
+                {t.settings.button}
+              </Button>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="lg">

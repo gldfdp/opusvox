@@ -48,6 +48,10 @@ export interface Translations {
   language: {
     label: string
   }
+  settings: {
+    title: string
+    button: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -98,6 +102,10 @@ export const translations: Record<Language, Translations> = {
     },
     language: {
       label: 'Language'
+    },
+    settings: {
+      title: 'Settings',
+      button: 'Settings'
     }
   },
   fr: {
@@ -147,6 +155,10 @@ export const translations: Record<Language, Translations> = {
     },
     language: {
       label: 'Langue'
+    },
+    settings: {
+      title: 'Paramètres',
+      button: 'Paramètres'
     }
   }
 }

@@ -24,3 +24,11 @@ export interface VoiceProfile {
 }
 
 export type VoiceRecordingState = 'idle' | 'recording' | 'processing' | 'success' | 'error'
+
+export interface UserSettings {
+  firstName: string
+  mistralApiKey: string
+  mistralConnected: boolean
+  createdAt: number
+  updatedAt: number
+}
