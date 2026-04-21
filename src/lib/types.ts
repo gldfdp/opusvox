@@ -13,3 +13,14 @@ export interface ResponseSuggestion {
 }
 
 export type RecordingState = 'idle' | 'recording' | 'processing' | 'speaking'
+
+export interface VoiceProfile {
+  id: string
+  name: string
+  language: 'en' | 'fr'
+  audioDataUrl: string
+  createdAt: number
+  duration: number
+}
+
+export type VoiceRecordingState = 'idle' | 'recording' | 'processing' | 'success' | 'error'

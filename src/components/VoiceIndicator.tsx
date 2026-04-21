@@ -1,12 +1,15 @@
-import { SpeakerHigh } from '@phosphor-icons/react'
+import { SpeakerHigh, User } from '@phosphor-icons/react'
 import { Language } from '@/lib/i18n'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface VoiceIndicatorProps {
   language: Language
   voiceName?: string
   isActive: boolean
+  isClonedVoice?: boolean
+  profileName?: string
 }
 
 const languageFlags: Record<Language, string> = {
@@ -19,7 +22,7 @@ const languageLabels: Record<Language, string> = {
   fr: 'Voix Française'
 }
 
-export function VoiceIndicator({ language, voiceName, isActive }: VoiceIndicatorProps) {
+export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, profileName }: VoiceIndicatorProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -39,23 +42,39 @@ export function VoiceIndicator({ language, voiceName, isActive }: VoiceIndicator
               ease: "easeInOut"
             }}
           >
-            <SpeakerHigh 
-              size={32} 
-              weight="fill" 
-              className={isActive ? 'text-accent' : 'text-muted-foreground'}
-            />
+            {isClonedVoice ? (
+              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                <User size={20} weight="fill" className="text-white" />
+              </div>
+            ) : (
+              <SpeakerHigh 
+                size={32} 
+                weight="fill" 
+                className={isActive ? 'text-accent' : 'text-muted-foreground'}
+              />
+            )}
           </motion.div>
           
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">{languageFlags[language]}</span>
               <span className="font-semibold text-foreground">
-                {languageLabels[language]}
+                {isClonedVoice && profileName ? profileName : languageLabels[language]}
               </span>
+              {isClonedVoice && (
+                <Badge className="bg-accent text-xs">
+                  {language === 'fr' ? 'Voix clonée' : 'Cloned Voice'}
+                </Badge>
+              )}
             </div>
-            {voiceName && (
+            {voiceName && !isClonedVoice && (
               <p className="text-xs text-muted-foreground font-mono">
                 {voiceName}
+              </p>
+            )}
+            {isClonedVoice && (
+              <p className="text-xs text-muted-foreground">
+                {language === 'fr' ? 'Voix personnalisée' : 'Personalized voice'}
               </p>
             )}
           </div>

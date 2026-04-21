@@ -8,13 +8,14 @@ import { ConversationHistory } from '@/components/ConversationHistory'
 import { CustomResponseDialog } from '@/components/CustomResponseDialog'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
+import { VoiceCloning } from '@/components/VoiceCloning'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ConversationTurn, ResponseSuggestion, RecordingState } from '@/lib/types'
-import { speak, loadVoices, getCurrentVoice } from '@/lib/tts'
+import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile } from '@/lib/types'
+import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice } from '@/lib/tts'
 import { AnimatePresence } from 'framer-motion'
 
 function AppContent() {
@@ -24,7 +25,7 @@ function AppContent() {
   const [transcribedText, setTranscribedText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
-  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
+  const [currentVoiceProfile, setCurrentVoiceProfile] = useState<VoiceProfile | null>(null)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -154,7 +155,8 @@ function AppContent() {
         language,
         rate: 0.9,
         pitch: 1,
-        volume: 1
+        volume: 1,
+        voiceProfile: currentVoiceProfile
       })
       
       setRecordingState('idle')
@@ -185,6 +187,15 @@ function AppContent() {
     setSuggestions([])
   }
 
+  const handleVoiceProfileChange = (profile: VoiceProfile | null) => {
+    setCurrentVoiceProfile(profile)
+    if (profile) {
+      toast.success(language === 'fr' 
+        ? `Voix personnalisée "${profile.name}" activée` 
+        : `Personalized voice "${profile.name}" activated`)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       <Toaster position="top-center" />
@@ -198,6 +209,7 @@ function AppContent() {
             </div>
             
             <div className="flex gap-3">
+              <VoiceCloning onVoiceProfileChange={handleVoiceProfileChange} />
               <LanguageSwitcher />
               <Sheet>
                 <SheetTrigger asChild>
@@ -247,6 +259,8 @@ function AppContent() {
                       language={language}
                       voiceName={getCurrentVoice()?.name}
                       isActive={recordingState === 'speaking'}
+                      isClonedVoice={isClonedVoice()}
+                      profileName={getCurrentVoiceProfile()?.name}
                     />
                   )}
                 </AnimatePresence>

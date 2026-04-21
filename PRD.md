@@ -55,11 +55,18 @@ This application has distinct features (voice recording, contextual responses, t
 - **Success criteria**: Language persists between sessions, all text updates instantly, TTS uses correct language-specific voice, no page refresh required
 
 ### Voice Language Indicator
-- **Functionality**: Displays the current TTS voice being used with language flag and voice name
-- **Purpose**: Provides clear visual feedback about which language voice will speak the response
+- **Functionality**: Displays the current TTS voice being used with language flag, voice name, and cloned voice badge
+- **Purpose**: Provides clear visual feedback about which language voice will speak the response and whether it's a personalized cloned voice
 - **Trigger**: Appears automatically when TTS is speaking
-- **Progression**: TTS begins → Voice indicator card appears with flag, language label, and voice name → Animated sound bars pulse during playback → Indicator fades out when speech ends
-- **Success criteria**: Indicator appears immediately when speaking starts, shows correct language and voice name, animations are smooth and non-distracting
+- **Progression**: TTS begins → Voice indicator card appears with flag, language label, voice name/profile name, and cloned voice badge if applicable → Animated sound bars pulse during playback → Indicator fades out when speech ends
+- **Success criteria**: Indicator appears immediately when speaking starts, shows correct language and voice name or profile name, displays "Cloned Voice" badge when using personalized voice, animations are smooth and non-distracting
+
+### Voice Cloning
+- **Functionality**: Allows users to record a 10-second audio sample of their voice to create a personalized voice profile for TTS
+- **Purpose**: Enables users to preserve their own voice for communication, making interactions feel more personal and authentic
+- **Trigger**: User clicks "Voice Cloning" button in header
+- **Progression**: Click button → Dialog opens → Enter profile name → Click "Start Recording" → Read displayed sample text for 10 seconds → Recording automatically stops → Audio is processed and saved → Profile appears in saved list → User can select profile to activate → TTS uses cloned voice for responses
+- **Success criteria**: Recording captures 10 seconds of clear audio, profile is saved locally with encryption, user can preview recorded voice, cloned voice plays seamlessly during TTS, profile persists between sessions, supports multiple profiles per language
 
 ## Edge Case Handling
 
