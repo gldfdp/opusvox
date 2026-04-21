@@ -25,6 +25,12 @@ function AppContent() {
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
   const [userSettings] = useKV<UserSettings>('user-settings', {
     firstName: '',
+    lastName: '',
+    age: null,
+    preferredCommunicationStyle: '',
+    medicalConditions: '',
+    allergies: '',
+    specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
     createdAt: Date.now(),
@@ -44,6 +50,12 @@ function AppContent() {
   const conversationHistory = history || []
   const currentUserSettings = userSettings || {
     firstName: '',
+    lastName: '',
+    age: null,
+    preferredCommunicationStyle: '',
+    medicalConditions: '',
+    allergies: '',
+    specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
     createdAt: Date.now(),

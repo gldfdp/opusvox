@@ -24,22 +24,73 @@ export async function generateResponseSuggestions(
     return getFallbackResponses(transcribedText, language)
   }
 
-  const userContext = userSettings?.firstName 
-    ? (language === 'fr' 
-        ? `L'utilisateur s'appelle ${userSettings.firstName}.` 
-        : `The user's name is ${userSettings.firstName}.`)
+  const userContextParts: string[] = []
+  
+  if (userSettings?.firstName) {
+    const nameContext = language === 'fr' 
+      ? `L'utilisateur s'appelle ${userSettings.firstName}${userSettings.lastName ? ` ${userSettings.lastName}` : ''}.`
+      : `The user's name is ${userSettings.firstName}${userSettings.lastName ? ` ${userSettings.lastName}` : ''}.`
+    userContextParts.push(nameContext)
+  }
+  
+  if (userSettings?.age) {
+    const ageContext = language === 'fr'
+      ? `L'utilisateur a ${userSettings.age} ans.`
+      : `The user is ${userSettings.age} years old.`
+    userContextParts.push(ageContext)
+  }
+  
+  if (userSettings?.preferredCommunicationStyle) {
+    const styleMap: Record<string, { fr: string; en: string }> = {
+      'formal': { fr: 'formel', en: 'formal' },
+      'casual': { fr: 'décontracté', en: 'casual' },
+      'professional': { fr: 'professionnel', en: 'professional' },
+      'friendly': { fr: 'amical', en: 'friendly' }
+    }
+    const styleName = styleMap[userSettings.preferredCommunicationStyle]
+    if (styleName) {
+      const styleContext = language === 'fr'
+        ? `Style de communication préféré : ${styleName.fr}. Adaptez le ton des réponses en conséquence.`
+        : `Preferred communication style: ${styleName.en}. Adapt the tone of responses accordingly.`
+      userContextParts.push(styleContext)
+    }
+  }
+  
+  if (userSettings?.medicalConditions) {
+    const medicalContext = language === 'fr'
+      ? `Conditions médicales : ${userSettings.medicalConditions}`
+      : `Medical conditions: ${userSettings.medicalConditions}`
+    userContextParts.push(medicalContext)
+  }
+  
+  if (userSettings?.allergies) {
+    const allergyContext = language === 'fr'
+      ? `Allergies : ${userSettings.allergies}`
+      : `Allergies: ${userSettings.allergies}`
+    userContextParts.push(allergyContext)
+  }
+  
+  if (userSettings?.specialNeeds) {
+    const specialNeedsContext = language === 'fr'
+      ? `Besoins spéciaux : ${userSettings.specialNeeds}`
+      : `Special needs: ${userSettings.specialNeeds}`
+    userContextParts.push(specialNeedsContext)
+  }
+  
+  const userContext = userContextParts.length > 0 
+    ? userContextParts.join('\n') + '\n\n'
     : ''
 
   const systemMessage = language === 'fr'
     ? `Vous êtes un assistant de communication pour une personne qui a perdu l'usage de la parole. Votre rôle est de générer des réponses appropriées et empathiques que l'utilisateur pourrait vouloir dire.
 
-${userContext ? userContext + ' Utilisez ce prénom dans les réponses lorsque cela est pertinent et naturel (par exemple, pour se présenter ou confirmer son identité).\n' : ''}
-Générez exactement 4 suggestions de réponse qui :
+${userContext ? 'Informations sur l\'utilisateur :\n' + userContext : ''}Générez exactement 4 suggestions de réponse qui :
 1. Sont adaptées au contexte de la conversation
 2. Couvrent différentes intentions (affirmative, négative, neutre, et une alternative)
 3. Sont naturelles et conversationnelles
 4. Sont courtes et faciles à dire par synthèse vocale
 5. Reflètent le ton et le contexte de la situation
+6. Tiennent compte des informations personnelles de l'utilisateur (âge, style de communication, conditions médicales, etc.)
 
 Retournez UNIQUEMENT un objet JSON valide avec la structure suivante (sans texte avant ou après) :
 {
@@ -52,13 +103,13 @@ Retournez UNIQUEMENT un objet JSON valide avec la structure suivante (sans texte
 }`
     : `You are a communication assistant for a person who has lost the ability to speak. Your role is to generate appropriate and empathetic responses that the user might want to say.
 
-${userContext ? userContext + ' Use this first name in responses when it is relevant and natural (for example, when introducing themselves or confirming their identity).\n' : ''}
-Generate exactly 4 response suggestions that:
+${userContext ? 'User information:\n' + userContext : ''}Generate exactly 4 response suggestions that:
 1. Are appropriate to the conversation context
 2. Cover different intents (affirmative, negative, neutral, and an alternative)
 3. Are natural and conversational
 4. Are short and easy to speak via text-to-speech
 5. Reflect the tone and context of the situation
+6. Take into account the user's personal information (age, communication style, medical conditions, etc.)
 
 Return ONLY a valid JSON object with the following structure (no text before or after):
 {

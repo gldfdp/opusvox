@@ -11,6 +11,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   User, 
   Key, 
@@ -24,7 +26,8 @@ import {
   CloudArrowUp,
   FloppyDisk,
   CheckCircle,
-  Warning
+  Warning,
+  Heart
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -40,6 +43,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const { t, language } = useLanguage()
   const [userSettings, setUserSettings] = useKV<UserSettings>('user-settings', {
     firstName: '',
+    lastName: '',
+    age: null,
+    preferredCommunicationStyle: '',
+    medicalConditions: '',
+    allergies: '',
+    specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
     createdAt: Date.now(),
@@ -50,6 +59,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const [selectedProfile, setSelectedProfile] = useKV<string | null>('selected-voice-profile', null)
   
   const [firstName, setFirstName] = useState(userSettings?.firstName || '')
+  const [lastName, setLastName] = useState(userSettings?.lastName || '')
+  const [age, setAge] = useState<string>(userSettings?.age?.toString() || '')
+  const [communicationStyle, setCommunicationStyle] = useState<'formal' | 'casual' | 'professional' | 'friendly' | ''>(userSettings?.preferredCommunicationStyle || '')
+  const [medicalConditions, setMedicalConditions] = useState(userSettings?.medicalConditions || '')
+  const [allergies, setAllergies] = useState(userSettings?.allergies || '')
+  const [specialNeeds, setSpecialNeeds] = useState(userSettings?.specialNeeds || '')
   const [apiKey, setApiKey] = useState(userSettings?.mistralApiKey || '')
   const [showApiKey, setShowApiKey] = useState(false)
   const [testingConnection, setTestingConnection] = useState(false)
@@ -69,6 +84,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
   const currentSettings = userSettings || {
     firstName: '',
+    lastName: '',
+    age: null,
+    preferredCommunicationStyle: '' as const,
+    medicalConditions: '',
+    allergies: '',
+    specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
     createdAt: Date.now(),
@@ -79,13 +100,27 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
   useEffect(() => {
     setFirstName(currentSettings.firstName || '')
+    setLastName(currentSettings.lastName || '')
+    setAge(currentSettings.age?.toString() || '')
+    setCommunicationStyle(currentSettings.preferredCommunicationStyle || '')
+    setMedicalConditions(currentSettings.medicalConditions || '')
+    setAllergies(currentSettings.allergies || '')
+    setSpecialNeeds(currentSettings.specialNeeds || '')
     setApiKey(currentSettings.mistralApiKey || '')
   }, [currentSettings])
 
   const handleSaveProfile = () => {
+    const ageNumber = age.trim() ? parseInt(age, 10) : null
+    
     const updated: UserSettings = {
       ...currentSettings,
       firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      age: ageNumber && !isNaN(ageNumber) ? ageNumber : null,
+      preferredCommunicationStyle: communicationStyle,
+      medicalConditions: medicalConditions.trim(),
+      allergies: allergies.trim(),
+      specialNeeds: specialNeeds.trim(),
       updatedAt: Date.now()
     }
     
@@ -437,15 +472,122 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">
+                  {language === 'fr' ? 'Prénom' : 'First Name'}
+                </Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder={language === 'fr' ? 'Entrez votre prénom' : 'Enter your first name'}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="lastName">
+                  {language === 'fr' ? 'Nom' : 'Last Name'}
+                </Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder={language === 'fr' ? 'Entrez votre nom' : 'Enter your last name'}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="firstName">
-                {language === 'fr' ? 'Prénom' : 'First Name'}
+              <Label htmlFor="age">
+                {language === 'fr' ? 'Âge' : 'Age'}
               </Label>
               <Input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder={language === 'fr' ? 'Entrez votre prénom' : 'Enter your first name'}
+                id="age"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder={language === 'fr' ? 'Entrez votre âge' : 'Enter your age'}
+                min="0"
+                max="150"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="communicationStyle">
+                {language === 'fr' ? 'Style de communication préféré' : 'Preferred Communication Style'}
+              </Label>
+              <Select value={communicationStyle} onValueChange={(value) => setCommunicationStyle(value as any)}>
+                <SelectTrigger id="communicationStyle">
+                  <SelectValue placeholder={language === 'fr' ? 'Sélectionnez un style' : 'Select a style'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="formal">
+                    {language === 'fr' ? 'Formel' : 'Formal'}
+                  </SelectItem>
+                  <SelectItem value="casual">
+                    {language === 'fr' ? 'Décontracté' : 'Casual'}
+                  </SelectItem>
+                  <SelectItem value="professional">
+                    {language === 'fr' ? 'Professionnel' : 'Professional'}
+                  </SelectItem>
+                  <SelectItem value="friendly">
+                    {language === 'fr' ? 'Amical' : 'Friendly'}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {language === 'fr' 
+                  ? 'Cela influencera le ton des suggestions de réponses générées' 
+                  : 'This will influence the tone of generated response suggestions'}
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="medicalConditions" className="flex items-center gap-2">
+                <Heart size={18} weight="fill" className="text-accent" />
+                {language === 'fr' ? 'Conditions médicales' : 'Medical Conditions'}
+              </Label>
+              <Textarea
+                id="medicalConditions"
+                value={medicalConditions}
+                onChange={(e) => setMedicalConditions(e.target.value)}
+                placeholder={language === 'fr' 
+                  ? 'Entrez toute condition médicale pertinente pour les conversations...' 
+                  : 'Enter any medical conditions relevant to conversations...'}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="allergies">
+                {language === 'fr' ? 'Allergies' : 'Allergies'}
+              </Label>
+              <Textarea
+                id="allergies"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+                placeholder={language === 'fr' 
+                  ? 'Listez vos allergies (nourriture, médicaments, etc.)...' 
+                  : 'List your allergies (food, medications, etc.)...'}
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="specialNeeds">
+                {language === 'fr' ? 'Besoins spéciaux' : 'Special Needs'}
+              </Label>
+              <Textarea
+                id="specialNeeds"
+                value={specialNeeds}
+                onChange={(e) => setSpecialNeeds(e.target.value)}
+                placeholder={language === 'fr' 
+                  ? 'Toute information supplémentaire utile pour la communication...' 
+                  : 'Any additional information useful for communication...'}
+                rows={3}
               />
             </div>
             

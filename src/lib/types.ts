@@ -27,6 +27,12 @@ export type VoiceRecordingState = 'idle' | 'recording' | 'processing' | 'success
 
 export interface UserSettings {
   firstName: string
+  lastName: string
+  age: number | null
+  preferredCommunicationStyle: 'formal' | 'casual' | 'professional' | 'friendly' | ''
+  medicalConditions: string
+  allergies: string
+  specialNeeds: string
   mistralApiKey: string
   mistralConnected: boolean
   createdAt: number
