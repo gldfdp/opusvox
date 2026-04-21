@@ -80,22 +80,27 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
       const base64Audio = options.voiceProfile.audioDataUrl.split(',')[1]
       if (base64Audio) {
         try {
-          const audioResponse = await fetch(options.voiceProfile.audioDataUrl)
-          const voiceBlob = await audioResponse.blob()
-          
-          const formData = new FormData()
-          formData.append('model', 'tts-1')
-          formData.append('input', options.text)
-          formData.append('voice_sample', voiceBlob, 'voice_sample.webm')
-          formData.append('speed', speed.toString())
-          formData.append('response_format', 'wav')
+          const audioBlob = await base64ToBlob(base64Audio)
+          const arrayBuffer = await audioBlob.arrayBuffer()
+          const base64VoiceSample = btoa(
+            String.fromCharCode(...new Uint8Array(arrayBuffer))
+          )
+
+          const requestBody = {
+            model: 'tts-1',
+            input: options.text,
+            voice_sample: base64VoiceSample,
+            speed: speed,
+            response_format: 'wav'
+          }
 
           const clonedResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${options.apiKey}`
+              'Authorization': `Bearer ${options.apiKey}`,
+              'Content-Type': 'application/json'
             },
-            body: formData
+            body: JSON.stringify(requestBody)
           })
 
           if (!clonedResponse.ok) {
