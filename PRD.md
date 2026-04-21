@@ -20,11 +20,11 @@ This application has distinct features (voice recording, contextual responses, t
 - **Success criteria**: Audio successfully captures, transcription appears within 500ms, text is accurate
 
 ### Contextual Response Generation
-- **Functionality**: Analyzes transcribed speech with conversation history to generate relevant response options
-- **Purpose**: Provides intelligent, context-aware responses that feel natural and appropriate
+- **Functionality**: Analyzes transcribed speech with conversation history using AI (GPT-4o-mini via Spark LLM API) to generate intelligent, context-aware response options
+- **Purpose**: Provides intelligent responses that feel natural, appropriate, and contextually relevant to the ongoing conversation
 - **Trigger**: Automatically after speech transcription completes
-- **Progression**: Transcription completes → Last 5 conversation turns sent to LLM → 3-5 response suggestions appear as buttons → User selects one or types custom
-- **Success criteria**: Responses are contextually relevant, appear within 300ms, cover different communication intents
+- **Progression**: Transcription completes → Last 5 conversation turns + transcribed text sent to LLM with language-specific system prompt → AI generates 4 contextually appropriate responses covering different intents (affirmative, negative, neutral, alternative) → Response suggestions appear as buttons → User selects one or types custom → Fallback to predefined responses if API fails
+- **Success criteria**: Responses are contextually relevant to both the current input and conversation history, appear within 500ms, cover different communication intents, adapt to the selected language (English/French), gracefully fall back to predefined responses on errors
 
 ### Voice Synthesis
 - **Functionality**: Converts selected text response to natural-sounding speech with language-specific voices

@@ -95,46 +95,22 @@ function AppContent() {
   }
 
   const generateResponses = async (input: string) => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const responseMap: Record<string, ResponseSuggestion[]> = {
-      'feeling': [
-        { id: '1', text: "I'm feeling okay, thank you for asking.", intent: 'positive' },
-        { id: '2', text: "I'm a bit tired right now.", intent: 'neutral' },
-        { id: '3', text: "Not great, I could use some help.", intent: 'negative' },
-        { id: '4', text: "Better than yesterday, thanks.", intent: 'positive' }
-      ],
-      'water': [
-        { id: '1', text: "Yes please, I would love some water.", intent: 'affirmative' },
-        { id: '2', text: "No thank you, I'm fine for now.", intent: 'negative' },
-        { id: '3', text: "Maybe in a little while.", intent: 'neutral' },
-        { id: '4', text: "Yes, but just a small amount please.", intent: 'affirmative' }
-      ],
-      'need': [
-        { id: '1', text: "I'm okay for now, thank you.", intent: 'negative' },
-        { id: '2', text: "Yes, could you help me adjust my position?", intent: 'affirmative' },
-        { id: '3', text: "I need to use the restroom.", intent: 'urgent' },
-        { id: '4', text: "Some pain medication would be helpful.", intent: 'request' }
-      ],
-      'default': [
-        { id: '1', text: "Yes, that would be great.", intent: 'affirmative' },
-        { id: '2', text: "No thank you.", intent: 'negative' },
-        { id: '3', text: "Let me think about it.", intent: 'neutral' },
-        { id: '4', text: "I appreciate you asking.", intent: 'grateful' }
-      ]
+    try {
+      const { generateResponseSuggestions } = await import('@/lib/mistral')
+      
+      const responses = await generateResponseSuggestions({
+        transcribedText: input,
+        language,
+        conversationHistory
+      })
+      
+      setSuggestions(responses)
+    } catch (error) {
+      console.error('Error generating responses:', error)
+      toast.error(language === 'fr' 
+        ? 'Erreur lors de la génération des réponses'
+        : 'Error generating responses')
     }
-    
-    const lowerInput = input.toLowerCase()
-    let responses = responseMap.default
-    
-    for (const [key, value] of Object.entries(responseMap)) {
-      if (lowerInput.includes(key)) {
-        responses = value
-        break
-      }
-    }
-    
-    setSuggestions(responses)
   }
 
   const handleSelectResponse = async (responseText: string) => {
