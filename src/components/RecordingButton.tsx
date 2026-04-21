@@ -1,6 +1,7 @@
 import { Microphone, Stop } from '@phosphor-icons/react'
 import { RecordingState } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/hooks/use-language'
 
 interface RecordingButtonProps {
   state: RecordingState
@@ -9,6 +10,7 @@ interface RecordingButtonProps {
 }
 
 export function RecordingButton({ state, onStartRecording, onStopRecording }: RecordingButtonProps) {
+  const { t } = useLanguage()
   const isRecording = state === 'recording'
   const isProcessing = state === 'processing'
   const isSpeaking = state === 'speaking'
@@ -52,7 +54,7 @@ export function RecordingButton({ state, onStartRecording, onStopRecording }: Re
             ? "bg-accent text-accent-foreground shadow-lg shadow-accent/30" 
             : "bg-primary text-primary-foreground shadow-md hover:shadow-lg hover:scale-105"
         )}
-        aria-label={isRecording ? "Stop recording" : "Start recording"}
+        aria-label={isRecording ? t.recording.buttonStopLabel : t.recording.buttonStartLabel}
       >
         {isRecording ? (
           <Stop size={32} weight="fill" />

@@ -47,6 +47,13 @@ This application has distinct features (voice recording, contextual responses, t
 - **Progression**: Tap custom button → Text input appears with keyboard → User types message → Confirm button → TTS speaks the message
 - **Success criteria**: Keyboard appears instantly, text is editable, works seamlessly with TTS
 
+### Language Selection
+- **Functionality**: Allows users to switch the interface language between English and French
+- **Purpose**: Makes the application accessible to both English and French-speaking users
+- **Trigger**: User clicks language switcher dropdown in header
+- **Progression**: Click language button → Dropdown menu appears with language options → Select language → Interface immediately updates to selected language
+- **Success criteria**: Language persists between sessions, all text updates instantly, no page refresh required
+
 ## Edge Case Handling
 
 - **No microphone access**: Display clear permission request with instructions to enable microphone in browser settings

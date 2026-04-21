@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/hooks/use-language'
 
 interface CustomResponseDialogProps {
   open: boolean
@@ -10,6 +11,7 @@ interface CustomResponseDialogProps {
 }
 
 export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomResponseDialogProps) {
+  const { t } = useLanguage()
   const [text, setText] = useState('')
 
   const handleSubmit = () => {
@@ -30,9 +32,9 @@ export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomRes
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Write your response</DialogTitle>
+          <DialogTitle className="text-2xl">{t.customDialog.title}</DialogTitle>
           <DialogDescription className="text-base">
-            Type your custom message and press Send when ready.
+            {t.customDialog.description}
           </DialogDescription>
         </DialogHeader>
         
@@ -42,7 +44,7 @@ export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomRes
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message here..."
+            placeholder={t.customDialog.placeholder}
             className="min-h-40 text-lg conversation-text resize-none"
             autoFocus
           />
@@ -55,19 +57,19 @@ export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomRes
                 onOpenChange(false)
               }}
             >
-              Cancel
+              {t.customDialog.cancel}
             </Button>
             <Button 
               onClick={handleSubmit}
               disabled={!text.trim()}
               size="lg"
             >
-              Send Response
+              {t.customDialog.send}
             </Button>
           </div>
           
           <p className="text-xs text-muted-foreground text-center">
-            Tip: Press Cmd+Enter (Mac) or Ctrl+Enter (Windows) to send
+            {t.customDialog.tip}
           </p>
         </div>
       </DialogContent>

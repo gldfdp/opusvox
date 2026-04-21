@@ -2,6 +2,7 @@ import { ResponseSuggestion } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PencilSimple } from '@phosphor-icons/react'
+import { useLanguage } from '@/hooks/use-language'
 
 interface ResponseSuggestionsProps {
   suggestions: ResponseSuggestion[]
@@ -16,9 +17,11 @@ export function ResponseSuggestions({
   onCustomResponse,
   disabled = false 
 }: ResponseSuggestionsProps) {
+  const { t } = useLanguage()
+  
   return (
     <div className="space-y-3">
-      <h2 className="text-xl font-semibold text-foreground">Select your response</h2>
+      <h2 className="text-xl font-semibold text-foreground">{t.responses.title}</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {suggestions.map((suggestion) => (
@@ -47,7 +50,7 @@ export function ResponseSuggestions({
         disabled={disabled}
       >
         <PencilSimple size={20} className="mr-2" />
-        Write custom response
+        {t.responses.customButton}
       </Button>
     </div>
   )

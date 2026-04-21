@@ -6,13 +6,16 @@ import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
 import { CustomResponseDialog } from '@/components/CustomResponseDialog'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ConversationTurn, ResponseSuggestion, RecordingState } from '@/lib/types'
 
-function App() {
+function AppContent() {
+  const { t } = useLanguage()
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
@@ -46,9 +49,9 @@ function App() {
 
       mediaRecorder.start()
       setRecordingState('recording')
-      toast.info('Recording started')
+      toast.info(t.recording.toastStarted)
     } catch (error) {
-      toast.error('Microphone access denied. Please enable microphone permissions.')
+      toast.error(t.recording.toastPermissionDenied)
       console.error('Error accessing microphone:', error)
     }
   }
@@ -149,11 +152,11 @@ function App() {
     
     utterance.onerror = () => {
       setRecordingState('idle')
-      toast.error('Speech synthesis failed')
+      toast.error(t.recording.toastError)
     }
     
     speechSynthesis.speak(utterance)
-    toast.success('Speaking response...')
+    toast.success(t.recording.toastSpeaking)
   }
 
   const saveConversationTurn = (userResponse: string, isCustom: boolean) => {
@@ -183,26 +186,29 @@ function App() {
         <header className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">VoiceConnect</h1>
-              <p className="text-lg text-muted-foreground">Communication assistant for enhanced conversation</p>
+              <h1 className="text-4xl font-bold text-foreground mb-2">{t.app.title}</h1>
+              <p className="text-lg text-muted-foreground">{t.app.subtitle}</p>
             </div>
             
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="lg">
-                  <ClockCounterClockwise size={20} className="mr-2" />
-                  History ({conversationHistory.length})
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-lg">
-                <SheetHeader>
-                  <SheetTitle className="text-2xl">Conversation History</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6 h-[calc(100vh-120px)]">
-                  <ConversationHistory history={conversationHistory} />
-                </div>
-              </SheetContent>
-            </Sheet>
+            <div className="flex gap-3">
+              <LanguageSwitcher />
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="lg">
+                    <ClockCounterClockwise size={20} className="mr-2" />
+                    {t.history.buttonLabel} ({conversationHistory.length})
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-lg">
+                  <SheetHeader>
+                    <SheetTitle className="text-2xl">{t.history.title}</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 h-[calc(100vh-120px)]">
+                    <ConversationHistory history={conversationHistory} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </header>
 
@@ -213,10 +219,10 @@ function App() {
                 <div>
                   <h2 className="text-2xl font-semibold mb-2">Listen to visitor</h2>
                   <p className="text-muted-foreground">
-                    {recordingState === 'idle' && 'Press the button to record'}
-                    {recordingState === 'recording' && 'Recording... Release when done'}
-                    {recordingState === 'processing' && 'Processing your recording...'}
-                    {recordingState === 'speaking' && 'Speaking your response...'}
+                    {recordingState === 'idle' && t.recording.statusIdle}
+                    {recordingState === 'recording' && t.recording.statusRecording}
+                    {recordingState === 'processing' && t.recording.statusProcessing}
+                    {recordingState === 'speaking' && t.recording.statusSpeaking}
                   </p>
                 </div>
 
@@ -240,7 +246,7 @@ function App() {
             {transcribedText && (
               <Card className="p-6 bg-secondary/50 border-2">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  Visitor said:
+                  {t.transcribed.label}
                 </h3>
                 <p className="conversation-text text-lg text-foreground leading-relaxed">
                   {transcribedText}
@@ -250,8 +256,7 @@ function App() {
 
             <Alert className="bg-accent/10 border-accent/30">
               <AlertDescription className="text-sm">
-                <strong>Privacy Notice:</strong> All conversations are stored locally on your device and encrypted. 
-                Your data never leaves your browser.
+                <strong>{t.privacy.title}</strong> {t.privacy.message}
               </AlertDescription>
             </Alert>
           </div>
@@ -269,7 +274,7 @@ function App() {
             ) : (
               <Card className="p-8">
                 <div className="text-center text-muted-foreground space-y-3">
-                  <p className="text-lg">Response suggestions will appear here</p>
+                  <p className="text-lg">{t.responses.placeholder}</p>
                   <p className="text-sm">Record a visitor's message to get started</p>
                 </div>
               </Card>
@@ -284,6 +289,14 @@ function App() {
         onSubmit={handleCustomResponse}
       />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   )
 }
 
