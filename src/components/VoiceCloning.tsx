@@ -280,22 +280,21 @@ export function VoiceCloning() {
         throw new Error('Invalid audio data')
       }
 
-      const response = await fetch(`data:audio/webm;base64,${base64Audio}`)
-      const voiceBlob = await response.blob()
-
-      const formData = new FormData()
-      formData.append('model', 'tts-1')
-      formData.append('input', testText)
-      formData.append('voice_sample', voiceBlob, 'voice_sample.wav')
-      formData.append('speed', speed.toString())
-      formData.append('response_format', 'wav')
+      const requestBody = {
+        model: 'tts-1',
+        input: testText,
+        voice_sample: base64Audio,
+        speed: speed,
+        response_format: 'wav'
+      }
 
       const ttsResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${currentUserSettings.mistralApiKey}`
+          'Authorization': `Bearer ${currentUserSettings.mistralApiKey}`,
+          'Content-Type': 'application/json'
         },
-        body: formData
+        body: JSON.stringify(requestBody)
       })
 
       if (!ttsResponse.ok) {
