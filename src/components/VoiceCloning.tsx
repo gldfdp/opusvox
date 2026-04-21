@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Microphone, Play, Trash, Check, X, Plus, User } from '@phosphor-icons/react'
+import { Microphone, Play, Trash, Check, X, Plus, User, Waveform } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -40,12 +40,14 @@ export function VoiceCloning() {
   const [profileName, setProfileName] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [previewAudio, setPreviewAudio] = useState<string | null>(null)
+  const [testingVoice, setTestingVoice] = useState<string | null>(null)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<number | null>(null)
   const progressIntervalRef = useRef<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const testAudioRef = useRef<HTMLAudioElement | null>(null)
 
   const currentProfiles = profiles || []
   const currentUserSettings = userSettings || {
@@ -243,6 +245,99 @@ export function VoiceCloning() {
     }
   }
 
+  const testVoice = async (profile: VoiceProfile) => {
+    if (!currentUserSettings.mistralApiKey) {
+      toast.error(language === 'fr' 
+        ? 'Veuillez configurer votre clé API Mistral dans les paramètres pour tester la voix'
+        : 'Please configure your Mistral API key in settings to test the voice')
+      return
+    }
+
+    if (testingVoice === profile.id) {
+      if (testAudioRef.current) {
+        testAudioRef.current.pause()
+        testAudioRef.current.src = ''
+      }
+      setTestingVoice(null)
+      return
+    }
+
+    setTestingVoice(profile.id)
+    
+    const testText = language === 'fr'
+      ? `Bonjour, je suis ${currentUserSettings.firstName || 'Marie'}. Voici un aperçu de ma voix clonée.`
+      : `Hello, I am ${currentUserSettings.firstName || 'John'}. This is a preview of my cloned voice.`
+
+    try {
+      toast.info(language === 'fr' 
+        ? 'Génération de l\'aperçu vocal...' 
+        : 'Generating voice preview...')
+
+      const speed = 0.9
+
+      const base64Audio = profile.audioDataUrl.split(',')[1]
+      if (!base64Audio) {
+        throw new Error('Invalid audio data')
+      }
+
+      const response = await fetch(`data:audio/webm;base64,${base64Audio}`)
+      const voiceBlob = await response.blob()
+
+      const formData = new FormData()
+      formData.append('model', 'tts-1')
+      formData.append('input', testText)
+      formData.append('voice_sample', voiceBlob, 'voice_sample.wav')
+      formData.append('speed', speed.toString())
+      formData.append('response_format', 'wav')
+
+      const ttsResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUserSettings.mistralApiKey}`
+        },
+        body: formData
+      })
+
+      if (!ttsResponse.ok) {
+        const errorText = await ttsResponse.text().catch(() => '')
+        console.error('Mistral TTS test error:', {
+          status: ttsResponse.status,
+          statusText: ttsResponse.statusText,
+          body: errorText
+        })
+        throw new Error(`Mistral TTS API error: ${ttsResponse.status}`)
+      }
+
+      const audioBlob = await ttsResponse.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+
+      if (testAudioRef.current) {
+        testAudioRef.current.src = audioUrl
+        testAudioRef.current.volume = 1
+        
+        testAudioRef.current.onended = () => {
+          URL.revokeObjectURL(audioUrl)
+          setTestingVoice(null)
+        }
+
+        testAudioRef.current.onerror = () => {
+          URL.revokeObjectURL(audioUrl)
+          setTestingVoice(null)
+          toast.error(language === 'fr' ? 'Erreur de lecture audio' : 'Audio playback error')
+        }
+
+        await testAudioRef.current.play()
+        toast.success(language === 'fr' ? 'Lecture de l\'aperçu vocal' : 'Playing voice preview')
+      }
+    } catch (error) {
+      console.error('Voice test error:', error)
+      setTestingVoice(null)
+      toast.error(language === 'fr' 
+        ? 'Erreur lors du test de la voix. Vérifiez votre clé API Mistral.'
+        : 'Error testing voice. Check your Mistral API key.')
+    }
+  }
+
   const cancelRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop()
@@ -269,6 +364,7 @@ export function VoiceCloning() {
   return (
     <>
       <audio ref={audioRef} className="hidden" />
+      <audio ref={testAudioRef} className="hidden" />
       
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
@@ -422,6 +518,21 @@ export function VoiceCloning() {
                 <h3 className="font-semibold text-lg">
                   {language === 'fr' ? 'Profils vocaux enregistrés' : 'Saved Voice Profiles'}
                 </h3>
+                
+                <Alert className="bg-primary/5 border-primary/30">
+                  <AlertDescription className="text-sm">
+                    <strong className="flex items-center gap-2">
+                      <Waveform size={16} />
+                      {language === 'fr' ? 'Tester votre voix clonée' : 'Test your cloned voice'}
+                    </strong>
+                    <p className="mt-1">
+                      {language === 'fr' 
+                        ? 'Cliquez sur l\'icône de forme d\'onde pour entendre un aperçu de votre voix clonée avec Mistral TTS. Assurez-vous d\'avoir configuré votre clé API Mistral dans les paramètres.'
+                        : 'Click the waveform icon to hear a preview of your cloned voice with Mistral TTS. Make sure you have configured your Mistral API key in settings.'}
+                    </p>
+                  </AlertDescription>
+                </Alert>
+                
                 <ScrollArea className="h-64 rounded-md border p-4">
                   <div className="space-y-2">
                     {currentProfiles.map((profile) => (
@@ -468,8 +579,21 @@ export function VoiceCloning() {
                                 e.stopPropagation()
                                 playPreview(profile.audioDataUrl)
                               }}
+                              title={language === 'fr' ? 'Écouter l\'enregistrement original' : 'Play original recording'}
                             >
                               <Play size={16} weight={previewAudio === profile.audioDataUrl ? 'fill' : 'regular'} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={testingVoice === profile.id ? 'default' : 'ghost'}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                testVoice(profile)
+                              }}
+                              disabled={testingVoice !== null && testingVoice !== profile.id}
+                              title={language === 'fr' ? 'Tester la voix clonée avec Mistral TTS' : 'Test cloned voice with Mistral TTS'}
+                            >
+                              <Waveform size={16} weight={testingVoice === profile.id ? 'fill' : 'regular'} className={testingVoice === profile.id ? 'animate-pulse' : ''} />
                             </Button>
                             <Button
                               size="sm"
@@ -478,6 +602,7 @@ export function VoiceCloning() {
                                 e.stopPropagation()
                                 deleteProfile(profile.id)
                               }}
+                              title={language === 'fr' ? 'Supprimer le profil' : 'Delete profile'}
                             >
                               <Trash size={16} className="text-destructive" />
                             </Button>
