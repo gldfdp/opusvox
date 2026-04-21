@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
 import { ClockCounterClockwise, SpeakerHigh } from '@phosphor-icons/react'
@@ -13,9 +13,10 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ConversationTurn, ResponseSuggestion, RecordingState } from '@/lib/types'
+import { speak, loadVoices } from '@/lib/tts'
 
 function AppContent() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
@@ -28,6 +29,10 @@ function AppContent() {
   const audioChunksRef = useRef<Blob[]>([])
   
   const conversationHistory = history || []
+
+  useEffect(() => {
+    loadVoices()
+  }, [])
 
   const handleStartRecording = async () => {
     try {
@@ -139,24 +144,24 @@ function AppContent() {
 
   const speakResponse = async (responseText: string, isCustom: boolean) => {
     setRecordingState('speaking')
+    toast.success(t.recording.toastSpeaking)
     
-    const utterance = new SpeechSynthesisUtterance(responseText)
-    utterance.rate = 0.9
-    utterance.pitch = 1
-    utterance.volume = 1
-    
-    utterance.onend = () => {
+    try {
+      await speak({
+        text: responseText,
+        language,
+        rate: 0.9,
+        pitch: 1,
+        volume: 1
+      })
+      
       setRecordingState('idle')
       saveConversationTurn(responseText, isCustom)
-    }
-    
-    utterance.onerror = () => {
+    } catch (error) {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
+      console.error('TTS error:', error)
     }
-    
-    speechSynthesis.speak(utterance)
-    toast.success(t.recording.toastSpeaking)
   }
 
   const saveConversationTurn = (userResponse: string, isCustom: boolean) => {
