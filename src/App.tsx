@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
-import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice } from '@/lib/tts'
+import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
 import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
 import { AnimatePresence } from 'framer-motion'
 
@@ -177,7 +177,8 @@ function AppContent() {
         rate: 0.9,
         pitch: 1,
         volume: 1,
-        voiceProfile: currentVoiceProfile
+        voiceProfile: currentVoiceProfile,
+        apiKey: currentUserSettings.mistralApiKey
       })
       
       setRecordingState('idle')
@@ -270,7 +271,14 @@ function AppContent() {
                   </p>
                   {recordingState === 'idle' && (
                     <div className="mt-3 flex items-center justify-center gap-2">
-                      {isTranscriptionAvailable(currentUserSettings.mistralApiKey) ? (
+                      {isTTSAvailable(currentUserSettings.mistralApiKey) ? (
+                        <div className="flex items-center gap-2 text-primary text-sm">
+                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                          <span className="font-medium">
+                            {language === 'fr' ? 'Mistral TTS activé' : 'Mistral TTS enabled'}
+                          </span>
+                        </div>
+                      ) : isTranscriptionAvailable(currentUserSettings.mistralApiKey) ? (
                         <div className="flex items-center gap-2 text-accent text-sm">
                           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                           <span className="font-medium">
@@ -305,6 +313,7 @@ function AppContent() {
                       isActive={recordingState === 'speaking'}
                       isClonedVoice={isClonedVoice()}
                       profileName={getCurrentVoiceProfile()?.name}
+                      isMistralTTS={isMistralTTS()}
                     />
                   )}
                 </AnimatePresence>

@@ -8,11 +8,13 @@ export interface TTSOptions {
   pitch?: number
   volume?: number
   voiceProfile?: VoiceProfile | null
+  apiKey?: string
 }
 
 let currentVoice: SpeechSynthesisVoice | null = null
 let currentVoiceProfile: VoiceProfile | null = null
 let isUsingClonedVoice = false
+let isUsingMistralTTS = false
 
 export function getPreferredVoice(language: Language): SpeechSynthesisVoice | null {
   const voices = speechSynthesis.getVoices()
@@ -44,10 +46,110 @@ export function isClonedVoice(): boolean {
   return isUsingClonedVoice
 }
 
+export function isMistralTTS(): boolean {
+  return isUsingMistralTTS
+}
+
+export function isTTSAvailable(apiKey?: string): boolean {
+  return !!apiKey && apiKey.trim().length > 0
+}
+
 export async function speak(options: TTSOptions): Promise<void> {
-  if (options.voiceProfile && options.voiceProfile.language === options.language) {
+  if (isTTSAvailable(options.apiKey)) {
+    return speakWithMistralTTS(options)
+  } else if (options.voiceProfile && options.voiceProfile.language === options.language) {
     return speakWithClonedVoice(options)
   } else {
+    return speakWithSystemVoice(options)
+  }
+}
+
+async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
+  if (!options.apiKey) {
+    return speakWithSystemVoice(options)
+  }
+
+  try {
+    isUsingMistralTTS = true
+    currentVoiceProfile = options.voiceProfile || null
+    isUsingClonedVoice = !!options.voiceProfile
+
+    const requestBody: {
+      model: string
+      input: string
+      voice?: string
+      response_format?: string
+      speed?: number
+    } = {
+      model: 'mistral-small-latest',
+      input: options.text,
+      response_format: 'mp3',
+      speed: options.rate ?? 1.0
+    }
+
+    if (options.voiceProfile && options.voiceProfile.audioDataUrl) {
+      const base64Audio = options.voiceProfile.audioDataUrl.split(',')[1]
+      if (base64Audio) {
+        (requestBody as any).voice_sample = base64Audio
+      }
+    }
+
+    const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${options.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      console.error('Mistral TTS API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      })
+      throw new Error(`Mistral TTS API error: ${response.status} ${response.statusText}`)
+    }
+
+    const audioBlob = await response.blob()
+    const audioUrl = URL.createObjectURL(audioBlob)
+
+    return new Promise((resolve, reject) => {
+      const audio = new Audio(audioUrl)
+      audio.volume = options.volume ?? 1
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl)
+        isUsingMistralTTS = false
+        currentVoiceProfile = null
+        isUsingClonedVoice = false
+        resolve()
+      }
+
+      audio.onerror = (event) => {
+        URL.revokeObjectURL(audioUrl)
+        isUsingMistralTTS = false
+        currentVoiceProfile = null
+        isUsingClonedVoice = false
+        console.error('Audio playback error:', event)
+        reject(new Error('Failed to play Mistral TTS audio'))
+      }
+
+      audio.play().catch((error) => {
+        URL.revokeObjectURL(audioUrl)
+        isUsingMistralTTS = false
+        currentVoiceProfile = null
+        isUsingClonedVoice = false
+        reject(error)
+      })
+    })
+  } catch (error) {
+    isUsingMistralTTS = false
+    currentVoiceProfile = null
+    isUsingClonedVoice = false
+    console.error('Mistral TTS error, falling back to system voice:', error)
     return speakWithSystemVoice(options)
   }
 }
@@ -133,6 +235,7 @@ export function stopSpeaking(): void {
   currentVoice = null
   currentVoiceProfile = null
   isUsingClonedVoice = false
+  isUsingMistralTTS = false
 }
 
 export function loadVoices(): Promise<SpeechSynthesisVoice[]> {

@@ -1,4 +1,4 @@
-import { SpeakerHigh, User } from '@phosphor-icons/react'
+import { SpeakerHigh, User, Sparkle } from '@phosphor-icons/react'
 import { Language } from '@/lib/i18n'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
@@ -10,6 +10,7 @@ interface VoiceIndicatorProps {
   isActive: boolean
   isClonedVoice?: boolean
   profileName?: string
+  isMistralTTS?: boolean
 }
 
 const languageFlags: Record<Language, string> = {
@@ -22,7 +23,7 @@ const languageLabels: Record<Language, string> = {
   fr: 'Voix Française'
 }
 
-export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, profileName }: VoiceIndicatorProps) {
+export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, profileName, isMistralTTS }: VoiceIndicatorProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -42,7 +43,11 @@ export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, p
               ease: "easeInOut"
             }}
           >
-            {isClonedVoice ? (
+            {isMistralTTS ? (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+                <Sparkle size={20} weight="fill" className="text-white" />
+              </div>
+            ) : isClonedVoice ? (
               <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
                 <User size={20} weight="fill" className="text-white" />
               </div>
@@ -61,18 +66,28 @@ export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, p
               <span className="font-semibold text-foreground">
                 {isClonedVoice && profileName ? profileName : languageLabels[language]}
               </span>
-              {isClonedVoice && (
+              {isMistralTTS && (
+                <Badge className="bg-gradient-to-r from-accent to-primary text-white text-xs">
+                  {language === 'fr' ? 'Mistral TTS' : 'Mistral TTS'}
+                </Badge>
+              )}
+              {isClonedVoice && !isMistralTTS && (
                 <Badge className="bg-accent text-xs">
                   {language === 'fr' ? 'Voix clonée' : 'Cloned Voice'}
                 </Badge>
               )}
             </div>
-            {voiceName && !isClonedVoice && (
+            {voiceName && !isClonedVoice && !isMistralTTS && (
               <p className="text-xs text-muted-foreground font-mono">
                 {voiceName}
               </p>
             )}
-            {isClonedVoice && (
+            {isMistralTTS && (
+              <p className="text-xs text-muted-foreground">
+                {language === 'fr' ? 'Synthèse vocale IA' : 'AI speech synthesis'}
+              </p>
+            )}
+            {isClonedVoice && !isMistralTTS && (
               <p className="text-xs text-muted-foreground">
                 {language === 'fr' ? 'Voix personnalisée' : 'Personalized voice'}
               </p>
