@@ -8,7 +8,7 @@ export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'fr', ap
     
     const formData = new FormData()
     formData.append('file', audioFile)
-    formData.append('model', 'whisper-large-v3')
+    formData.append('model', 'voxtral-mini-transcribe-realtime-2602')
     formData.append('language', language)
     formData.append('response_format', 'json')
 
