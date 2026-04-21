@@ -229,6 +229,14 @@ function AppContent() {
     setSuggestions([])
   }
 
+  const handleDeleteConversation = (id: string) => {
+    setHistory((currentHistory) => {
+      const current = currentHistory || []
+      return current.filter(turn => turn.id !== id)
+    })
+    toast.success(t.history.deleteConfirm)
+  }
+
 
 
   return (
@@ -262,7 +270,10 @@ function AppContent() {
                     <SheetTitle className="text-2xl">{t.history.title}</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6 h-[calc(100vh-120px)]">
-                    <ConversationHistory history={conversationHistory} />
+                    <ConversationHistory 
+                      history={conversationHistory}
+                      onDelete={handleDeleteConversation}
+                    />
                   </div>
                 </SheetContent>
               </Sheet>

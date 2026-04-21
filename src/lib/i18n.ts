@@ -29,6 +29,8 @@ export interface Translations {
     visitor: string
     you: string
     custom: string
+    delete: string
+    deleteConfirm: string
   }
   customDialog: {
     title: string
@@ -83,7 +85,9 @@ export const translations: Record<Language, Translations> = {
       empty: 'No conversation history yet. Start recording to begin.',
       visitor: 'Visitor',
       you: 'You',
-      custom: 'Custom'
+      custom: 'Custom',
+      delete: 'Delete',
+      deleteConfirm: 'Conversation deleted'
     },
     customDialog: {
       title: 'Write your response',
@@ -136,7 +140,9 @@ export const translations: Record<Language, Translations> = {
       empty: 'Aucun historique de conversation pour le moment. Commencez un enregistrement pour débuter.',
       visitor: 'Visiteur',
       you: 'Vous',
-      custom: 'Personnalisé'
+      custom: 'Personnalisé',
+      delete: 'Supprimer',
+      deleteConfirm: 'Conversation supprimée'
     },
     customDialog: {
       title: 'Écrivez votre réponse',
