@@ -427,9 +427,10 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     audioChunksRef.current = []
   }
 
+  const userName = currentSettings.firstName || (language === 'fr' ? 'Marie' : 'John')
   const sampleText = language === 'fr'
-    ? "Bonjour, je m'appelle Marie. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer."
-    : "Hello, my name is John. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself."
+    ? `Bonjour, je m'appelle ${userName}. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer.`
+    : `Hello, my name is ${userName}. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself.`
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-6">

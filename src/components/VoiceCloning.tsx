@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { VoiceProfile, VoiceRecordingState } from '@/lib/types'
+import { VoiceProfile, VoiceRecordingState, UserSettings } from '@/lib/types'
 import { useLanguage } from '@/hooks/use-language'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,14 +18,23 @@ import { motion, AnimatePresence } from 'framer-motion'
 const RECORDING_DURATION = 10000
 const MIN_RECORDING_DURATION = 3000
 
-interface VoiceCloningProps {
-  onVoiceProfileChange?: (profile: VoiceProfile | null) => void
-}
-
-export function VoiceCloning({ onVoiceProfileChange }: VoiceCloningProps) {
+export function VoiceCloning() {
   const { t, language } = useLanguage()
   const [profiles, setProfiles] = useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfile, setSelectedProfile] = useKV<string | null>('selected-voice-profile', null)
+  const [userSettings] = useKV<UserSettings>('user-settings', {
+    firstName: '',
+    lastName: '',
+    age: null,
+    preferredCommunicationStyle: '',
+    medicalConditions: '',
+    allergies: '',
+    specialNeeds: '',
+    mistralApiKey: '',
+    mistralConnected: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  })
   const [recordingState, setRecordingState] = useState<VoiceRecordingState>('idle')
   const [recordingProgress, setRecordingProgress] = useState(0)
   const [profileName, setProfileName] = useState('')
@@ -39,20 +48,19 @@ export function VoiceCloning({ onVoiceProfileChange }: VoiceCloningProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const currentProfiles = profiles || []
-
-  useEffect(() => {
-    if (selectedProfile && currentProfiles.length > 0) {
-      const profile = currentProfiles.find(p => p.id === selectedProfile)
-      if (profile) {
-        onVoiceProfileChange?.(profile)
-      } else {
-        setSelectedProfile(null)
-        onVoiceProfileChange?.(null)
-      }
-    } else {
-      onVoiceProfileChange?.(null)
-    }
-  }, [selectedProfile, currentProfiles, onVoiceProfileChange])
+  const currentUserSettings = userSettings || {
+    firstName: '',
+    lastName: '',
+    age: null,
+    preferredCommunicationStyle: '',
+    medicalConditions: '',
+    allergies: '',
+    specialNeeds: '',
+    mistralApiKey: '',
+    mistralConnected: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  }
 
   const startRecording = async () => {
     if (!profileName.trim()) {
@@ -253,9 +261,10 @@ export function VoiceCloning({ onVoiceProfileChange }: VoiceCloningProps) {
     audioChunksRef.current = []
   }
 
+  const userName = currentUserSettings.firstName || (language === 'fr' ? 'Marie' : 'John')
   const sampleText = language === 'fr'
-    ? "Bonjour, je m'appelle Marie. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer."
-    : "Hello, my name is John. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself."
+    ? `Bonjour, je m'appelle ${userName}. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer.`
+    : `Hello, my name is ${userName}. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself.`
 
   return (
     <>

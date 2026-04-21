@@ -36,11 +36,12 @@ function AppContent() {
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
+  const [profiles] = useKV<VoiceProfile[]>('voice-profiles', [])
+  const [selectedProfileId] = useKV<string | null>('selected-voice-profile', null)
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
-  const [currentVoiceProfile, setCurrentVoiceProfile] = useState<VoiceProfile | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -61,6 +62,11 @@ function AppContent() {
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
+  
+  const currentProfiles = profiles || []
+  const currentVoiceProfile = selectedProfileId 
+    ? currentProfiles.find(p => p.id === selectedProfileId) || null
+    : null
 
   useEffect(() => {
     loadVoices()
@@ -223,14 +229,7 @@ function AppContent() {
     setSuggestions([])
   }
 
-  const handleVoiceProfileChange = (profile: VoiceProfile | null) => {
-    setCurrentVoiceProfile(profile)
-    if (profile) {
-      toast.success(language === 'fr' 
-        ? `Voix personnalisée "${profile.name}" activée` 
-        : `Personalized voice "${profile.name}" activated`)
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
@@ -245,7 +244,7 @@ function AppContent() {
             </div>
             
             <div className="flex gap-3">
-              <VoiceCloning onVoiceProfileChange={handleVoiceProfileChange} />
+              <VoiceCloning />
               <LanguageSwitcher />
               <Button variant="outline" size="lg" onClick={() => setSettingsOpen(true)}>
                 <Gear size={20} className="mr-2" />
