@@ -3,17 +3,15 @@ export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'fr', ap
     throw new Error('Mistral API key is required for transcription')
   }
 
-  const formData = new FormData()
-  formData.append('file', audioBlob, 'recording.webm')
-  formData.append('model', 'pixtral-large-latest')
-  
-  if (language === 'fr') {
-    formData.append('language', 'fr')
-  } else {
-    formData.append('language', 'en')
-  }
-
   try {
+    const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' })
+    
+    const formData = new FormData()
+    formData.append('file', audioFile)
+    formData.append('model', 'whisper-large-v3')
+    formData.append('language', language)
+    formData.append('response_format', 'json')
+
     const response = await fetch('https://api.mistral.ai/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -24,8 +22,12 @@ export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'fr', ap
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error('Mistral API error:', errorData)
-      throw new Error(`Mistral API error: ${response.status} ${response.statusText}`)
+      console.error('Mistral STT API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      })
+      throw new Error(`Mistral STT API error: ${response.status} ${response.statusText}`)
     }
 
     const data = await response.json()
