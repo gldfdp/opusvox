@@ -51,6 +51,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
+    keyboardShortcuts: ['q', 's', 'd', 'f'],
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -68,6 +69,9 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const [apiKey, setApiKey] = useState(userSettings?.mistralApiKey || '')
   const [showApiKey, setShowApiKey] = useState(false)
   const [testingConnection, setTestingConnection] = useState(false)
+  const [keyboardShortcuts, setKeyboardShortcuts] = useState<[string, string, string, string]>(
+    userSettings?.keyboardShortcuts || ['q', 's', 'd', 'f']
+  )
   
   const [recordingState, setRecordingState] = useState<VoiceRecordingState>('idle')
   const [recordingProgress, setRecordingProgress] = useState(0)
@@ -82,7 +86,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const currentSettings = userSettings || {
+  const currentSettings: UserSettings = userSettings || {
     firstName: '',
     lastName: '',
     age: null,
@@ -92,6 +96,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
+    keyboardShortcuts: ['q', 's', 'd', 'f'],
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -107,6 +112,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     setAllergies(currentSettings.allergies || '')
     setSpecialNeeds(currentSettings.specialNeeds || '')
     setApiKey(currentSettings.mistralApiKey || '')
+    setKeyboardShortcuts(currentSettings.keyboardShortcuts)
   }, [currentSettings])
 
   const handleSaveProfile = () => {
@@ -121,6 +127,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       medicalConditions: medicalConditions.trim(),
       allergies: allergies.trim(),
       specialNeeds: specialNeeds.trim(),
+      keyboardShortcuts,
       updatedAt: Date.now()
     }
     
@@ -596,6 +603,53 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               <FloppyDisk size={20} className="mr-2" weight="fill" />
               {language === 'fr' ? 'Enregistrer le profil' : 'Save Profile'}
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-primary text-2xl">⌨️</span>
+              {language === 'fr' ? 'Raccourcis clavier' : 'Keyboard Shortcuts'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'fr' 
+                ? 'Configurez les touches pour sélectionner rapidement les réponses suggérées' 
+                : 'Configure keys to quickly select suggested responses'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[0, 1, 2, 3].map((index) => (
+                <div key={index} className="space-y-2">
+                  <Label htmlFor={`shortcut-${index}`}>
+                    {language === 'fr' ? 'Réponse' : 'Response'} {index + 1}
+                  </Label>
+                  <Input
+                    id={`shortcut-${index}`}
+                    value={keyboardShortcuts[index]}
+                    onChange={(e) => {
+                      const newKey = e.target.value.toLowerCase().slice(-1)
+                      if (newKey && /^[a-z]$/.test(newKey)) {
+                        const newShortcuts: [string, string, string, string] = [...keyboardShortcuts] as [string, string, string, string]
+                        newShortcuts[index] = newKey
+                        setKeyboardShortcuts(newShortcuts)
+                      }
+                    }}
+                    maxLength={1}
+                    className="text-center uppercase font-semibold text-lg"
+                    placeholder={['Q', 'S', 'D', 'F'][index]}
+                  />
+                </div>
+              ))}
+            </div>
+            <Alert className="bg-muted/50">
+              <AlertDescription>
+                {language === 'fr' 
+                  ? 'Utilisez ces touches pour sélectionner rapidement les suggestions de réponses sur la page principale.' 
+                  : 'Use these keys to quickly select response suggestions on the main page.'}
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
 

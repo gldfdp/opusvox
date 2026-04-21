@@ -33,6 +33,7 @@ function AppContent() {
     specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
+    keyboardShortcuts: ['q', 's', 'd', 'f'],
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -59,6 +60,7 @@ function AppContent() {
     specialNeeds: '',
     mistralApiKey: '',
     mistralConnected: false,
+    keyboardShortcuts: ['q', 's', 'd', 'f'],
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -377,6 +379,7 @@ function AppContent() {
                   onSelectResponse={handleSelectResponse}
                   onCustomResponse={() => setCustomDialogOpen(true)}
                   disabled={recordingState !== 'idle'}
+                  keyboardShortcuts={currentUserSettings.keyboardShortcuts}
                 />
               </Card>
             ) : (
