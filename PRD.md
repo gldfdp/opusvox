@@ -13,11 +13,11 @@ This application has distinct features (voice recording, contextual responses, t
 ## Essential Features
 
 ### Voice Recognition
-- **Functionality**: Captures audio input and transcribes it to text using speech-to-text
-- **Purpose**: Allows caregivers and visitors to speak to the user, creating natural two-way conversation
+- **Functionality**: Captures audio input and transcribes it to text using Mistral's Speech-to-Text API (when configured) or simulated transcription as fallback
+- **Purpose**: Allows caregivers and visitors to speak to the user, creating natural two-way conversation with real speech recognition powered by Mistral AI
 - **Trigger**: User presses and holds a microphone button
-- **Progression**: Press microphone button → Audio recording indicator appears → Release button → Transcription displays → Response options generated
-- **Success criteria**: Audio successfully captures, transcription appears within 500ms, text is accurate
+- **Progression**: Press microphone button → Audio recording indicator appears → Release button → Audio sent to Mistral STT API (if API key configured) or simulated transcription → Transcription displays → Response options generated
+- **Success criteria**: Audio successfully captures, real API transcription when Mistral key is configured with visual indicator showing "Mistral STT enabled", fallback to simulated mode with indicator showing "Simulation mode", transcription appears within 500ms, text is accurate, clear user feedback on which mode is active
 
 ### Contextual Response Generation
 - **Functionality**: Analyzes transcribed speech with conversation history using AI (GPT-4o-mini via Spark LLM API) to generate intelligent, context-aware response options
@@ -68,14 +68,23 @@ This application has distinct features (voice recording, contextual responses, t
 - **Progression**: Click button → Dialog opens → Enter profile name → Click "Start Recording" → Read displayed sample text for 10 seconds → Recording automatically stops → Audio is processed and saved → Profile appears in saved list → User can select profile to activate → TTS uses cloned voice for responses
 - **Success criteria**: Recording captures 10 seconds of clear audio, profile is saved locally with encryption, user can preview recorded voice, cloned voice plays seamlessly during TTS, profile persists between sessions, supports multiple profiles per language
 
+### Settings & API Configuration
+- **Functionality**: Centralized settings page where users configure their profile, Mistral API key for advanced features, and manage voice profiles
+- **Purpose**: Enables users to activate real Mistral STT transcription, personalize the application, and manage their voice cloning profiles
+- **Trigger**: User clicks "Settings" button in header
+- **Progression**: Click settings → Settings page opens → User enters first name → User enters Mistral API key → Test connection validates key → When connected, "Mistral STT enabled" indicator appears on main page → Real speech-to-text transcription activates automatically
+- **Success criteria**: API key persists securely, connection test provides clear feedback, settings are available without Mistral key (app works in simulation mode), user can disconnect/reconnect API, voice profiles are manageable from settings
+
 ## Edge Case Handling
 
 - **No microphone access**: Display clear permission request with instructions to enable microphone in browser settings
-- **API failures**: Show friendly error message with retry button, cache last successful responses as fallback
-- **Network offline**: Indicate offline status clearly, allow viewing history and typing custom responses (TTS will fail gracefully)
+- **API failures**: Show friendly error message with retry button, automatically fall back to simulation mode for STT when Mistral API fails, cache last successful responses as fallback
+- **Network offline**: Indicate offline status clearly, automatically switch to simulation mode for transcription, allow viewing history and typing custom responses (TTS will fail gracefully)
+- **Invalid or expired API key**: Display clear error message in settings, provide link to Mistral console, gracefully fall back to simulation mode with clear indicator
 - **Empty transcription**: Prompt user to speak more clearly or adjust microphone position, suggest checking audio input
 - **Very long conversations**: Automatically trim context to last 5 exchanges to maintain performance and reduce API costs
 - **Rapid successive inputs**: Debounce microphone button to prevent overlapping recordings and API calls
+- **No API key configured**: Application works fully in simulation mode with clear indicator, prompts user to configure Mistral API for real transcription in toast messages
 
 ## Design Direction
 

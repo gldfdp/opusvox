@@ -15,13 +15,21 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile } from '@/lib/types'
+import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice } from '@/lib/tts'
+import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
 import { AnimatePresence } from 'framer-motion'
 
 function AppContent() {
   const { t, language } = useLanguage()
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
+  const [userSettings] = useKV<UserSettings>('user-settings', {
+    firstName: '',
+    mistralApiKey: '',
+    mistralConnected: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  })
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
@@ -34,6 +42,13 @@ function AppContent() {
   const audioChunksRef = useRef<Blob[]>([])
   
   const conversationHistory = history || []
+  const currentUserSettings = userSettings || {
+    firstName: '',
+    mistralApiKey: '',
+    mistralConnected: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  }
 
   useEffect(() => {
     loadVoices()
@@ -80,22 +95,46 @@ function AppContent() {
   const processRecording = async () => {
     setRecordingState('processing')
     
-    await new Promise(resolve => setTimeout(resolve, 800))
+    if (audioChunksRef.current.length === 0) {
+      toast.error(t.recording.toastError)
+      setRecordingState('idle')
+      return
+    }
     
-    const simulatedTranscriptions = [
-      "How are you feeling today?",
-      "Would you like some water?",
-      "Do you need anything right now?",
-      "Should I adjust the temperature in the room?",
-      "Are you comfortable?",
-      "Would you like to watch TV?",
-      "Is there anyone you'd like me to call?",
-      "Do you want me to help you with something?"
-    ]
+    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
     
-    const transcribed = simulatedTranscriptions[Math.floor(Math.random() * simulatedTranscriptions.length)]
+    let transcribed = ''
+    
+    if (isTranscriptionAvailable(currentUserSettings.mistralApiKey)) {
+      try {
+        toast.info(language === 'fr' 
+          ? 'Transcription avec Mistral API...' 
+          : 'Transcribing with Mistral API...')
+        
+        transcribed = await transcribeAudio(audioBlob, language, currentUserSettings.mistralApiKey)
+        
+        toast.success(language === 'fr' 
+          ? 'Transcription réussie !' 
+          : 'Transcription successful!')
+      } catch (error) {
+        console.error('Mistral transcription error:', error)
+        toast.error(language === 'fr' 
+          ? 'Erreur de transcription - utilisation du mode simulé' 
+          : 'Transcription error - using simulated mode')
+        
+        await new Promise(resolve => setTimeout(resolve, 800))
+        transcribed = getSimulatedTranscription(language)
+      }
+    } else {
+      toast.info(language === 'fr' 
+        ? 'Mode simulation (configurez Mistral API dans les paramètres pour une vraie transcription)' 
+        : 'Simulation mode (configure Mistral API in settings for real transcription)')
+      
+      await new Promise(resolve => setTimeout(resolve, 800))
+      transcribed = getSimulatedTranscription(language)
+    }
+    
     setTranscribedText(transcribed)
-    
     await generateResponses(transcribed)
     setRecordingState('idle')
   }
@@ -229,6 +268,25 @@ function AppContent() {
                     {recordingState === 'processing' && t.recording.statusProcessing}
                     {recordingState === 'speaking' && t.recording.statusSpeaking}
                   </p>
+                  {recordingState === 'idle' && (
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      {isTranscriptionAvailable(currentUserSettings.mistralApiKey) ? (
+                        <div className="flex items-center gap-2 text-accent text-sm">
+                          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                          <span className="font-medium">
+                            {language === 'fr' ? 'Mistral STT activé' : 'Mistral STT enabled'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                          <span>
+                            {language === 'fr' ? 'Mode simulation' : 'Simulation mode'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-center py-8">
