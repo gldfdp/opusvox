@@ -147,7 +147,8 @@ function AppContent() {
         transcribedText: input,
         language,
         conversationHistory,
-        apiKey: currentUserSettings.mistralApiKey
+        apiKey: currentUserSettings.mistralApiKey,
+        userSettings: currentUserSettings
       })
       
       setSuggestions(responses)
