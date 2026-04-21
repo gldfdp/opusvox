@@ -7,13 +7,15 @@ import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
 import { CustomResponseDialog } from '@/components/CustomResponseDialog'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ConversationTurn, ResponseSuggestion, RecordingState } from '@/lib/types'
-import { speak, loadVoices } from '@/lib/tts'
+import { speak, loadVoices, getCurrentVoice } from '@/lib/tts'
+import { AnimatePresence } from 'framer-motion'
 
 function AppContent() {
   const { t, language } = useLanguage()
@@ -239,8 +241,18 @@ function AppContent() {
                   />
                 </div>
 
+                <AnimatePresence>
+                  {recordingState === 'speaking' && (
+                    <VoiceIndicator
+                      language={language}
+                      voiceName={getCurrentVoice()?.name}
+                      isActive={recordingState === 'speaking'}
+                    />
+                  )}
+                </AnimatePresence>
+
                 {recordingState === 'speaking' && (
-                  <div className="flex items-center justify-center gap-2 text-accent">
+                  <div className="flex items-center justify-center gap-2 text-accent mt-4">
                     <SpeakerHigh size={24} weight="fill" className="animate-pulse" />
                     <span className="font-medium">Playing audio...</span>
                   </div>

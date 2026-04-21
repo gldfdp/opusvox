@@ -27,11 +27,11 @@ This application has distinct features (voice recording, contextual responses, t
 - **Success criteria**: Responses are contextually relevant, appear within 300ms, cover different communication intents
 
 ### Voice Synthesis
-- **Functionality**: Converts selected text response to natural-sounding speech
-- **Purpose**: Enables the user to "speak" their chosen response aloud
+- **Functionality**: Converts selected text response to natural-sounding speech with language-specific voices
+- **Purpose**: Enables the user to "speak" their chosen response aloud in the appropriate language
 - **Trigger**: User taps a response button or confirms custom text
-- **Progression**: Response selected → Text sent to TTS API → Audio plays through device speakers → Visual indicator shows playback
-- **Success criteria**: Voice sounds natural, playback starts within 200ms, volume is appropriate
+- **Progression**: Response selected → Text sent to TTS API with language setting → Audio plays through device speakers → Visual indicator shows playback with language voice details
+- **Success criteria**: Voice sounds natural, playback starts within 200ms, volume is appropriate, correct language voice is used and displayed
 
 ### Conversation History
 - **Functionality**: Stores and displays past conversation exchanges locally
@@ -48,11 +48,18 @@ This application has distinct features (voice recording, contextual responses, t
 - **Success criteria**: Keyboard appears instantly, text is editable, works seamlessly with TTS
 
 ### Language Selection
-- **Functionality**: Allows users to switch the interface language between English and French
-- **Purpose**: Makes the application accessible to both English and French-speaking users
+- **Functionality**: Allows users to switch the interface language between English and French, affecting both UI text and TTS voice
+- **Purpose**: Makes the application accessible to both English and French-speaking users with appropriate voice synthesis
 - **Trigger**: User clicks language switcher dropdown in header
-- **Progression**: Click language button → Dropdown menu appears with language options → Select language → Interface immediately updates to selected language
-- **Success criteria**: Language persists between sessions, all text updates instantly, no page refresh required
+- **Progression**: Click language button → Dropdown menu appears with language options → Select language → Interface immediately updates to selected language → TTS voice automatically switches to match language
+- **Success criteria**: Language persists between sessions, all text updates instantly, TTS uses correct language-specific voice, no page refresh required
+
+### Voice Language Indicator
+- **Functionality**: Displays the current TTS voice being used with language flag and voice name
+- **Purpose**: Provides clear visual feedback about which language voice will speak the response
+- **Trigger**: Appears automatically when TTS is speaking
+- **Progression**: TTS begins → Voice indicator card appears with flag, language label, and voice name → Animated sound bars pulse during playback → Indicator fades out when speech ends
+- **Success criteria**: Indicator appears immediately when speaking starts, shows correct language and voice name, animations are smooth and non-distracting
 
 ## Edge Case Handling
 
@@ -113,6 +120,7 @@ Animations should **reduce cognitive load and provide clear feedback** without c
   - **Response cards** - Card variants with hover states that slightly lift and change border color, tap feedback with quick scale animation
   - **Conversation bubbles** - Custom styled divs with directional styling (user responses vs. visitor input), rounded heavily with tail indicators
   - **Recording indicator** - Custom component with animated concentric circles in accent color, pulsing smoothly at 1.5s intervals
+  - **Voice language indicator** - Custom card component showing language flag emoji, voice name, and animated sound bars during TTS playback; uses accent color highlights when active
 
 - **States**:
   - Buttons: Default (solid primary), Hover (slightly darker with subtle lift), Active (scale 0.98 with deeper shadow), Disabled (50% opacity, no interaction)

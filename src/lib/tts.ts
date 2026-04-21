@@ -8,6 +8,8 @@ export interface TTSOptions {
   volume?: number
 }
 
+let currentVoice: SpeechSynthesisVoice | null = null
+
 export function getPreferredVoice(language: Language): SpeechSynthesisVoice | null {
   const voices = speechSynthesis.getVoices()
   
@@ -26,6 +28,10 @@ export function getPreferredVoice(language: Language): SpeechSynthesisVoice | nu
   return voices.find(v => v.lang.startsWith(language)) || voices[0] || null
 }
 
+export function getCurrentVoice(): SpeechSynthesisVoice | null {
+  return currentVoice
+}
+
 export function speak(options: TTSOptions): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!('speechSynthesis' in window)) {
@@ -39,16 +45,24 @@ export function speak(options: TTSOptions): Promise<void> {
     if (voice) {
       utterance.voice = voice
       utterance.lang = voice.lang
+      currentVoice = voice
     } else {
       utterance.lang = options.language === 'fr' ? 'fr-FR' : 'en-US'
+      currentVoice = null
     }
     
     utterance.rate = options.rate ?? 0.9
     utterance.pitch = options.pitch ?? 1
     utterance.volume = options.volume ?? 1
     
-    utterance.onend = () => resolve()
-    utterance.onerror = (event) => reject(event)
+    utterance.onend = () => {
+      currentVoice = null
+      resolve()
+    }
+    utterance.onerror = (event) => {
+      currentVoice = null
+      reject(event)
+    }
     
     speechSynthesis.speak(utterance)
   })
