@@ -77,48 +77,48 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
     const speed = Math.max(0.5, Math.min(2.0, options.rate ?? 1.0))
 
     if (options.voiceProfile?.audioDataUrl) {
-      const base64Audio = options.voiceProfile.audioDataUrl.split(',')[1]
-      if (base64Audio) {
-        try {
-          const audioBlob = await base64ToBlob(base64Audio)
-          const arrayBuffer = await audioBlob.arrayBuffer()
-          const base64VoiceSample = btoa(
-            String.fromCharCode(...new Uint8Array(arrayBuffer))
-          )
-
-          const requestBody = {
-            model: 'tts-1',
-            input: options.text,
-            voice_sample: base64VoiceSample,
-            speed: speed,
-            response_format: 'wav'
-          }
-
-          const clonedResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${options.apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-          })
-
-          if (!clonedResponse.ok) {
-            const errorText = await clonedResponse.text().catch(() => '')
-            console.error('Mistral TTS (cloned) API error:', {
-              status: clonedResponse.status,
-              statusText: clonedResponse.statusText,
-              body: errorText
-            })
-            throw new Error(`Mistral TTS API error: ${clonedResponse.status}`)
-          }
-
-          const clonedAudioBlob = await clonedResponse.blob()
-          console.log('Successfully used cloned voice profile:', options.voiceProfile.name)
-          return playAudio(clonedAudioBlob, options.volume ?? 1)
-        } catch (error) {
-          console.warn('Failed to use cloned voice, falling back to default voice:', error)
+      try {
+        const audioDataUrl = options.voiceProfile.audioDataUrl
+        let base64Audio: string
+        
+        if (audioDataUrl.includes(',')) {
+          base64Audio = audioDataUrl.split(',')[1]
+        } else {
+          base64Audio = audioDataUrl
         }
+
+        const formData = new FormData()
+        formData.append('model', 'tts-1')
+        formData.append('input', options.text)
+        formData.append('speed', speed.toString())
+        formData.append('response_format', 'wav')
+        
+        const audioBlob = await base64ToBlob(base64Audio)
+        formData.append('voice_sample', audioBlob, 'voice_sample.webm')
+
+        const clonedResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${options.apiKey}`
+          },
+          body: formData
+        })
+
+        if (!clonedResponse.ok) {
+          const errorText = await clonedResponse.text().catch(() => '')
+          console.error('Mistral TTS (cloned) API error:', {
+            status: clonedResponse.status,
+            statusText: clonedResponse.statusText,
+            body: errorText
+          })
+          throw new Error(`Mistral TTS API error: ${clonedResponse.status}`)
+        }
+
+        const clonedAudioBlob = await clonedResponse.blob()
+        console.log('Successfully used cloned voice profile:', options.voiceProfile.name)
+        return playAudio(clonedAudioBlob, options.volume ?? 1)
+      } catch (error) {
+        console.warn('Failed to use cloned voice, falling back to default voice:', error)
       }
     }
 
