@@ -76,22 +76,17 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
 
     const speed = Math.max(0.5, Math.min(2.0, options.rate ?? 1.0))
 
-    const requestBody: Record<string, any> = {
-      model: 'tts-1',
-      input: options.text,
-      response_format: 'wav',
-      speed: speed
-    }
-
-    if (options.voiceProfile && options.voiceProfile.audioDataUrl) {
+    if (options.voiceProfile?.audioDataUrl) {
       const base64Audio = options.voiceProfile.audioDataUrl.split(',')[1]
       if (base64Audio) {
         try {
-          const voiceBlob = await base64ToBlob(base64Audio)
+          const audioResponse = await fetch(options.voiceProfile.audioDataUrl)
+          const voiceBlob = await audioResponse.blob()
+          
           const formData = new FormData()
           formData.append('model', 'tts-1')
           formData.append('input', options.text)
-          formData.append('voice_sample', voiceBlob, 'voice_sample.wav')
+          formData.append('voice_sample', voiceBlob, 'voice_sample.webm')
           formData.append('speed', speed.toString())
           formData.append('response_format', 'wav')
 
@@ -114,17 +109,23 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           }
 
           const clonedAudioBlob = await clonedResponse.blob()
+          console.log('Successfully used cloned voice profile:', options.voiceProfile.name)
           return playAudio(clonedAudioBlob, options.volume ?? 1)
         } catch (error) {
           console.warn('Failed to use cloned voice, falling back to default voice:', error)
-          requestBody.voice = getDefaultMistralVoice(options.language)
         }
-      } else {
-        requestBody.voice = getDefaultMistralVoice(options.language)
       }
-    } else {
-      requestBody.voice = getDefaultMistralVoice(options.language)
     }
+
+    const requestBody = {
+      model: 'tts-1',
+      input: options.text,
+      response_format: 'wav',
+      speed: speed,
+      voice: getDefaultMistralVoice(options.language)
+    }
+
+    console.log('Using default Mistral TTS voice:', requestBody.voice)
 
     const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
       method: 'POST',
