@@ -5,21 +5,25 @@ interface MistralResponseContext {
   transcribedText: string
   language: Language
   conversationHistory: ConversationTurn[]
+  apiKey?: string
+}
+
+interface MistralMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
 }
 
 export async function generateResponseSuggestions(
   context: MistralResponseContext
 ): Promise<ResponseSuggestion[]> {
-  const { transcribedText, language, conversationHistory } = context
+  const { transcribedText, language, conversationHistory, apiKey } = context
   
-  const recentHistory = conversationHistory.slice(-5)
-  const historyContext = recentHistory.length > 0
-    ? recentHistory.map(turn => 
-        `Visitor: "${turn.visitorInput}"\nUser: "${turn.userResponse}"`
-      ).join('\n\n')
-    : 'No previous conversation'
+  if (!apiKey) {
+    console.warn('No Mistral API key provided, using fallback responses')
+    return getFallbackResponses(transcribedText, language)
+  }
 
-  const systemPrompt = language === 'fr'
+  const systemMessage = language === 'fr'
     ? `Vous êtes un assistant de communication pour une personne qui a perdu l'usage de la parole. Votre rôle est de générer des réponses appropriées et empathiques que l'utilisateur pourrait vouloir dire.
 
 Générez exactement 4 suggestions de réponse qui :
@@ -29,12 +33,7 @@ Générez exactement 4 suggestions de réponse qui :
 4. Sont courtes et faciles à dire par synthèse vocale
 5. Reflètent le ton et le contexte de la situation
 
-Historique récent de conversation :
-${historyContext}
-
-Question/commentaire du visiteur : "${transcribedText}"
-
-Retournez les suggestions sous forme de JSON avec la structure suivante :
+Retournez UNIQUEMENT un objet JSON valide avec la structure suivante (sans texte avant ou après) :
 {
   "responses": [
     {"id": "1", "text": "...", "intent": "affirmative"},
@@ -52,12 +51,7 @@ Generate exactly 4 response suggestions that:
 4. Are short and easy to speak via text-to-speech
 5. Reflect the tone and context of the situation
 
-Recent conversation history:
-${historyContext}
-
-Visitor's question/comment: "${transcribedText}"
-
-Return the suggestions as JSON with the following structure:
+Return ONLY a valid JSON object with the following structure (no text before or after):
 {
   "responses": [
     {"id": "1", "text": "...", "intent": "affirmative"},
@@ -67,10 +61,64 @@ Return the suggestions as JSON with the following structure:
   ]
 }`
 
+  const messages: MistralMessage[] = [
+    {
+      role: 'system',
+      content: systemMessage
+    }
+  ]
+
+  const recentHistory = conversationHistory.slice(-5)
+  for (const turn of recentHistory) {
+    messages.push({
+      role: 'user',
+      content: `Visitor's message: "${turn.visitorInput}"`
+    })
+    messages.push({
+      role: 'assistant',
+      content: JSON.stringify({
+        responses: [
+          { id: '1', text: turn.userResponse, intent: 'selected' }
+        ]
+      })
+    })
+  }
+
+  messages.push({
+    role: 'user',
+    content: `Visitor's new message: "${transcribedText}"\n\nGenerate 4 response suggestions now.`
+  })
+
   try {
-    const response = await window.spark.llm(systemPrompt, 'gpt-4o-mini', true)
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'mistral-medium-latest',
+        messages,
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+        max_tokens: 500
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Mistral API error:', response.status, errorText)
+      throw new Error(`Mistral API error: ${response.status}`)
+    }
+
+    const data = await response.json()
     
-    const parsed = JSON.parse(response)
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from Mistral API')
+    }
+
+    const content = data.choices[0].message.content
+    const parsed = JSON.parse(content)
     
     if (parsed.responses && Array.isArray(parsed.responses)) {
       return parsed.responses.map((r: { id: string; text: string; intent: string }) => ({
@@ -80,7 +128,7 @@ Return the suggestions as JSON with the following structure:
       }))
     }
     
-    throw new Error('Invalid response format from LLM')
+    throw new Error('Invalid response format from Mistral API')
   } catch (error) {
     console.error('Error generating responses with Mistral:', error)
     return getFallbackResponses(transcribedText, language)

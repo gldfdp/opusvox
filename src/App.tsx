@@ -146,7 +146,8 @@ function AppContent() {
       const responses = await generateResponseSuggestions({
         transcribedText: input,
         language,
-        conversationHistory
+        conversationHistory,
+        apiKey: currentUserSettings.mistralApiKey
       })
       
       setSuggestions(responses)
