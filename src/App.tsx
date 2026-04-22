@@ -184,11 +184,10 @@ function AppContent() {
   const generateResponses = async (input: string) => {
     try {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
-      const responseLanguage = currentVisitorLanguage || language
       
       const responses = await generateResponseSuggestions({
         transcribedText: input,
-        language: responseLanguage,
+        language: language,
         conversationHistory,
         apiKey: currentUserSettings.mistralApiKey,
         userSettings: currentUserSettings
@@ -197,8 +196,7 @@ function AppContent() {
       setSuggestions(responses)
     } catch (error) {
       console.error('Error generating responses:', error)
-      const responseLanguage = currentVisitorLanguage || language
-      toast.error(responseLanguage === 'fr' 
+      toast.error(language === 'fr' 
         ? 'Erreur lors de la génération des réponses'
         : 'Error generating responses')
     }
