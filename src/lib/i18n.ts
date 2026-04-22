@@ -65,6 +65,12 @@ export interface Translations {
   translation: {
     autoTranslating: string
   }
+  initiateConversation: {
+    title: string
+    placeholder: string
+    button: string
+    tooltip: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -132,6 +138,12 @@ export const translations: Record<Language, Translations> = {
     },
     translation: {
       autoTranslating: 'Auto-translating responses to English...'
+    },
+    initiateConversation: {
+      title: 'Or type to start a conversation',
+      placeholder: 'Type your message here...',
+      button: 'Generate responses',
+      tooltip: 'Type a custom message to initiate the conversation'
     }
   },
   fr: {
@@ -198,6 +210,12 @@ export const translations: Record<Language, Translations> = {
     },
     translation: {
       autoTranslating: 'Traduction automatique des réponses en français...'
+    },
+    initiateConversation: {
+      title: 'Ou tapez pour initier une conversation',
+      placeholder: 'Tapez votre message ici...',
+      button: 'Générer des réponses',
+      tooltip: 'Tapez un message personnalisé pour initier la conversation'
     }
   }
 }

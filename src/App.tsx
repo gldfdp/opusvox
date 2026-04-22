@@ -8,6 +8,7 @@ import { ConversationHistory } from '@/components/ConversationHistory'
 import { CustomResponseDialog } from '@/components/CustomResponseDialog'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { SettingsPage } from '@/components/SettingsPage'
+import { TextInitiator } from '@/components/TextInitiator'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -179,6 +180,11 @@ function AppContent() {
         ? 'Erreur lors de la génération des réponses'
         : 'Error generating responses')
     }
+  }
+
+  const handleTextSubmit = async (text: string) => {
+    setTranscribedText(text)
+    await generateResponses(text)
   }
 
   const handleSelectResponse = async (responseText: string) => {
@@ -431,6 +437,11 @@ function AppContent() {
                 </p>
               </Card>
             )}
+
+            <TextInitiator 
+              onTextSubmit={handleTextSubmit}
+              disabled={recordingState !== 'idle'}
+            />
 
             <Alert className="bg-accent/10 border-accent/30">
               <AlertDescription className="text-sm">
