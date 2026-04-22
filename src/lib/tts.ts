@@ -33,7 +33,30 @@ export function getPreferredVoice(language: string): SpeechSynthesisVoice | null
     ko: ['ko-KR', 'ko'],
     ar: ['ar-SA', 'ar'],
     hi: ['hi-IN', 'hi'],
-    tr: ['tr-TR', 'tr']
+    tr: ['tr-TR', 'tr'],
+    sv: ['sv-SE', 'sv'],
+    da: ['da-DK', 'da'],
+    no: ['no-NO', 'nb-NO', 'no', 'nb'],
+    fi: ['fi-FI', 'fi'],
+    cs: ['cs-CZ', 'cs'],
+    sk: ['sk-SK', 'sk'],
+    hu: ['hu-HU', 'hu'],
+    ro: ['ro-RO', 'ro'],
+    bg: ['bg-BG', 'bg'],
+    el: ['el-GR', 'el'],
+    he: ['he-IL', 'he'],
+    uk: ['uk-UA', 'uk'],
+    vi: ['vi-VN', 'vi'],
+    th: ['th-TH', 'th'],
+    id: ['id-ID', 'id'],
+    ms: ['ms-MY', 'ms'],
+    ca: ['ca-ES', 'ca'],
+    hr: ['hr-HR', 'hr'],
+    sr: ['sr-RS', 'sr'],
+    lt: ['lt-LT', 'lt'],
+    lv: ['lv-LV', 'lv'],
+    et: ['et-EE', 'et'],
+    sl: ['sl-SI', 'sl']
   }
   
   const preferredLangs = languageMap[language] || [language]
@@ -104,8 +127,11 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           input: options.text,
           voice_sample: base64Audio,
           speed: speed,
-          response_format: 'wav'
+          response_format: 'wav',
+          language: options.language
         }
+        
+        console.log('Using cloned voice with language:', options.language)
 
         const clonedResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
           method: 'POST',
@@ -139,10 +165,11 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
       input: options.text,
       response_format: 'wav',
       speed: speed,
-      voice: getDefaultMistralVoice(options.language)
+      voice: getDefaultMistralVoice(options.language),
+      language: options.language
     }
 
-    console.log('Using default Mistral TTS voice:', requestBody.voice)
+    console.log('Using Mistral TTS with language:', options.language, 'voice:', requestBody.voice)
 
     const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
       method: 'POST',
@@ -178,10 +205,42 @@ function getDefaultMistralVoice(language: string): string {
   const voiceMap: Record<string, string> = {
     fr: 'lea',
     en: 'alloy',
-    es: 'alloy',
-    de: 'alloy',
-    it: 'alloy',
-    pt: 'alloy'
+    es: 'nova',
+    de: 'fable',
+    it: 'shimmer',
+    pt: 'onyx',
+    nl: 'echo',
+    pl: 'alloy',
+    ru: 'fable',
+    ja: 'shimmer',
+    zh: 'nova',
+    ko: 'alloy',
+    ar: 'onyx',
+    hi: 'echo',
+    tr: 'fable',
+    sv: 'alloy',
+    da: 'nova',
+    no: 'fable',
+    fi: 'echo',
+    cs: 'shimmer',
+    sk: 'onyx',
+    hu: 'alloy',
+    ro: 'nova',
+    bg: 'fable',
+    el: 'echo',
+    he: 'shimmer',
+    uk: 'onyx',
+    vi: 'nova',
+    th: 'alloy',
+    id: 'fable',
+    ms: 'echo',
+    ca: 'lea',
+    hr: 'shimmer',
+    sr: 'onyx',
+    lt: 'nova',
+    lv: 'fable',
+    et: 'echo',
+    sl: 'alloy'
   }
   return voiceMap[language] || 'alloy'
 }
