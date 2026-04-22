@@ -66,6 +66,17 @@ export async function translateText(text: string, targetLanguage: string, apiKey
     }
 
     const data = await response.json()
+    
+    if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+      console.error('Invalid translation response - no choices:', data)
+      throw new Error('Invalid translation response format')
+    }
+
+    if (!data.choices[0].message || !data.choices[0].message.content) {
+      console.error('Invalid translation response - no message content:', data)
+      throw new Error('Invalid translation response format')
+    }
+    
     return data.choices[0].message.content.trim()
   } catch (error) {
     console.error('Translation error:', error)
@@ -232,14 +243,20 @@ Return ONLY a valid JSON object with the following structure (no text before or 
 
     const data = await response.json()
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+      console.error('Invalid response format from Mistral API - no choices:', data)
+      throw new Error('Invalid response format from Mistral API')
+    }
+
+    if (!data.choices[0].message || !data.choices[0].message.content) {
+      console.error('Invalid response format from Mistral API - no message content:', data)
       throw new Error('Invalid response format from Mistral API')
     }
 
     const content = data.choices[0].message.content
     const parsed = JSON.parse(content)
     
-    if (parsed.responses && Array.isArray(parsed.responses)) {
+    if (parsed.responses && Array.isArray(parsed.responses) && parsed.responses.length > 0) {
       const responses = parsed.responses.map((r: { id: string; text: string; intent: string }) => ({
         id: r.id || Math.random().toString(36).substring(7),
         text: r.text,
@@ -261,6 +278,7 @@ Return ONLY a valid JSON object with the following structure (no text before or 
       return responses
     }
     
+    console.error('Invalid response format from Mistral API - responses not found or empty:', parsed)
     throw new Error('Invalid response format from Mistral API')
   } catch (error) {
     console.error('Error generating responses with Mistral:', error)

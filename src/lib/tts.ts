@@ -122,11 +122,14 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           base64Audio = audioDataUrl
         }
 
-        const requestBody = {
+        const requestBody: Record<string, unknown> = {
           model: 'voxtral-mini-tts-2603',
           input: options.text,
-          ref_audio: base64Audio,
-          speed: speed
+          ref_audio: base64Audio
+        }
+        
+        if (speed !== 1.0) {
+          requestBody.speed = speed
         }
         
         console.log('Using cloned voice with ref_audio')
@@ -158,11 +161,14 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
       }
     }
 
-    const requestBody = {
+    const requestBody: Record<string, unknown> = {
       model: 'voxtral-mini-tts-2603',
       input: options.text,
-      voice: 'atlas',
-      speed: speed
+      voice: 'atlas'
+    }
+    
+    if (speed !== 1.0) {
+      requestBody.speed = speed
     }
 
     console.log('Using Mistral TTS with default voice (atlas)')
