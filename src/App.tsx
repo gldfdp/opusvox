@@ -288,7 +288,7 @@ function AppContent() {
             <Card className="p-8">
               <div className="text-center space-y-6">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-2">Listen to visitor</h2>
+                  <h2 className="text-2xl font-semibold mb-2">{t.recording.listenTitle}</h2>
                   <p className="text-muted-foreground">
                     {recordingState === 'idle' && t.recording.statusIdle}
                     {recordingState === 'recording' && t.recording.statusRecording}

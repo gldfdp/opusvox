@@ -16,6 +16,7 @@ export interface Translations {
     toastPermissionDenied: string
     toastSpeaking: string
     toastError: string
+    listenTitle: string
   }
   responses: {
     title: string
@@ -72,7 +73,8 @@ export const translations: Record<Language, Translations> = {
       toastStarted: 'Recording started',
       toastPermissionDenied: 'Microphone access denied. Please enable microphone permissions.',
       toastSpeaking: 'Speaking response...',
-      toastError: 'Speech synthesis failed'
+      toastError: 'Speech synthesis failed',
+      listenTitle: 'Listen to visitor'
     },
     responses: {
       title: 'Select your response',
@@ -127,7 +129,8 @@ export const translations: Record<Language, Translations> = {
       toastStarted: 'Enregistrement démarré',
       toastPermissionDenied: 'Accès au microphone refusé. Veuillez activer les autorisations du microphone.',
       toastSpeaking: 'Énonciation de la réponse...',
-      toastError: 'Échec de la synthèse vocale'
+      toastError: 'Échec de la synthèse vocale',
+      listenTitle: 'Écouter le visiteur'
     },
     responses: {
       title: 'Sélectionnez votre réponse',
