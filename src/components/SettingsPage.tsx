@@ -73,7 +73,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const [showApiKey, setShowApiKey] = useState(false)
   const [testingConnection, setTestingConnection] = useState(false)
   const [keyboardShortcuts, setKeyboardShortcuts] = useState<[string, string, string, string]>(
-    userSettings?.keyboardShortcuts || ['q', 's', 'd', 'f']
+    (userSettings?.keyboardShortcuts as [string, string, string, string]) || ['q', 's', 'd', 'f']
   )
   
   const [recordingState, setRecordingState] = useState<VoiceRecordingState>('idle')
@@ -449,19 +449,21 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         ? 'Génération de l\'aperçu vocal...' 
         : 'Generating voice preview...')
 
-      const speed = 0.9
+      const speed: number = 0.9
 
       const base64Audio = profile.audioDataUrl.split(',')[1]
       if (!base64Audio) {
         throw new Error('Invalid audio data')
       }
 
-      const requestBody = {
-        model: 'tts-1',
+      const requestBody: Record<string, unknown> = {
+        model: 'voxtral-mini-tts-2603',
         input: testText,
-        voice_sample: base64Audio,
-        speed: speed,
-        response_format: 'wav'
+        ref_audio: base64Audio
+      }
+      
+      if (Math.abs(speed - 1.0) > 0.01) {
+        requestBody.speed = speed
       }
 
       const ttsResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
@@ -760,11 +762,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                   </Label>
                   <Input
                     id={`shortcut-${index}`}
-                    value={keyboardShortcuts[index]}
+                    value={keyboardShortcuts?.[index] || ['q', 's', 'd', 'f'][index]}
                     onChange={(e) => {
                       const newKey = e.target.value.toLowerCase().slice(-1)
                       if (newKey && /^[a-z]$/.test(newKey)) {
-                        const newShortcuts: [string, string, string, string] = [...keyboardShortcuts] as [string, string, string, string]
+                        const currentShortcuts = keyboardShortcuts || ['q', 's', 'd', 'f']
+                        const newShortcuts: [string, string, string, string] = [...currentShortcuts] as [string, string, string, string]
                         newShortcuts[index] = newKey
                         setKeyboardShortcuts(newShortcuts)
                       }
