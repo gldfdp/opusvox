@@ -80,6 +80,10 @@ export interface Translations {
     title: string
     description: string
   }
+  volume: {
+    label: string
+    tooltip: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -160,6 +164,10 @@ export const translations: Record<Language, Translations> = {
     visitorLanguage: {
       title: 'Visitor language',
       description: 'Select the language your visitor will speak in'
+    },
+    volume: {
+      label: 'Speech Volume',
+      tooltip: 'Adjust the volume for text-to-speech output'
     }
   },
   fr: {
@@ -239,6 +247,10 @@ export const translations: Record<Language, Translations> = {
     visitorLanguage: {
       title: 'Langue du visiteur',
       description: 'Sélectionnez la langue dans laquelle votre visiteur parlera'
+    },
+    volume: {
+      label: 'Volume vocal',
+      tooltip: 'Ajuster le volume de la synthèse vocale'
     }
   }
 }

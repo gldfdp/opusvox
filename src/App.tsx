@@ -10,6 +10,7 @@ import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { SettingsPage } from '@/components/SettingsPage'
 import { TextInitiator } from '@/components/TextInitiator'
 import { VisitorLanguageSelector } from '@/components/VisitorLanguageSelector'
+import { VolumeControl } from '@/components/VolumeControl'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -36,7 +37,7 @@ import { AnimatePresence } from 'framer-motion'
 function AppContent() {
   const { t, language } = useLanguage()
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
-  const [userSettings] = useKV<UserSettings>('user-settings', {
+  const [userSettings, setUserSettings] = useKV<UserSettings>('user-settings', {
     firstName: '',
     lastName: '',
     age: null,
@@ -47,6 +48,7 @@ function AppContent() {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    ttsVolume: 0.8,
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -77,6 +79,7 @@ function AppContent() {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    ttsVolume: 0.8,
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -232,7 +235,7 @@ function AppContent() {
         language: responseLanguage,
         rate: 0.9,
         pitch: 1,
-        volume: 1,
+        volume: currentUserSettings.ttsVolume,
         voiceProfile: currentVoiceProfile,
         apiKey: currentUserSettings.mistralApiKey
       })
@@ -303,7 +306,7 @@ function AppContent() {
         language: languageToSpeak,
         rate: 0.9,
         pitch: 1,
-        volume: 1,
+        volume: currentUserSettings.ttsVolume,
         voiceProfile: currentVoiceProfile,
         apiKey: currentUserSettings.mistralApiKey
       })
@@ -332,7 +335,7 @@ function AppContent() {
         language: lastSpokenResponse.language,
         rate: 0.9,
         pitch: 1,
-        volume: 1,
+        volume: currentUserSettings.ttsVolume,
         voiceProfile: currentVoiceProfile,
         apiKey: currentUserSettings.mistralApiKey
       })
@@ -378,6 +381,13 @@ function AppContent() {
     toast.success(t.history.clearAllSuccess)
   }
 
+  const handleVolumeChange = (newVolume: number) => {
+    setUserSettings((current) => ({
+      ...currentUserSettings,
+      ttsVolume: newVolume,
+      updatedAt: Date.now()
+    }))
+  }
 
 
   return (
@@ -541,6 +551,16 @@ function AppContent() {
                     <span className="font-medium">Playing audio...</span>
                   </div>
                 )}
+
+                <div className="mt-8 pt-6 border-t border-border">
+                  <div className="mb-2 text-center">
+                    <span className="text-sm font-semibold text-muted-foreground">{t.volume.label}</span>
+                  </div>
+                  <VolumeControl 
+                    volume={currentUserSettings.ttsVolume}
+                    onVolumeChange={handleVolumeChange}
+                  />
+                </div>
               </div>
             </Card>
 

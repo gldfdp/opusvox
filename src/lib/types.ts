@@ -40,6 +40,7 @@ export interface UserSettings {
   mistralApiKey: string
   mistralConnected: boolean
   keyboardShortcuts: [string, string, string, string]
+  ttsVolume: number
   createdAt: number
   updatedAt: number
 }

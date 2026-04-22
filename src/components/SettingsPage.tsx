@@ -55,6 +55,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    ttsVolume: 0.8,
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -102,6 +103,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    ttsVolume: 0.8,
     createdAt: Date.now(),
     updatedAt: Date.now()
   }

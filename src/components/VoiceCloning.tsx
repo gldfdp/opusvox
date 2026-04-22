@@ -33,6 +33,7 @@ export function VoiceCloning() {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    ttsVolume: 0.8,
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
