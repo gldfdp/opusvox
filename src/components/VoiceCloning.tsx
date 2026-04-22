@@ -173,7 +173,8 @@ export function VoiceCloning() {
         language,
         audioDataUrl,
         createdAt: Date.now(),
-        duration: audioDuration
+        duration: audioDuration,
+        voiceType: 'custom'
       }
       
       setProfiles((current) => {
@@ -232,7 +233,9 @@ export function VoiceCloning() {
     }
   }
 
-  const playPreview = (audioDataUrl: string) => {
+  const playPreview = (audioDataUrl?: string) => {
+    if (!audioDataUrl) return
+    
     if (previewAudio === audioDataUrl) {
       audioRef.current?.pause()
       setPreviewAudio(null)
@@ -251,6 +254,13 @@ export function VoiceCloning() {
       toast.error(language === 'fr' 
         ? 'Veuillez configurer votre clé API Mistral dans les paramètres pour tester la voix'
         : 'Please configure your Mistral API key in settings to test the voice')
+      return
+    }
+
+    if (profile.voiceType !== 'custom' || !profile.audioDataUrl) {
+      toast.error(language === 'fr' 
+        ? 'Ce profil ne peut pas être testé'
+        : 'This profile cannot be tested')
       return
     }
 
@@ -567,7 +577,7 @@ export function VoiceCloning() {
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                {new Date(profile.createdAt).toLocaleDateString()} · {Math.round(profile.duration / 1000)}s
+                                {new Date(profile.createdAt).toLocaleDateString()}{profile.duration ? ` · ${Math.round(profile.duration / 1000)}s` : ''}
                               </p>
                             </div>
                           </div>

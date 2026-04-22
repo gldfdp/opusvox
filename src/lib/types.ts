@@ -14,13 +14,17 @@ export interface ResponseSuggestion {
 
 export type RecordingState = 'idle' | 'recording' | 'processing' | 'speaking'
 
+export type MistralVoiceId = 'atlas' | 'celeste' | 'koda'
+
 export interface VoiceProfile {
   id: string
   name: string
   language: 'en' | 'fr'
-  audioDataUrl: string
+  audioDataUrl?: string
   createdAt: number
-  duration: number
+  duration?: number
+  voiceType: 'custom' | 'mistral-preset'
+  mistralVoiceId?: MistralVoiceId
 }
 
 export type VoiceRecordingState = 'idle' | 'recording' | 'processing' | 'success' | 'error'

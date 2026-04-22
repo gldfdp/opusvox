@@ -111,7 +111,7 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
 
     const speed = Math.max(0.5, Math.min(2.0, options.rate ?? 1.0))
 
-    if (options.voiceProfile?.audioDataUrl) {
+    if (options.voiceProfile?.voiceType === 'custom' && options.voiceProfile?.audioDataUrl) {
       try {
         const audioDataUrl = options.voiceProfile.audioDataUrl
         let base64Audio: string
@@ -126,6 +126,10 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           model: 'voxtral-mini-tts-2603',
           input: options.text,
           ref_audio: base64Audio
+        }
+        
+        if (speed !== 1.0) {
+          requestBody.speed = speed
         }
         
         console.log('Using cloned voice with ref_audio')
@@ -157,17 +161,21 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
       }
     }
 
+    const voiceId = options.voiceProfile?.voiceType === 'mistral-preset' && options.voiceProfile?.mistralVoiceId 
+      ? options.voiceProfile.mistralVoiceId 
+      : 'atlas'
+
     const requestBody: Record<string, unknown> = {
       model: 'voxtral-mini-tts-2603',
       input: options.text,
-      voice: 'atlas'
+      voice: voiceId
     }
     
     if (speed !== 1.0) {
       requestBody.speed = speed
     }
 
-    console.log('Using Mistral TTS with default voice (atlas)')
+    console.log('Using Mistral TTS with voice:', voiceId)
 
     const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
       method: 'POST',
@@ -240,7 +248,7 @@ async function playAudio(audioBlob: Blob, volume: number): Promise<void> {
 
 async function speakWithClonedVoice(options: TTSOptions): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (!options.voiceProfile) {
+    if (!options.voiceProfile || !options.voiceProfile.audioDataUrl) {
       speakWithSystemVoice(options).then(resolve).catch(reject)
       return
     }
