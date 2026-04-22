@@ -14,6 +14,63 @@ interface MistralMessage {
   content: string
 }
 
+function detectLanguage(text: string): Language {
+  const frenchWords = ['le', 'la', 'les', 'de', 'des', 'un', 'une', 'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'oui', 'non', 'bonjour', 'merci', 'est', 'suis', 'êtes', 'sont']
+  const englishWords = ['the', 'a', 'an', 'is', 'are', 'am', 'was', 'were', 'yes', 'no', 'hello', 'thank', 'you', 'i', 'we', 'they', 'he', 'she']
+  
+  const lowerText = text.toLowerCase()
+  const words = lowerText.split(/\s+/)
+  
+  let frenchScore = 0
+  let englishScore = 0
+  
+  words.forEach(word => {
+    if (frenchWords.includes(word)) frenchScore++
+    if (englishWords.includes(word)) englishScore++
+  })
+  
+  if (lowerText.match(/[àâäéèêëïîôùûüÿç]/)) {
+    frenchScore += 3
+  }
+  
+  return frenchScore > englishScore ? 'fr' : 'en'
+}
+
+async function translateText(text: string, targetLanguage: Language, apiKey: string): Promise<string> {
+  try {
+    const systemMessage = targetLanguage === 'fr'
+      ? `Tu es un traducteur professionnel. Traduis le texte suivant en français de manière naturelle et fluide. Retourne UNIQUEMENT la traduction, sans aucun texte supplémentaire.`
+      : `You are a professional translator. Translate the following text into English in a natural and fluent way. Return ONLY the translation, without any additional text.`
+
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'mistral-small-latest',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3,
+        max_tokens: 200
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Translation API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.choices[0].message.content.trim()
+  } catch (error) {
+    console.error('Translation error:', error)
+    return text
+  }
+}
+
 export async function generateResponseSuggestions(
   context: MistralResponseContext
 ): Promise<ResponseSuggestion[]> {
@@ -181,11 +238,25 @@ Return ONLY a valid JSON object with the following structure (no text before or 
     const parsed = JSON.parse(content)
     
     if (parsed.responses && Array.isArray(parsed.responses)) {
-      return parsed.responses.map((r: { id: string; text: string; intent: string }) => ({
+      const responses = parsed.responses.map((r: { id: string; text: string; intent: string }) => ({
         id: r.id || Math.random().toString(36).substring(7),
         text: r.text,
         intent: r.intent
       }))
+      
+      const detectedLang = detectLanguage(responses[0].text)
+      
+      if (detectedLang !== language) {
+        const translatedResponses = await Promise.all(
+          responses.map(async (response: ResponseSuggestion) => ({
+            ...response,
+            text: await translateText(response.text, language, apiKey)
+          }))
+        )
+        return translatedResponses
+      }
+      
+      return responses
     }
     
     throw new Error('Invalid response format from Mistral API')

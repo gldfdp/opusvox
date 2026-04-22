@@ -55,6 +55,9 @@ export interface Translations {
     title: string
     button: string
   }
+  translation: {
+    autoTranslating: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -112,6 +115,9 @@ export const translations: Record<Language, Translations> = {
     settings: {
       title: 'Settings',
       button: 'Settings'
+    },
+    translation: {
+      autoTranslating: 'Auto-translating responses to English...'
     }
   },
   fr: {
@@ -168,6 +174,9 @@ export const translations: Record<Language, Translations> = {
     settings: {
       title: 'Paramètres',
       button: 'Paramètres'
+    },
+    translation: {
+      autoTranslating: 'Traduction automatique des réponses en français...'
     }
   }
 }
