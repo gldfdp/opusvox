@@ -38,9 +38,11 @@ export function detectLanguage(text: string): string {
 
 export async function translateText(text: string, targetLanguage: string, apiKey: string): Promise<string> {
   try {
-    const systemMessage = targetLanguage === 'fr'
-      ? `Tu es un traducteur professionnel. Traduis le texte suivant en français de manière naturelle et fluide. Retourne UNIQUEMENT la traduction, sans aucun texte supplémentaire.`
-      : `You are a professional translator. Translate the following text into English in a natural and fluent way. Return ONLY the translation, without any additional text.`
+    const { MISTRAL_SUPPORTED_LANGUAGES } = await import('./languages')
+    const targetLangInfo = MISTRAL_SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage)
+    const targetLangName = targetLangInfo?.nameNative || targetLanguage
+    
+    const systemMessage = `You are a professional translator. Translate the following text into ${targetLangName} (language code: ${targetLanguage}) in a natural and fluent way. Return ONLY the translation, without any additional text, explanation, or commentary. The translation should sound natural to a native speaker.`
 
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
