@@ -31,6 +31,8 @@ export interface Translations {
     customButton: string
     placeholder: string
     getStarted: string
+    regenerate: string
+    regenerateTooltip: string
   }
   history: {
     title: string
@@ -115,7 +117,9 @@ export const translations: Record<Language, Translations> = {
       title: 'Select your response',
       customButton: 'Write custom response',
       placeholder: 'Response suggestions will appear here',
-      getStarted: 'Record a visitor\'s message to get started'
+      getStarted: 'Record a visitor\'s message to get started',
+      regenerate: 'Regenerate suggestions',
+      regenerateTooltip: 'Generate new response suggestions based on the last visitor message'
     },
     history: {
       title: 'Conversation History',
@@ -198,7 +202,9 @@ export const translations: Record<Language, Translations> = {
       title: 'Sélectionnez votre réponse',
       customButton: 'Écrire une réponse personnalisée',
       placeholder: 'Les suggestions de réponse apparaîtront ici',
-      getStarted: 'Enregistrez un message du visiteur pour commencer'
+      getStarted: 'Enregistrez un message du visiteur pour commencer',
+      regenerate: 'Régénérer les suggestions',
+      regenerateTooltip: 'Générer de nouvelles suggestions de réponse basées sur le dernier message du visiteur'
     },
     history: {
       title: 'Historique des conversations',

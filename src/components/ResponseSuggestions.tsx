@@ -1,14 +1,16 @@
 import { ResponseSuggestion } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PencilSimple } from '@phosphor-icons/react'
+import { PencilSimple, ArrowsClockwise } from '@phosphor-icons/react'
 import { useLanguage } from '@/hooks/use-language'
 import { useEffect } from 'react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface ResponseSuggestionsProps {
   suggestions: ResponseSuggestion[]
   onSelectResponse: (response: string) => void
   onCustomResponse: () => void
+  onRegenerate?: () => void
   disabled?: boolean
   keyboardShortcuts?: [string, string, string, string]
 }
@@ -17,6 +19,7 @@ export function ResponseSuggestions({
   suggestions, 
   onSelectResponse, 
   onCustomResponse,
+  onRegenerate,
   disabled = false,
   keyboardShortcuts = ['q', 's', 'd', 'f']
 }: ResponseSuggestionsProps) {
@@ -41,7 +44,31 @@ export function ResponseSuggestions({
   
   return (
     <div className="space-y-3">
-      <h2 className="text-xl font-semibold text-foreground">{t.responses.title}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-foreground">{t.responses.title}</h2>
+        
+        {onRegenerate && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRegenerate}
+                  disabled={disabled}
+                  className="gap-2"
+                >
+                  <ArrowsClockwise size={18} />
+                  {t.responses.regenerate}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t.responses.regenerateTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {suggestions.map((suggestion, index) => (

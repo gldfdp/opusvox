@@ -202,6 +202,16 @@ function AppContent() {
     }
   }
 
+  const handleRegenerateResponses = async () => {
+    if (!transcribedText) return
+    
+    toast.info(language === 'fr'
+      ? 'Régénération des suggestions...'
+      : 'Regenerating suggestions...')
+    
+    await generateResponses(transcribedText)
+  }
+
   const handleTextSubmit = async (text: string) => {
     await speakUserInitiatedText(text)
   }
@@ -603,6 +613,7 @@ function AppContent() {
                   suggestions={suggestions}
                   onSelectResponse={handleSelectResponse}
                   onCustomResponse={() => setCustomDialogOpen(true)}
+                  onRegenerate={handleRegenerateResponses}
                   disabled={recordingState !== 'idle'}
                   keyboardShortcuts={currentUserSettings.keyboardShortcuts}
                 />
