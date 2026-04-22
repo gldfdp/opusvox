@@ -126,8 +126,7 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           model: 'voxtral-mini-tts-2603',
           input: options.text,
           ref_audio: base64Audio,
-          speed: speed,
-          response_format: 'wav'
+          speed: speed
         }
         
         console.log('Using cloned voice with ref_audio')
@@ -162,11 +161,11 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
     const requestBody = {
       model: 'voxtral-mini-tts-2603',
       input: options.text,
-      response_format: 'wav',
+      voice: 'atlas',
       speed: speed
     }
 
-    console.log('Using Mistral TTS with default voice')
+    console.log('Using Mistral TTS with default voice (atlas)')
 
     const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
       method: 'POST',
