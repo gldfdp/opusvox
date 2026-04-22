@@ -1,6 +1,6 @@
 # Planning Guide
 
-A web-based communication assistance application for people who have lost the ability to speak, enabling them to communicate through AI-powered speech recognition, contextual response generation, and voice synthesis.
+A web-based communication assistance application called **OpusVox** for people who have lost the ability to speak, enabling them to communicate through AI-powered speech recognition, contextual response generation, and voice synthesis.
 
 **Experience Qualities**:
 1. **Empowering** - The interface should feel supportive and confidence-building, never condescending or limiting. Every interaction should reinforce the user's agency.
@@ -50,9 +50,9 @@ This application has distinct features (voice recording, contextual responses, t
 ### Language Selection
 - **Functionality**: Allows users to switch the interface language between English and French, affecting both UI text and TTS voice
 - **Purpose**: Makes the application accessible to both English and French-speaking users with appropriate voice synthesis
-- **Trigger**: User clicks language switcher dropdown in header
-- **Progression**: Click language button → Dropdown menu appears with language options → Select language → Interface immediately updates to selected language → TTS voice automatically switches to match language
-- **Success criteria**: Language persists between sessions, all text updates instantly, TTS uses correct language-specific voice, no page refresh required
+- **Trigger**: User clicks language selector dropdown in settings page
+- **Progression**: Open Settings → Select language from dropdown menu → Interface immediately updates to selected language → TTS voice automatically switches to match language
+- **Success criteria**: Language persists between sessions, all text updates instantly, TTS uses correct language-specific voice, no page refresh required, accessible from centralized settings interface
 
 ### Voice Language Indicator
 - **Functionality**: Displays the current TTS voice being used with language flag, voice name, and cloned voice badge
@@ -62,18 +62,18 @@ This application has distinct features (voice recording, contextual responses, t
 - **Success criteria**: Indicator appears immediately when speaking starts, shows correct language and voice name or profile name, displays "Cloned Voice" badge when using personalized voice, animations are smooth and non-distracting
 
 ### Voice Cloning
-- **Functionality**: Allows users to record a 10-second audio sample of their voice to create a personalized voice profile for TTS
+- **Functionality**: Allows users to record a 10-second audio sample of their voice to create a personalized voice profile for TTS, with test functionality to preview the cloned voice
 - **Purpose**: Enables users to preserve their own voice for communication, making interactions feel more personal and authentic
-- **Trigger**: User clicks "Voice Cloning" button in header
-- **Progression**: Click button → Dialog opens → Enter profile name → Click "Start Recording" → Read displayed sample text for 10 seconds → Recording automatically stops → Audio is processed and saved → Profile appears in saved list → User can select profile to activate → TTS uses cloned voice for responses
-- **Success criteria**: Recording captures 10 seconds of clear audio, profile is saved locally with encryption, user can preview recorded voice, cloned voice plays seamlessly during TTS, profile persists between sessions, supports multiple profiles per language
+- **Trigger**: User opens Settings page and navigates to Voice Cloning section
+- **Progression**: Open Settings → Navigate to Voice Cloning section → Enter profile name → Click "Start Recording" → Read displayed sample text for 10 seconds → Recording automatically stops → Audio is processed and saved → Profile appears in saved list → User can test cloned voice with Mistral TTS → User can select profile to activate → TTS uses cloned voice for responses
+- **Success criteria**: Recording captures 10 seconds of clear audio, profile is saved locally with encryption, user can preview original recording and test cloned voice with Mistral TTS, cloned voice plays seamlessly during TTS, profile persists between sessions, supports multiple profiles per language, all voice management accessible from centralized settings interface
 
 ### Settings & API Configuration
-- **Functionality**: Centralized settings page where users configure their profile, Mistral API key for advanced features, and manage voice profiles
-- **Purpose**: Enables users to activate real Mistral STT transcription, personalize the application, and manage their voice cloning profiles
+- **Functionality**: Centralized settings page where users configure their profile, select interface language, manage voice cloning profiles with test functionality, connect Mistral API key for advanced features, and customize keyboard shortcuts
+- **Purpose**: Enables users to activate real Mistral STT/TTS transcription, personalize the application, manage language preferences, and manage their voice cloning profiles
 - **Trigger**: User clicks "Settings" button in header
-- **Progression**: Click settings → Settings page opens → User enters first name → User enters Mistral API key → Test connection validates key → When connected, "Mistral STT enabled" indicator appears on main page → Real speech-to-text transcription activates automatically
-- **Success criteria**: API key persists securely, connection test provides clear feedback, settings are available without Mistral key (app works in simulation mode), user can disconnect/reconnect API, voice profiles are manageable from settings
+- **Progression**: Click settings → Settings page opens → User can change language → User can enter first name and other profile info → User can manage voice cloning profiles and test them → User can enter Mistral API key → Test connection validates key → When connected, "Mistral STT/TTS enabled" indicators appear on main page → Real speech-to-text and text-to-speech activate automatically
+- **Success criteria**: API key persists securely, connection test provides clear feedback, settings are available without Mistral key (app works in simulation mode), user can disconnect/reconnect API, voice profiles are manageable from settings with test functionality, language selection is integrated in settings, all configuration is centralized in one location
 
 ## Edge Case Handling
 

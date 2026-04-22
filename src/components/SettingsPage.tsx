@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { UserSettings, VoiceProfile, VoiceRecordingState } from '@/lib/types'
 import { useLanguage } from '@/hooks/use-language'
+import { Language } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -27,7 +28,9 @@ import {
   FloppyDisk,
   CheckCircle,
   Warning,
-  Heart
+  Heart,
+  Translate,
+  Waveform
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -40,7 +43,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onClose }: SettingsPageProps) {
-  const { t, language } = useLanguage()
+  const { t, language, setLanguage } = useLanguage()
   const [userSettings, setUserSettings] = useKV<UserSettings>('user-settings', {
     firstName: '',
     lastName: '',
@@ -78,6 +81,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const [profileName, setProfileName] = useState('')
   const [previewAudio, setPreviewAudio] = useState<string | null>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [testingVoice, setTestingVoice] = useState<string | null>(null)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -85,6 +89,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const progressIntervalRef = useRef<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const testAudioRef = useRef<HTMLAudioElement | null>(null)
 
   const currentSettings: UserSettings = userSettings || {
     firstName: '',
@@ -416,6 +421,98 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     }
   }
 
+  const testVoice = async (profile: VoiceProfile) => {
+    if (!currentSettings.mistralApiKey) {
+      toast.error(language === 'fr' 
+        ? 'Veuillez configurer votre clé API Mistral dans les paramètres pour tester la voix'
+        : 'Please configure your Mistral API key in settings to test the voice')
+      return
+    }
+
+    if (testingVoice === profile.id) {
+      if (testAudioRef.current) {
+        testAudioRef.current.pause()
+        testAudioRef.current.src = ''
+      }
+      setTestingVoice(null)
+      return
+    }
+
+    setTestingVoice(profile.id)
+    
+    const testText = language === 'fr'
+      ? `Bonjour, je suis ${currentSettings.firstName || 'Marie'}. Voici un aperçu de ma voix clonée.`
+      : `Hello, I am ${currentSettings.firstName || 'John'}. This is a preview of my cloned voice.`
+
+    try {
+      toast.info(language === 'fr' 
+        ? 'Génération de l\'aperçu vocal...' 
+        : 'Generating voice preview...')
+
+      const speed = 0.9
+
+      const base64Audio = profile.audioDataUrl.split(',')[1]
+      if (!base64Audio) {
+        throw new Error('Invalid audio data')
+      }
+
+      const requestBody = {
+        model: 'tts-1',
+        input: testText,
+        voice_sample: base64Audio,
+        speed: speed,
+        response_format: 'wav'
+      }
+
+      const ttsResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentSettings.mistralApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      if (!ttsResponse.ok) {
+        const errorText = await ttsResponse.text().catch(() => '')
+        console.error('Mistral TTS test error:', {
+          status: ttsResponse.status,
+          statusText: ttsResponse.statusText,
+          body: errorText
+        })
+        throw new Error(`Mistral TTS API error: ${ttsResponse.status}`)
+      }
+
+      const audioBlob = await ttsResponse.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+
+      if (testAudioRef.current) {
+        testAudioRef.current.src = audioUrl
+        testAudioRef.current.volume = 1
+        
+        testAudioRef.current.onended = () => {
+          URL.revokeObjectURL(audioUrl)
+          setTestingVoice(null)
+        }
+
+        testAudioRef.current.onerror = () => {
+          URL.revokeObjectURL(audioUrl)
+          setTestingVoice(null)
+          toast.error(language === 'fr' ? 'Erreur de lecture audio' : 'Audio playback error')
+        }
+
+        await testAudioRef.current.play()
+        toast.success(language === 'fr' ? 'Lecture de l\'aperçu vocal' : 'Playing voice preview')
+      }
+    } catch (error) {
+      console.error('Voice test error:', error)
+      setTestingVoice(null)
+      toast.error(language === 'fr' 
+        ? 'Erreur lors du test de la voix. Vérifiez votre clé API Mistral.'
+        : 'Error testing voice. Check your Mistral API key.')
+    }
+  }
+
   const cancelRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop()
@@ -442,6 +539,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-6">
       <audio ref={audioRef} className="hidden" />
+      <audio ref={testAudioRef} className="hidden" />
       <input
         ref={fileInputRef}
         type="file"
@@ -466,6 +564,41 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             {language === 'fr' ? 'Fermer' : 'Close'}
           </Button>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Translate size={24} weight="fill" className="text-primary" />
+              {language === 'fr' ? 'Langue de l\'interface' : 'Interface Language'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'fr' 
+                ? 'Sélectionnez la langue de l\'application' 
+                : 'Select the application language'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="language-select">
+                {language === 'fr' ? 'Langue' : 'Language'}
+              </Label>
+              <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
+                <SelectTrigger id="language-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {language === 'fr' 
+                  ? 'Cela affectera toute l\'interface et les réponses générées' 
+                  : 'This will affect the entire interface and generated responses'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -963,8 +1096,21 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                                 e.stopPropagation()
                                 playPreview(profile.audioDataUrl)
                               }}
+                              title={language === 'fr' ? 'Écouter l\'enregistrement original' : 'Play original recording'}
                             >
                               <Play size={16} weight={previewAudio === profile.audioDataUrl ? 'fill' : 'regular'} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={testingVoice === profile.id ? 'default' : 'ghost'}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                testVoice(profile)
+                              }}
+                              disabled={testingVoice !== null && testingVoice !== profile.id}
+                              title={language === 'fr' ? 'Tester la voix clonée avec Mistral TTS' : 'Test cloned voice with Mistral TTS'}
+                            >
+                              <Waveform size={16} weight={testingVoice === profile.id ? 'fill' : 'regular'} className={testingVoice === profile.id ? 'animate-pulse' : ''} />
                             </Button>
                             <Button
                               size="sm"
@@ -973,6 +1119,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                                 e.stopPropagation()
                                 deleteProfile(profile.id)
                               }}
+                              title={language === 'fr' ? 'Supprimer le profil' : 'Delete profile'}
                             >
                               <Trash size={16} className="text-destructive" />
                             </Button>

@@ -70,7 +70,7 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   en: {
     app: {
-      title: 'VoiceConnect',
+      title: 'OpusVox',
       subtitle: 'Communication assistant for enhanced conversation'
     },
     recording: {
@@ -136,7 +136,7 @@ export const translations: Record<Language, Translations> = {
   },
   fr: {
     app: {
-      title: 'VoiceConnect',
+      title: 'OpusVox',
       subtitle: 'Assistant de communication pour conversations enrichies'
     },
     recording: {

@@ -6,9 +6,7 @@ import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
 import { CustomResponseDialog } from '@/components/CustomResponseDialog'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
-import { VoiceCloning } from '@/components/VoiceCloning'
 import { SettingsPage } from '@/components/SettingsPage'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
@@ -326,8 +324,6 @@ function AppContent() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <VoiceCloning />
-              <LanguageSwitcher />
               <Button variant="outline" size="lg" onClick={() => setSettingsOpen(true)}>
                 <Gear size={20} className="mr-2" />
                 {t.settings.button}
