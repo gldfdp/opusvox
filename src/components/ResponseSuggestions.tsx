@@ -1,7 +1,7 @@
 import { ResponseSuggestion } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PencilSimple, ArrowsClockwise } from '@phosphor-icons/react'
+import { PencilSimple, ArrowsClockwise, X } from '@phosphor-icons/react'
 import { useLanguage } from '@/hooks/use-language'
 import { useEffect } from 'react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -11,6 +11,7 @@ interface ResponseSuggestionsProps {
   onSelectResponse: (response: string) => void
   onCustomResponse: () => void
   onRegenerate?: () => void
+  onCancelRegenerate?: () => void
   disabled?: boolean
   keyboardShortcuts?: [string, string, string, string]
   isLoading?: boolean
@@ -21,6 +22,7 @@ export function ResponseSuggestions({
   onSelectResponse, 
   onCustomResponse,
   onRegenerate,
+  onCancelRegenerate,
   disabled = false,
   keyboardShortcuts = ['q', 's', 'd', 'f'],
   isLoading = false
@@ -53,6 +55,17 @@ export function ResponseSuggestions({
             <p className="text-sm font-medium text-muted-foreground">
               {t.responses.loading || 'Generating new suggestions...'}
             </p>
+            {onCancelRegenerate && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onCancelRegenerate}
+                className="mt-2"
+              >
+                <X size={16} className="mr-2" />
+                {t.responses.cancel}
+              </Button>
+            )}
           </div>
         </div>
       )}

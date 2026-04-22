@@ -7,6 +7,7 @@ interface MistralResponseContext {
   conversationHistory: ConversationTurn[]
   apiKey?: string
   userSettings?: UserSettings
+  signal?: AbortSignal
 }
 
 interface MistralMessage {
@@ -87,7 +88,7 @@ export async function translateText(text: string, targetLanguage: string, apiKey
 export async function generateResponseSuggestions(
   context: MistralResponseContext
 ): Promise<ResponseSuggestion[]> {
-  const { transcribedText, language, conversationHistory, apiKey, userSettings } = context
+  const { transcribedText, language, conversationHistory, apiKey, userSettings, signal } = context
   
   if (!apiKey) {
     console.warn('No Mistral API key provided, using fallback responses')
@@ -232,8 +233,13 @@ Return ONLY a valid JSON object with the following structure (no text before or 
         response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 500
-      })
+      }),
+      signal
     })
+
+    if (signal?.aborted) {
+      throw new Error('Request was cancelled')
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -281,6 +287,9 @@ Return ONLY a valid JSON object with the following structure (no text before or 
     console.error('Invalid response format from Mistral API - responses not found or empty:', parsed)
     throw new Error('Invalid response format from Mistral API')
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error
+    }
     console.error('Error generating responses with Mistral:', error)
     return getFallbackResponses(transcribedText, language)
   }

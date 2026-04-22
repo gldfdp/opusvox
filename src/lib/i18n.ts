@@ -34,6 +34,8 @@ export interface Translations {
     regenerate: string
     regenerateTooltip: string
     loading: string
+    cancel: string
+    cancelTooltip: string
   }
   history: {
     title: string
@@ -121,7 +123,9 @@ export const translations: Record<Language, Translations> = {
       getStarted: 'Record a visitor\'s message to get started',
       regenerate: 'Regenerate suggestions',
       regenerateTooltip: 'Generate new response suggestions based on the last visitor message',
-      loading: 'Generating new suggestions...'
+      loading: 'Generating new suggestions...',
+      cancel: 'Cancel',
+      cancelTooltip: 'Stop generating new suggestions'
     },
     history: {
       title: 'Conversation History',
@@ -207,7 +211,9 @@ export const translations: Record<Language, Translations> = {
       getStarted: 'Enregistrez un message du visiteur pour commencer',
       regenerate: 'Régénérer les suggestions',
       regenerateTooltip: 'Générer de nouvelles suggestions de réponse basées sur le dernier message du visiteur',
-      loading: 'Génération de nouvelles suggestions...'
+      loading: 'Génération de nouvelles suggestions...',
+      cancel: 'Annuler',
+      cancelTooltip: 'Arrêter la génération de nouvelles suggestions'
     },
     history: {
       title: 'Historique des conversations',

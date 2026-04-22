@@ -68,6 +68,7 @@ function AppContent() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   const conversationHistory = history || []
   const currentUserSettings = userSettings || {
@@ -183,6 +184,7 @@ function AppContent() {
   }
 
   const generateResponses = async (input: string) => {
+    abortControllerRef.current = new AbortController()
     setIsLoadingSuggestions(true)
     try {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
@@ -192,17 +194,25 @@ function AppContent() {
         language: language,
         conversationHistory,
         apiKey: currentUserSettings.mistralApiKey,
-        userSettings: currentUserSettings
+        userSettings: currentUserSettings,
+        signal: abortControllerRef.current.signal
       })
       
       setSuggestions(responses)
     } catch (error) {
-      console.error('Error generating responses:', error)
-      toast.error(language === 'fr' 
-        ? 'Erreur lors de la génération des réponses'
-        : 'Error generating responses')
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.info(language === 'fr' 
+          ? 'Génération de suggestions annulée'
+          : 'Suggestion generation cancelled')
+      } else {
+        console.error('Error generating responses:', error)
+        toast.error(language === 'fr' 
+          ? 'Erreur lors de la génération des réponses'
+          : 'Error generating responses')
+      }
     } finally {
       setIsLoadingSuggestions(false)
+      abortControllerRef.current = null
     }
   }
 
@@ -214,6 +224,12 @@ function AppContent() {
       : 'Regenerating suggestions...')
     
     await generateResponses(transcribedText)
+  }
+
+  const handleCancelRegenerate = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
   }
 
   const handleTextSubmit = async (text: string) => {
@@ -618,6 +634,7 @@ function AppContent() {
                   onSelectResponse={handleSelectResponse}
                   onCustomResponse={() => setCustomDialogOpen(true)}
                   onRegenerate={handleRegenerateResponses}
+                  onCancelRegenerate={handleCancelRegenerate}
                   disabled={recordingState !== 'idle'}
                   keyboardShortcuts={currentUserSettings.keyboardShortcuts}
                   isLoading={isLoadingSuggestions}
