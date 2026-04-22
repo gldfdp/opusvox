@@ -24,10 +24,12 @@ export function ConversationHistory({ history, onDelete }: ConversationHistoryPr
     )
   }
 
+  const sortedHistory = [...history].reverse()
+
   return (
     <ScrollArea className="h-full pr-4">
       <div className="space-y-6 px-4">
-        {history.map((turn, index) => (
+        {sortedHistory.map((turn, index) => (
           <div key={turn.id} className="space-y-3">
             {index > 0 && <Separator className="my-6" />}
             
