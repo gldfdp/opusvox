@@ -146,7 +146,7 @@ export const translations: Record<Language, Translations> = {
     initiateConversation: {
       title: 'Or type to start a conversation',
       placeholder: 'Type your message here...',
-      button: 'Generate responses',
+      button: 'Speak to my visitor',
       tooltip: 'Type a custom message to initiate the conversation'
     },
     visitorLanguage: {
@@ -222,7 +222,7 @@ export const translations: Record<Language, Translations> = {
     initiateConversation: {
       title: 'Ou tapez pour initier une conversation',
       placeholder: 'Tapez votre message ici...',
-      button: 'Générer des réponses',
+      button: 'Dicter à mon interlocuteur',
       tooltip: 'Tapez un message personnalisé pour initier la conversation'
     },
     visitorLanguage: {
