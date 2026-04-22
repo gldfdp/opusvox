@@ -227,7 +227,7 @@ function AppContent() {
       })
       
       setRecordingState('idle')
-      saveUserInitiatedConversation(textToSpeak)
+      saveUserInitiatedConversation(text)
     } catch (error) {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
