@@ -71,6 +71,10 @@ export interface Translations {
     button: string
     tooltip: string
   }
+  visitorLanguage: {
+    title: string
+    description: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -144,6 +148,10 @@ export const translations: Record<Language, Translations> = {
       placeholder: 'Type your message here...',
       button: 'Generate responses',
       tooltip: 'Type a custom message to initiate the conversation'
+    },
+    visitorLanguage: {
+      title: 'Visitor language',
+      description: 'Select the language your visitor will speak in'
     }
   },
   fr: {
@@ -216,6 +224,10 @@ export const translations: Record<Language, Translations> = {
       placeholder: 'Tapez votre message ici...',
       button: 'Générer des réponses',
       tooltip: 'Tapez un message personnalisé pour initier la conversation'
+    },
+    visitorLanguage: {
+      title: 'Langue du visiteur',
+      description: 'Sélectionnez la langue dans laquelle votre visiteur parlera'
     }
   }
 }

@@ -9,6 +9,7 @@ import { CustomResponseDialog } from '@/components/CustomResponseDialog'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { SettingsPage } from '@/components/SettingsPage'
 import { TextInitiator } from '@/components/TextInitiator'
+import { VisitorLanguageSelector } from '@/components/VisitorLanguageSelector'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,7 @@ function AppContent() {
   })
   const [profiles] = useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfileId] = useKV<string | null>('selected-voice-profile', null)
+  const [visitorLanguage, setVisitorLanguage] = useKV<Language | null>('visitor-language', null)
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
@@ -71,6 +73,7 @@ function AppContent() {
   const currentVoiceProfile = selectedProfileId 
     ? currentProfiles.find(p => p.id === selectedProfileId) || null
     : null
+  const currentVisitorLanguage = visitorLanguage || null
 
   useEffect(() => {
     loadVoices()
@@ -126,34 +129,35 @@ function AppContent() {
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
     
     let transcribed = ''
+    const transcriptionLanguage = currentVisitorLanguage || language
     
     if (isTranscriptionAvailable(currentUserSettings.mistralApiKey)) {
       try {
-        toast.info(language === 'fr' 
+        toast.info(transcriptionLanguage === 'fr' 
           ? 'Transcription avec Mistral API...' 
           : 'Transcribing with Mistral API...')
         
-        transcribed = await transcribeAudio(audioBlob, language, currentUserSettings.mistralApiKey)
+        transcribed = await transcribeAudio(audioBlob, transcriptionLanguage, currentUserSettings.mistralApiKey)
         
-        toast.success(language === 'fr' 
+        toast.success(transcriptionLanguage === 'fr' 
           ? 'Transcription réussie !' 
           : 'Transcription successful!')
       } catch (error) {
         console.error('Mistral transcription error:', error)
-        toast.error(language === 'fr' 
+        toast.error(transcriptionLanguage === 'fr' 
           ? 'Erreur de transcription - utilisation du mode simulé' 
           : 'Transcription error - using simulated mode')
         
         await new Promise(resolve => setTimeout(resolve, 800))
-        transcribed = getSimulatedTranscription(language)
+        transcribed = getSimulatedTranscription(transcriptionLanguage)
       }
     } else {
-      toast.info(language === 'fr' 
+      toast.info(transcriptionLanguage === 'fr' 
         ? 'Mode simulation (configurez Mistral API dans les paramètres pour une vraie transcription)' 
         : 'Simulation mode (configure Mistral API in settings for real transcription)')
       
       await new Promise(resolve => setTimeout(resolve, 800))
-      transcribed = getSimulatedTranscription(language)
+      transcribed = getSimulatedTranscription(transcriptionLanguage)
     }
     
     setTranscribedText(transcribed)
@@ -164,10 +168,11 @@ function AppContent() {
   const generateResponses = async (input: string) => {
     try {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
+      const responseLanguage = currentVisitorLanguage || language
       
       const responses = await generateResponseSuggestions({
         transcribedText: input,
-        language,
+        language: responseLanguage,
         conversationHistory,
         apiKey: currentUserSettings.mistralApiKey,
         userSettings: currentUserSettings
@@ -176,7 +181,8 @@ function AppContent() {
       setSuggestions(responses)
     } catch (error) {
       console.error('Error generating responses:', error)
-      toast.error(language === 'fr' 
+      const responseLanguage = currentVisitorLanguage || language
+      toast.error(responseLanguage === 'fr' 
         ? 'Erreur lors de la génération des réponses'
         : 'Error generating responses')
     }
@@ -359,10 +365,34 @@ function AppContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
+            {!currentVisitorLanguage && (
+              <VisitorLanguageSelector
+                selectedLanguage={currentVisitorLanguage}
+                onSelectLanguage={setVisitorLanguage}
+              />
+            )}
+            
             <Card className="p-8">
               <div className="text-center space-y-6">
                 <div>
                   <h2 className="text-2xl font-semibold mb-2">{t.recording.listenTitle}</h2>
+                  {currentVisitorLanguage && (
+                    <p className="text-sm text-accent mb-2">
+                      {currentVisitorLanguage === 'en' ? '🇬🇧 English' : '🇫🇷 Français'}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setVisitorLanguage(null)
+                          setTranscribedText('')
+                          setSuggestions([])
+                        }}
+                        className="ml-2 h-6 text-xs"
+                      >
+                        {language === 'fr' ? 'Changer' : 'Change'}
+                      </Button>
+                    </p>
+                  )}
                   <p className="text-muted-foreground">
                     {recordingState === 'idle' && t.recording.statusIdle}
                     {recordingState === 'recording' && t.recording.statusRecording}
