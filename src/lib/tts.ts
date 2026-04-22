@@ -123,7 +123,7 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
         }
 
         const requestBody = {
-          model: 'voxtral-mini-tts-2502',
+          model: 'voxtral-mini-tts-2603',
           input: options.text,
           voice_sample: base64Audio,
           speed: speed,
