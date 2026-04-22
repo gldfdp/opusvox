@@ -128,10 +128,6 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           ref_audio: base64Audio
         }
         
-        if (speed !== 1.0) {
-          requestBody.speed = speed
-        }
-        
         console.log('Using cloned voice with ref_audio')
 
         const clonedResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
