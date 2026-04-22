@@ -458,7 +458,7 @@ function AppContent() {
               <Card className="p-8">
                 <div className="text-center text-muted-foreground space-y-3">
                   <p className="text-lg">{t.responses.placeholder}</p>
-                  <p className="text-sm">Record a visitor's message to get started</p>
+                  <p className="text-sm">{t.responses.getStarted}</p>
                 </div>
               </Card>
             )}

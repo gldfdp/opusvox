@@ -28,6 +28,7 @@ export interface Translations {
     title: string
     customButton: string
     placeholder: string
+    getStarted: string
   }
   history: {
     title: string
@@ -94,7 +95,8 @@ export const translations: Record<Language, Translations> = {
     responses: {
       title: 'Select your response',
       customButton: 'Write custom response',
-      placeholder: 'Response suggestions will appear here'
+      placeholder: 'Response suggestions will appear here',
+      getStarted: 'Record a visitor\'s message to get started'
     },
     history: {
       title: 'Conversation History',
@@ -159,7 +161,8 @@ export const translations: Record<Language, Translations> = {
     responses: {
       title: 'Sélectionnez votre réponse',
       customButton: 'Écrire une réponse personnalisée',
-      placeholder: 'Les suggestions de réponse apparaîtront ici'
+      placeholder: 'Les suggestions de réponse apparaîtront ici',
+      getStarted: 'Enregistrez un message du visiteur pour commencer'
     },
     history: {
       title: 'Historique des conversations',
