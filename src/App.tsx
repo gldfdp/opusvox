@@ -189,8 +189,50 @@ function AppContent() {
   }
 
   const handleTextSubmit = async (text: string) => {
-    setTranscribedText(text)
-    await generateResponses(text)
+    await speakUserInitiatedText(text)
+  }
+
+  const speakUserInitiatedText = async (text: string) => {
+    setRecordingState('speaking')
+    const responseLanguage = currentVisitorLanguage || language
+    toast.success(t.recording.toastSpeaking)
+    
+    try {
+      setLastSpokenResponse({ text, language: responseLanguage })
+      
+      await speak({
+        text,
+        language: responseLanguage,
+        rate: 0.9,
+        pitch: 1,
+        volume: 1,
+        voiceProfile: currentVoiceProfile,
+        apiKey: currentUserSettings.mistralApiKey
+      })
+      
+      setRecordingState('idle')
+      saveUserInitiatedConversation(text)
+    } catch (error) {
+      setRecordingState('idle')
+      toast.error(t.recording.toastError)
+      console.error('TTS error:', error)
+    }
+  }
+
+  const saveUserInitiatedConversation = (userText: string) => {
+    const newTurn: ConversationTurn = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      visitorInput: '',
+      userResponse: userText,
+      isCustomResponse: false
+    }
+    
+    setHistory((currentHistory) => {
+      const current = currentHistory || []
+      const updated = [...current, newTurn]
+      return updated.slice(-20)
+    })
   }
 
   const handleSelectResponse = async (responseText: string) => {
