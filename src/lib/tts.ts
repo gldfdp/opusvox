@@ -1,8 +1,7 @@
-import { Language } from './i18n'
 import { VoiceProfile } from './types'
 
 export interface TTSOptions {
-  language: Language
+  language: string
   text: string
   rate?: number
   pitch?: number
@@ -16,15 +15,28 @@ let currentVoiceProfile: VoiceProfile | null = null
 let isUsingClonedVoice = false
 let isUsingMistralTTS = false
 
-export function getPreferredVoice(language: Language): SpeechSynthesisVoice | null {
+export function getPreferredVoice(language: string): SpeechSynthesisVoice | null {
   const voices = speechSynthesis.getVoices()
   
-  const languageMap: Record<Language, string[]> = {
+  const languageMap: Record<string, string[]> = {
     en: ['en-US', 'en-GB', 'en-AU', 'en'],
-    fr: ['fr-FR', 'fr-CA', 'fr-BE', 'fr']
+    fr: ['fr-FR', 'fr-CA', 'fr-BE', 'fr'],
+    es: ['es-ES', 'es-MX', 'es'],
+    de: ['de-DE', 'de-AT', 'de'],
+    it: ['it-IT', 'it'],
+    pt: ['pt-PT', 'pt-BR', 'pt'],
+    nl: ['nl-NL', 'nl-BE', 'nl'],
+    pl: ['pl-PL', 'pl'],
+    ru: ['ru-RU', 'ru'],
+    ja: ['ja-JP', 'ja'],
+    zh: ['zh-CN', 'zh-TW', 'zh'],
+    ko: ['ko-KR', 'ko'],
+    ar: ['ar-SA', 'ar'],
+    hi: ['hi-IN', 'hi'],
+    tr: ['tr-TR', 'tr']
   }
   
-  const preferredLangs = languageMap[language]
+  const preferredLangs = languageMap[language] || [language]
   
   for (const lang of preferredLangs) {
     const voice = voices.find(v => v.lang.startsWith(lang))
@@ -162,8 +174,16 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
   }
 }
 
-function getDefaultMistralVoice(language: Language): string {
-  return language === 'fr' ? 'lea' : 'alloy'
+function getDefaultMistralVoice(language: string): string {
+  const voiceMap: Record<string, string> = {
+    fr: 'lea',
+    en: 'alloy',
+    es: 'alloy',
+    de: 'alloy',
+    it: 'alloy',
+    pt: 'alloy'
+  }
+  return voiceMap[language] || 'alloy'
 }
 
 async function base64ToBlob(base64: string): Promise<Blob> {

@@ -20,6 +20,7 @@ import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, Use
 import { Language } from '@/lib/i18n'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
 import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
+import { getLanguageDisplayName } from '@/lib/languages'
 import { AnimatePresence } from 'framer-motion'
 
 function AppContent() {
@@ -41,13 +42,13 @@ function AppContent() {
   })
   const [profiles] = useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfileId] = useKV<string | null>('selected-voice-profile', null)
-  const [visitorLanguage, setVisitorLanguage] = useKV<Language | null>('visitor-language', null)
+  const [visitorLanguage, setVisitorLanguage] = useKV<string | null>('visitor-language', null)
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: Language} | null>(null)
+  const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: string} | null>(null)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -264,7 +265,7 @@ function AppContent() {
     
     try {
       let textToSpeak = responseText
-      let languageToSpeak = language
+      let languageToSpeak: string = language
       
       if (transcribedText && currentUserSettings.mistralApiKey) {
         const { detectLanguage, translateText } = await import('@/lib/mistral')
@@ -435,7 +436,7 @@ function AppContent() {
                   <h2 className="text-2xl font-semibold mb-2">{t.recording.listenTitle}</h2>
                   {currentVisitorLanguage && (
                     <p className="text-sm text-accent mb-2">
-                      {currentVisitorLanguage === 'en' ? '🇬🇧 English' : '🇫🇷 Français'}
+                      {getLanguageDisplayName(currentVisitorLanguage, language)}
                       <Button
                         variant="ghost"
                         size="sm"

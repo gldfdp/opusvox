@@ -1,5 +1,7 @@
 export type Language = 'en' | 'fr'
 
+export type VisitorLanguageCode = string
+
 export interface Translations {
   app: {
     title: string

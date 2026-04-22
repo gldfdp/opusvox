@@ -3,7 +3,7 @@ import { Language } from './i18n'
 
 interface MistralResponseContext {
   transcribedText: string
-  language: Language
+  language: string
   conversationHistory: ConversationTurn[]
   apiKey?: string
   userSettings?: UserSettings
@@ -14,7 +14,7 @@ interface MistralMessage {
   content: string
 }
 
-export function detectLanguage(text: string): Language {
+export function detectLanguage(text: string): string {
   const frenchWords = ['le', 'la', 'les', 'de', 'des', 'un', 'une', 'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'oui', 'non', 'bonjour', 'merci', 'est', 'suis', 'êtes', 'sont', 'comment', 'ça', 'va', 'bien', 'pas', 'avec', 'pour', 'dans', 'ce', 'cette', 'ces', 'quel', 'quelle', 'quoi', 'qui', 'où', 'quand', 'pourquoi']
   const englishWords = ['the', 'a', 'an', 'is', 'are', 'am', 'was', 'were', 'yes', 'no', 'hello', 'thank', 'you', 'i', 'we', 'they', 'he', 'she', 'how', 'what', 'where', 'when', 'why', 'who', 'with', 'for', 'in', 'this', 'that', 'these', 'those', 'good', 'bad', 'well', 'not']
   
@@ -36,7 +36,7 @@ export function detectLanguage(text: string): Language {
   return frenchScore > englishScore ? 'fr' : 'en'
 }
 
-export async function translateText(text: string, targetLanguage: Language, apiKey: string): Promise<string> {
+export async function translateText(text: string, targetLanguage: string, apiKey: string): Promise<string> {
   try {
     const systemMessage = targetLanguage === 'fr'
       ? `Tu es un traducteur professionnel. Traduis le texte suivant en français de manière naturelle et fluide. Retourne UNIQUEMENT la traduction, sans aucun texte supplémentaire.`
@@ -266,7 +266,7 @@ Return ONLY a valid JSON object with the following structure (no text before or 
   }
 }
 
-function getFallbackResponses(input: string, language: Language): ResponseSuggestion[] {
+function getFallbackResponses(input: string, language: string): ResponseSuggestion[] {
   const lowerInput = input.toLowerCase()
   
   if (language === 'fr') {

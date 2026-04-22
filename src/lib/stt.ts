@@ -1,4 +1,4 @@
-export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'fr', apiKey?: string): Promise<string> {
+export async function transcribeAudio(audioBlob: Blob, language: string, apiKey?: string): Promise<string> {
   if (!apiKey) {
     throw new Error('Mistral API key is required for transcription')
   }
@@ -47,7 +47,7 @@ export function isTranscriptionAvailable(apiKey?: string): boolean {
   return !!apiKey && apiKey.trim().length > 0
 }
 
-export function getSimulatedTranscription(language: 'en' | 'fr'): string {
+export function getSimulatedTranscription(language: string): string {
   const transcriptions = language === 'fr' 
     ? [
         "Comment te sens-tu aujourd'hui ?",
