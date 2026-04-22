@@ -14,9 +14,9 @@ interface MistralMessage {
   content: string
 }
 
-function detectLanguage(text: string): Language {
-  const frenchWords = ['le', 'la', 'les', 'de', 'des', 'un', 'une', 'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'oui', 'non', 'bonjour', 'merci', 'est', 'suis', 'êtes', 'sont']
-  const englishWords = ['the', 'a', 'an', 'is', 'are', 'am', 'was', 'were', 'yes', 'no', 'hello', 'thank', 'you', 'i', 'we', 'they', 'he', 'she']
+export function detectLanguage(text: string): Language {
+  const frenchWords = ['le', 'la', 'les', 'de', 'des', 'un', 'une', 'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'oui', 'non', 'bonjour', 'merci', 'est', 'suis', 'êtes', 'sont', 'comment', 'ça', 'va', 'bien', 'pas', 'avec', 'pour', 'dans', 'ce', 'cette', 'ces', 'quel', 'quelle', 'quoi', 'qui', 'où', 'quand', 'pourquoi']
+  const englishWords = ['the', 'a', 'an', 'is', 'are', 'am', 'was', 'were', 'yes', 'no', 'hello', 'thank', 'you', 'i', 'we', 'they', 'he', 'she', 'how', 'what', 'where', 'when', 'why', 'who', 'with', 'for', 'in', 'this', 'that', 'these', 'those', 'good', 'bad', 'well', 'not']
   
   const lowerText = text.toLowerCase()
   const words = lowerText.split(/\s+/)
@@ -36,7 +36,7 @@ function detectLanguage(text: string): Language {
   return frenchScore > englishScore ? 'fr' : 'en'
 }
 
-async function translateText(text: string, targetLanguage: Language, apiKey: string): Promise<string> {
+export async function translateText(text: string, targetLanguage: Language, apiKey: string): Promise<string> {
   try {
     const systemMessage = targetLanguage === 'fr'
       ? `Tu es un traducteur professionnel. Traduis le texte suivant en français de manière naturelle et fluide. Retourne UNIQUEMENT la traduction, sans aucun texte supplémentaire.`

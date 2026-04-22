@@ -193,9 +193,30 @@ function AppContent() {
     toast.success(t.recording.toastSpeaking)
     
     try {
+      let textToSpeak = responseText
+      let languageToSpeak = language
+      
+      if (transcribedText && currentUserSettings.mistralApiKey) {
+        const { detectLanguage, translateText } = await import('@/lib/mistral')
+        const detectedQuestionLanguage = detectLanguage(transcribedText)
+        
+        if (detectedQuestionLanguage !== language) {
+          toast.info(language === 'fr' 
+            ? 'Traduction de la réponse en cours...' 
+            : 'Translating response...')
+          
+          textToSpeak = await translateText(responseText, detectedQuestionLanguage, currentUserSettings.mistralApiKey)
+          languageToSpeak = detectedQuestionLanguage
+          
+          console.log(`Question language: ${detectedQuestionLanguage}, Interface language: ${language}`)
+          console.log(`Original response: ${responseText}`)
+          console.log(`Translated response: ${textToSpeak}`)
+        }
+      }
+      
       await speak({
-        text: responseText,
-        language,
+        text: textToSpeak,
+        language: languageToSpeak,
         rate: 0.9,
         pitch: 1,
         volume: 1,
@@ -204,7 +225,7 @@ function AppContent() {
       })
       
       setRecordingState('idle')
-      saveConversationTurn(responseText, isCustom)
+      saveConversationTurn(textToSpeak, isCustom)
     } catch (error) {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
