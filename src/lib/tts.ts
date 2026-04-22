@@ -127,11 +127,10 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           input: options.text,
           ref_audio: base64Audio,
           speed: speed,
-          response_format: 'wav',
-          language: options.language
+          response_format: 'wav'
         }
         
-        console.log('Using cloned voice with language:', options.language)
+        console.log('Using cloned voice with ref_audio')
 
         const clonedResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {
           method: 'POST',
@@ -164,12 +163,10 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
       model: 'voxtral-mini-tts-2603',
       input: options.text,
       response_format: 'wav',
-      speed: speed,
-      voice: getDefaultMistralVoice(options.language),
-      language: options.language
+      speed: speed
     }
 
-    console.log('Using Mistral TTS with language:', options.language, 'voice:', requestBody.voice)
+    console.log('Using Mistral TTS with default voice')
 
     const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
       method: 'POST',
@@ -199,50 +196,6 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
     console.error('Mistral TTS error, falling back to system voice:', error)
     return speakWithSystemVoice(options)
   }
-}
-
-function getDefaultMistralVoice(language: string): string {
-  const voiceMap: Record<string, string> = {
-    fr: 'lea',
-    en: 'alloy',
-    es: 'nova',
-    de: 'fable',
-    it: 'shimmer',
-    pt: 'onyx',
-    nl: 'echo',
-    pl: 'alloy',
-    ru: 'fable',
-    ja: 'shimmer',
-    zh: 'nova',
-    ko: 'alloy',
-    ar: 'onyx',
-    hi: 'echo',
-    tr: 'fable',
-    sv: 'alloy',
-    da: 'nova',
-    no: 'fable',
-    fi: 'echo',
-    cs: 'shimmer',
-    sk: 'onyx',
-    hu: 'alloy',
-    ro: 'nova',
-    bg: 'fable',
-    el: 'echo',
-    he: 'shimmer',
-    uk: 'onyx',
-    vi: 'nova',
-    th: 'alloy',
-    id: 'fable',
-    ms: 'echo',
-    ca: 'lea',
-    hr: 'shimmer',
-    sr: 'onyx',
-    lt: 'nova',
-    lv: 'fable',
-    et: 'echo',
-    sl: 'alloy'
-  }
-  return voiceMap[language] || 'alloy'
 }
 
 async function base64ToBlob(base64: string): Promise<Blob> {
