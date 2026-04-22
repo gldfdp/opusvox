@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
-import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, Trash } from '@phosphor-icons/react'
+import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, Trash, X } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
@@ -62,6 +62,7 @@ function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false)
   const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: string} | null>(null)
+  const [privacyAlertVisible, setPrivacyAlertVisible] = useKV<boolean>('privacy-alert-visible', true)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -469,12 +470,12 @@ function AppContent() {
               />
             )}
             
-            <Card className="p-8">
-              <div className="text-center space-y-6">
+            <Card className="p-6">
+              <div className="text-center space-y-4">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-2">{t.recording.listenTitle}</h2>
+                  <h2 className="text-xl font-semibold mb-1">{t.recording.listenTitle}</h2>
                   {currentVisitorLanguage && (
-                    <p className="text-sm text-accent mb-2">
+                    <p className="text-sm text-accent mb-1">
                       {getLanguageDisplayName(currentVisitorLanguage, language)}
                       <Button
                         variant="ghost"
@@ -490,30 +491,30 @@ function AppContent() {
                       </Button>
                     </p>
                   )}
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {recordingState === 'idle' && t.recording.statusIdle}
                     {recordingState === 'recording' && t.recording.statusRecording}
                     {recordingState === 'processing' && t.recording.statusProcessing}
                     {recordingState === 'speaking' && t.recording.statusSpeaking}
                   </p>
                   {recordingState === 'idle' && (
-                    <div className="mt-3 flex items-center justify-center gap-2">
+                    <div className="mt-2 flex items-center justify-center gap-2">
                       {isTTSAvailable(currentUserSettings.mistralApiKey) ? (
-                        <div className="flex items-center gap-2 text-primary text-sm">
+                        <div className="flex items-center gap-2 text-primary text-xs">
                           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                           <span className="font-medium">
                             {language === 'fr' ? 'Mistral TTS activé' : 'Mistral TTS enabled'}
                           </span>
                         </div>
                       ) : isTranscriptionAvailable(currentUserSettings.mistralApiKey) ? (
-                        <div className="flex items-center gap-2 text-accent text-sm">
+                        <div className="flex items-center gap-2 text-accent text-xs">
                           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                           <span className="font-medium">
                             {language === 'fr' ? 'Mistral STT activé' : 'Mistral STT enabled'}
                           </span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs">
                           <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
                           <span>
                             {language === 'fr' ? 'Mode simulation' : 'Simulation mode'}
@@ -524,7 +525,7 @@ function AppContent() {
                   )}
                 </div>
 
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-4">
                   <RecordingButton
                     state={recordingState}
                     onStartRecording={handleStartRecording}
@@ -546,15 +547,15 @@ function AppContent() {
                 </AnimatePresence>
 
                 {recordingState === 'speaking' && (
-                  <div className="flex items-center justify-center gap-2 text-accent mt-4">
-                    <SpeakerHigh size={24} weight="fill" className="animate-pulse" />
-                    <span className="font-medium">Playing audio...</span>
+                  <div className="flex items-center justify-center gap-2 text-accent">
+                    <SpeakerHigh size={20} weight="fill" className="animate-pulse" />
+                    <span className="font-medium text-sm">Playing audio...</span>
                   </div>
                 )}
 
-                <div className="mt-8 pt-6 border-t border-border">
+                <div className="mt-4 pt-4 border-t border-border">
                   <div className="mb-2 text-center">
-                    <span className="text-sm font-semibold text-muted-foreground">{t.volume.label}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{t.volume.label}</span>
                   </div>
                   <VolumeControl 
                     volume={currentUserSettings.ttsVolume}
@@ -580,11 +581,21 @@ function AppContent() {
               disabled={recordingState !== 'idle'}
             />
 
-            <Alert className="bg-accent/10 border-accent/30">
-              <AlertDescription className="text-sm">
-                <strong>{t.privacy.title}</strong> {t.privacy.message}
-              </AlertDescription>
-            </Alert>
+            {privacyAlertVisible && (
+              <Alert className="bg-accent/10 border-accent/30 relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => setPrivacyAlertVisible(false)}
+                >
+                  <X size={14} />
+                </Button>
+                <AlertDescription className="text-sm pr-6">
+                  <strong>{t.privacy.title}</strong> {t.privacy.message}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div className="space-y-6">
