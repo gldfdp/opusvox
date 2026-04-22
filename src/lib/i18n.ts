@@ -41,6 +41,9 @@ export interface Translations {
     custom: string
     delete: string
     deleteConfirm: string
+    clearAll: string
+    clearAllConfirm: string
+    clearAllSuccess: string
   }
   customDialog: {
     title: string
@@ -118,7 +121,10 @@ export const translations: Record<Language, Translations> = {
       you: 'You',
       custom: 'Custom',
       delete: 'Delete',
-      deleteConfirm: 'Conversation deleted'
+      deleteConfirm: 'Conversation deleted',
+      clearAll: 'Clear all history',
+      clearAllConfirm: 'Are you sure you want to delete all conversation history? This action cannot be undone.',
+      clearAllSuccess: 'All conversation history has been cleared'
     },
     customDialog: {
       title: 'Write your response',
@@ -194,7 +200,10 @@ export const translations: Record<Language, Translations> = {
       you: 'Vous',
       custom: 'Personnalisé',
       delete: 'Supprimer',
-      deleteConfirm: 'Conversation supprimée'
+      deleteConfirm: 'Conversation supprimée',
+      clearAll: 'Tout supprimer',
+      clearAllConfirm: 'Êtes-vous sûr de vouloir supprimer tout l\'historique des conversations ? Cette action est irréversible.',
+      clearAllSuccess: 'Tout l\'historique des conversations a été supprimé'
     },
     customDialog: {
       title: 'Écrivez votre réponse',

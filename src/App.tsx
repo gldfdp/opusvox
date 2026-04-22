@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
-import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, Trash } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
@@ -16,6 +16,16 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
 import { Language } from '@/lib/i18n'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
@@ -48,6 +58,7 @@ function AppContent() {
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false)
   const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: string} | null>(null)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -361,6 +372,12 @@ function AppContent() {
     toast.success(t.history.deleteConfirm)
   }
 
+  const handleClearAllHistory = () => {
+    setHistory([])
+    setClearHistoryDialogOpen(false)
+    toast.success(t.history.clearAllSuccess)
+  }
+
 
 
   return (
@@ -407,7 +424,19 @@ function AppContent() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-lg">
                   <SheetHeader>
-                    <SheetTitle className="text-2xl">{t.history.title}</SheetTitle>
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="text-2xl">{t.history.title}</SheetTitle>
+                      {conversationHistory.length > 0 && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setClearHistoryDialogOpen(true)}
+                        >
+                          <Trash size={16} className="mr-2" />
+                          {t.history.clearAll}
+                        </Button>
+                      )}
+                    </div>
                   </SheetHeader>
                   <div className="mt-6 h-[calc(100vh-120px)]">
                     <ConversationHistory 
@@ -566,6 +595,23 @@ function AppContent() {
         onOpenChange={setCustomDialogOpen}
         onSubmit={handleCustomResponse}
       />
+
+      <AlertDialog open={clearHistoryDialogOpen} onOpenChange={setClearHistoryDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.history.clearAll}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.history.clearAllConfirm}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.customDialog.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t.history.clearAll}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
