@@ -18,6 +18,12 @@ export interface Translations {
     toastError: string
     listenTitle: string
   }
+  replay: {
+    button: string
+    tooltip: string
+    toastNoResponse: string
+    toastReplaying: string
+  }
   responses: {
     title: string
     customButton: string
@@ -79,6 +85,12 @@ export const translations: Record<Language, Translations> = {
       toastError: 'Speech synthesis failed',
       listenTitle: 'Listen to visitor'
     },
+    replay: {
+      button: 'Replay last response',
+      tooltip: 'Repeat the last spoken response',
+      toastNoResponse: 'No response to replay',
+      toastReplaying: 'Replaying last response...'
+    },
     responses: {
       title: 'Select your response',
       customButton: 'Write custom response',
@@ -137,6 +149,12 @@ export const translations: Record<Language, Translations> = {
       toastSpeaking: 'Énonciation de la réponse...',
       toastError: 'Échec de la synthèse vocale',
       listenTitle: 'Écouter le visiteur'
+    },
+    replay: {
+      button: 'Rejouer la dernière réponse',
+      tooltip: 'Répéter la dernière réponse prononcée',
+      toastNoResponse: 'Aucune réponse à rejouer',
+      toastReplaying: 'Lecture de la dernière réponse...'
     },
     responses: {
       title: 'Sélectionnez votre réponse',

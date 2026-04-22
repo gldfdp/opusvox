@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
-import { ClockCounterClockwise, SpeakerHigh, Gear } from '@phosphor-icons/react'
+import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
@@ -15,7 +15,9 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
+import { Language } from '@/lib/i18n'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
 import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
 import { AnimatePresence } from 'framer-motion'
@@ -44,6 +46,7 @@ function AppContent() {
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: Language} | null>(null)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -214,6 +217,8 @@ function AppContent() {
         }
       }
       
+      setLastSpokenResponse({ text: textToSpeak, language: languageToSpeak })
+      
       await speak({
         text: textToSpeak,
         language: languageToSpeak,
@@ -230,6 +235,34 @@ function AppContent() {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
       console.error('TTS error:', error)
+    }
+  }
+
+  const handleReplayLastResponse = async () => {
+    if (!lastSpokenResponse) {
+      toast.error(t.replay.toastNoResponse)
+      return
+    }
+
+    setRecordingState('speaking')
+    toast.info(t.replay.toastReplaying)
+    
+    try {
+      await speak({
+        text: lastSpokenResponse.text,
+        language: lastSpokenResponse.language,
+        rate: 0.9,
+        pitch: 1,
+        volume: 1,
+        voiceProfile: currentVoiceProfile,
+        apiKey: currentUserSettings.mistralApiKey
+      })
+      
+      setRecordingState('idle')
+    } catch (error) {
+      setRecordingState('idle')
+      toast.error(t.recording.toastError)
+      console.error('TTS replay error:', error)
     }
   }
 
@@ -275,6 +308,24 @@ function AppContent() {
             </div>
             
             <div className="flex gap-3">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      onClick={handleReplayLastResponse}
+                      disabled={!lastSpokenResponse || recordingState !== 'idle'}
+                    >
+                      <ArrowCounterClockwise size={20} className="mr-2" />
+                      {t.replay.button}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t.replay.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <VoiceCloning />
               <LanguageSwitcher />
               <Button variant="outline" size="lg" onClick={() => setSettingsOpen(true)}>
