@@ -58,6 +58,7 @@ function AppContent() {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false)
@@ -182,6 +183,7 @@ function AppContent() {
   }
 
   const generateResponses = async (input: string) => {
+    setIsLoadingSuggestions(true)
     try {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
       
@@ -199,6 +201,8 @@ function AppContent() {
       toast.error(language === 'fr' 
         ? 'Erreur lors de la génération des réponses'
         : 'Error generating responses')
+    } finally {
+      setIsLoadingSuggestions(false)
     }
   }
 
@@ -616,6 +620,7 @@ function AppContent() {
                   onRegenerate={handleRegenerateResponses}
                   disabled={recordingState !== 'idle'}
                   keyboardShortcuts={currentUserSettings.keyboardShortcuts}
+                  isLoading={isLoadingSuggestions}
                 />
               </Card>
             ) : (

@@ -13,6 +13,7 @@ interface ResponseSuggestionsProps {
   onRegenerate?: () => void
   disabled?: boolean
   keyboardShortcuts?: [string, string, string, string]
+  isLoading?: boolean
 }
 
 export function ResponseSuggestions({ 
@@ -21,7 +22,8 @@ export function ResponseSuggestions({
   onCustomResponse,
   onRegenerate,
   disabled = false,
-  keyboardShortcuts = ['q', 's', 'd', 'f']
+  keyboardShortcuts = ['q', 's', 'd', 'f'],
+  isLoading = false
 }: ResponseSuggestionsProps) {
   const { t } = useLanguage()
   
@@ -43,7 +45,18 @@ export function ResponseSuggestions({
   }, [suggestions, disabled, keyboardShortcuts, onSelectResponse])
   
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
+      {isLoading && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <ArrowsClockwise size={32} className="text-accent animate-spin" />
+            <p className="text-sm font-medium text-muted-foreground">
+              {t.responses.loading || 'Generating new suggestions...'}
+            </p>
+          </div>
+        </div>
+      )}
+      
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">{t.responses.title}</h2>
         
@@ -55,7 +68,7 @@ export function ResponseSuggestions({
                   variant="ghost"
                   size="sm"
                   onClick={onRegenerate}
-                  disabled={disabled}
+                  disabled={disabled || isLoading}
                   className="gap-2"
                 >
                   <ArrowsClockwise size={18} />
@@ -75,10 +88,10 @@ export function ResponseSuggestions({
           <Card
             key={suggestion.id}
             className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-accent active:scale-98 overflow-hidden relative"
-            onClick={() => !disabled && onSelectResponse(suggestion.text)}
+            onClick={() => !disabled && !isLoading && onSelectResponse(suggestion.text)}
           >
             <button
-              disabled={disabled}
+              disabled={disabled || isLoading}
               className="w-full p-5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {index < keyboardShortcuts.length && (
@@ -101,7 +114,7 @@ export function ResponseSuggestions({
         size="lg"
         className="w-full mt-4"
         onClick={onCustomResponse}
-        disabled={disabled}
+        disabled={disabled || isLoading}
       >
         <PencilSimple size={20} className="mr-2" />
         {t.responses.customButton}
