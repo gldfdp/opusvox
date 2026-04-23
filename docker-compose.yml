@@ -1,0 +1,9 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: opusvox
+    restart: unless-stopped
+    ports:
+      - "8083:80"

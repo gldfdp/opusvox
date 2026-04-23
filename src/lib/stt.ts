@@ -1,10 +1,17 @@
-export async function transcribeAudio(audioBlob: Blob, language: string, apiKey?: string): Promise<string> {
+export async function transcribeAudio(
+  audioBlob: Blob,
+  language: string,
+  apiKey?: string,
+  /** File extension matching the actual recorder MIME type (webm, mp4, ogg…) */
+  ext = 'webm'
+): Promise<string> {
   if (!apiKey) {
     throw new Error('Mistral API key is required for transcription')
   }
 
   try {
-    const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' })
+    const mimeType = audioBlob.type || `audio/${ext}`
+    const audioFile = new File([audioBlob], `recording.${ext}`, { type: mimeType })
     
     const formData = new FormData()
     formData.append('file', audioFile)

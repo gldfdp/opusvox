@@ -32,3 +32,10 @@ pids
 .devcontainer/
 
 .spark-workbench-id
+
+# Capacitor native build artifacts
+ios/App/Pods/
+ios/.gradle/
+android/.gradle/
+android/app/build/
+android/build/
