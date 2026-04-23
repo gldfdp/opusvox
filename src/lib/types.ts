@@ -21,6 +21,7 @@ export interface VoiceProfile {
   audioDataUrl: string
   createdAt: number
   duration: number
+  mistralVoiceId?: string
 }
 
 export type VoiceRecordingState = 'idle' | 'recording' | 'processing' | 'success' | 'error'

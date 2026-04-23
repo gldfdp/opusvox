@@ -103,7 +103,7 @@ export const translations: Record<Language, Translations> = {
   en: {
     app: {
       title: 'OpusVox',
-      subtitle: 'Communication assistant for enhanced conversation'
+      subtitle: 'Communication assistant'
     },
     onboarding: {
       step1Title: 'Welcome to OpusVox',
@@ -199,7 +199,7 @@ export const translations: Record<Language, Translations> = {
   fr: {
     app: {
       title: 'OpusVox',
-      subtitle: 'Assistant de communication pour conversations enrichies'
+      subtitle: 'Assistant de communication'
     },
     onboarding: {
       step1Title: 'Bienvenue sur OpusVox',

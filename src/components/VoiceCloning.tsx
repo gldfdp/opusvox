@@ -163,40 +163,72 @@ export function VoiceCloning() {
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const audioDataUrl = reader.result as string
-      
-      const newProfile: VoiceProfile = {
-        id: `voice-${Date.now()}`,
-        name: profileName.trim(),
-        language,
-        audioDataUrl,
-        createdAt: Date.now(),
-        duration: audioDuration
-      }
-      
-      setProfiles((current) => {
-        const updated = [...(current || []), newProfile]
-        return updated
-      })
-      
-      setSelectedProfile(newProfile.id)
-      setRecordingState('success')
-      setProfileName('')
-      
-      toast.success(language === 'fr' 
-        ? `Profil vocal "${newProfile.name}" créé avec succès` 
-        : `Voice profile "${newProfile.name}" created successfully`)
-      
-      setTimeout(() => {
-        setDialogOpen(false)
-        setRecordingState('idle')
-        setRecordingProgress(0)
-      }, 1500)
+    const audioDataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.readAsDataURL(audioBlob)
+    })
+
+    const newProfile: VoiceProfile = {
+      id: `voice-${Date.now()}`,
+      name: profileName.trim(),
+      language,
+      audioDataUrl,
+      createdAt: Date.now(),
+      duration: audioDuration
     }
+
+    if (currentUserSettings.mistralApiKey) {
+      try {
+        const base64Audio = audioDataUrl.split(',')[1]
+        const voiceResponse = await fetch('https://api.mistral.ai/v1/audio/voices', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUserSettings.mistralApiKey}`
+          },
+          body: JSON.stringify({
+            name: newProfile.name,
+            sample_audio: base64Audio,
+            sample_filename: `voice-${Date.now()}.webm`,
+            languages: [language]
+          })
+        })
+
+        if (voiceResponse.ok) {
+          const voiceData = await voiceResponse.json()
+          newProfile.mistralVoiceId = voiceData.id
+          console.log('Voice registered with Mistral, id:', voiceData.id)
+        } else {
+          const errorText = await voiceResponse.text()
+          console.warn('Failed to register voice with Mistral:', errorText)
+          toast.warning(language === 'fr'
+            ? 'Voix sauvegardée localement (enregistrement Mistral échoué)'
+            : 'Voice saved locally (Mistral registration failed)')
+        }
+      } catch (error) {
+        console.warn('Failed to register voice with Mistral:', error)
+      }
+    }
+
+    setProfiles((current) => {
+      const updated = [...(current || []), newProfile]
+      return updated
+    })
     
-    reader.readAsDataURL(audioBlob)
+    setSelectedProfile(newProfile.id)
+    setRecordingState('success')
+    setProfileName('')
+    
+    toast.success(language === 'fr' 
+      ? `Profil vocal "${newProfile.name}" créé avec succès` 
+      : `Voice profile "${newProfile.name}" created successfully`)
+    
+    setTimeout(() => {
+      setDialogOpen(false)
+      setRecordingState('idle')
+      setRecordingProgress(0)
+    }, 1500)
   }
 
   const getAudioDuration = (blob: Blob): Promise<number> => {
@@ -210,7 +242,21 @@ export function VoiceCloning() {
     })
   }
 
-  const deleteProfile = (profileId: string) => {
+  const deleteProfile = async (profileId: string) => {
+    const profile = currentProfiles.find(p => p.id === profileId)
+
+    if (profile?.mistralVoiceId && currentUserSettings.mistralApiKey) {
+      try {
+        await fetch(`https://api.mistral.ai/v1/audio/voices/${profile.mistralVoiceId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${currentUserSettings.mistralApiKey}` }
+        })
+        console.log('Voice deleted from Mistral:', profile.mistralVoiceId)
+      } catch (error) {
+        console.warn('Failed to delete voice from Mistral:', error)
+      }
+    }
+
     setProfiles((current) => {
       const updated = (current || []).filter(p => p.id !== profileId)
       return updated
@@ -274,19 +320,16 @@ export function VoiceCloning() {
         ? 'Génération de l\'aperçu vocal...' 
         : 'Generating voice preview...')
 
-      const speed = 0.9
-
       const base64Audio = profile.audioDataUrl.split(',')[1]
       if (!base64Audio) {
         throw new Error('Invalid audio data')
       }
 
       const requestBody = {
-        model: 'tts-1',
+        model: 'voxtral-mini-tts-2603',
         input: testText,
-        voice_sample: base64Audio,
-        speed: speed,
-        response_format: 'wav'
+        ref_audio: base64Audio,
+        response_format: 'wav',
       }
 
       const ttsResponse = await fetch('https://api.mistral.ai/v1/audio/speech', {

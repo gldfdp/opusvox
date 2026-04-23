@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useKV } from '@/hooks/use-kv'
 import { Toaster, toast } from 'sonner'
-import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, X } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
@@ -47,6 +47,7 @@ function AppContent() {
   const [visitorLanguage, setVisitorLanguage] = useKV<string | null>('visitor-language', null)
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
+  const [translatedVisitorText, setTranslatedVisitorText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -193,6 +194,19 @@ function AppContent() {
     }
     
     setTranscribedText(transcribed)
+
+    if (currentVisitorLanguage && currentVisitorLanguage !== language && currentUserSettings.mistralApiKey) {
+      try {
+        const { translateText } = await import('@/lib/mistral')
+        const translated = await translateText(transcribed, language, currentUserSettings.mistralApiKey)
+        setTranslatedVisitorText(translated)
+      } catch {
+        setTranslatedVisitorText('')
+      }
+    } else {
+      setTranslatedVisitorText('')
+    }
+
     await generateResponses(transcribed)
     setRecordingState('idle')
   }
@@ -200,11 +214,10 @@ function AppContent() {
   const generateResponses = async (input: string) => {
     try {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
-      const responseLanguage = currentVisitorLanguage || language
       
       const responses = await generateResponseSuggestions({
         transcribedText: input,
-        language: responseLanguage,
+        language,
         conversationHistory,
         apiKey: currentUserSettings.mistralApiKey,
         userSettings: currentUserSettings
@@ -258,7 +271,7 @@ function AppContent() {
       })
       
       setRecordingState('idle')
-      saveUserInitiatedConversation(textToSpeak)
+      saveUserInitiatedConversation(text)
     } catch (error) {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
@@ -296,24 +309,20 @@ function AppContent() {
     
     try {
       let textToSpeak = responseText
-      let languageToSpeak: string = language
+      const targetLanguage = currentVisitorLanguage || language
+      const languageToSpeak: string = targetLanguage
       
-      if (transcribedText && currentUserSettings.mistralApiKey) {
-        const { detectLanguage, translateText } = await import('@/lib/mistral')
-        const detectedQuestionLanguage = detectLanguage(transcribedText)
+      if (targetLanguage !== language && currentUserSettings.mistralApiKey) {
+        toast.info(language === 'fr' 
+          ? 'Traduction de la réponse en cours...' 
+          : 'Translating response...')
         
-        if (detectedQuestionLanguage !== language) {
-          toast.info(language === 'fr' 
-            ? 'Traduction de la réponse en cours...' 
-            : 'Translating response...')
-          
-          textToSpeak = await translateText(responseText, detectedQuestionLanguage, currentUserSettings.mistralApiKey)
-          languageToSpeak = detectedQuestionLanguage
-          
-          console.log(`Question language: ${detectedQuestionLanguage}, Interface language: ${language}`)
-          console.log(`Original response: ${responseText}`)
-          console.log(`Translated response: ${textToSpeak}`)
-        }
+        const { translateText } = await import('@/lib/mistral')
+        textToSpeak = await translateText(responseText, targetLanguage, currentUserSettings.mistralApiKey)
+        
+        console.log(`Interface language: ${language}, Visitor language: ${targetLanguage}`)
+        console.log(`Original response: ${responseText}`)
+        console.log(`Translated response: ${textToSpeak}`)
       }
       
       setLastSpokenResponse({ text: textToSpeak, language: languageToSpeak })
@@ -329,7 +338,7 @@ function AppContent() {
       })
       
       setRecordingState('idle')
-      saveConversationTurn(textToSpeak, isCustom)
+      saveConversationTurn(responseText, isCustom)
     } catch (error) {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
@@ -369,7 +378,7 @@ function AppContent() {
     const newTurn: ConversationTurn = {
       id: Date.now().toString(),
       timestamp: Date.now(),
-      visitorInput: transcribedText,
+      visitorInput: translatedVisitorText || transcribedText,
       userResponse,
       isCustomResponse: isCustom
     }
@@ -381,6 +390,7 @@ function AppContent() {
     })
     
     setTranscribedText('')
+    setTranslatedVisitorText('')
     setSuggestions([])
   }
 
@@ -474,6 +484,7 @@ function AppContent() {
                         onClick={() => {
                           setVisitorLanguage(null)
                           setTranscribedText('')
+                          setTranslatedVisitorText('')
                           setSuggestions([])
                         }}
                         className="ml-2 h-6 text-xs"
@@ -570,6 +581,16 @@ function AppContent() {
           </div>
 
           <div className="space-y-6">
+            {translatedVisitorText && (
+              <Card className="p-5 bg-secondary/50 border-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  {language === 'fr' ? 'Ce que dit votre interlocuteur' : "Visitor's message"}
+                </h3>
+                <p className="conversation-text text-base text-foreground leading-relaxed">
+                  {translatedVisitorText}
+                </p>
+              </Card>
+            )}
             {suggestions.length > 0 ? (
               <Card className="p-6">
                 <ResponseSuggestions
@@ -579,6 +600,20 @@ function AppContent() {
                   disabled={recordingState !== 'idle'}
                   keyboardShortcuts={currentUserSettings.keyboardShortcuts}
                 />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-3 text-muted-foreground hover:text-destructive"
+                  disabled={recordingState !== 'idle'}
+                  onClick={() => {
+                    setTranscribedText('')
+                    setTranslatedVisitorText('')
+                    setSuggestions([])
+                  }}
+                >
+                  <X size={16} className="mr-2" />
+                  {language === 'fr' ? 'Ignorer — pas de réponse nécessaire' : 'Dismiss — no response needed'}
+                </Button>
               </Card>
             ) : (
               <Card className="p-8">
