@@ -59,6 +59,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
     mistralContextTurns: 20,
+    recordingShortcut: ' ',
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -81,6 +82,9 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   )
   const [contextTurns, setContextTurns] = useState<number>(
     userSettings?.mistralContextTurns ?? 20
+  )
+  const [recordingShortcut, setRecordingShortcut] = useState<string>(
+    userSettings?.recordingShortcut ?? ' '
   )
   
   const [recordingState, setRecordingState] = useState<VoiceRecordingState>('idle')
@@ -111,6 +115,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
     mistralContextTurns: 20,
+    recordingShortcut: ' ',
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -129,6 +134,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     setApiKey(userSettings.mistralApiKey || '')
     setKeyboardShortcuts(userSettings.keyboardShortcuts)
     setContextTurns(userSettings.mistralContextTurns ?? 20)
+    setRecordingShortcut(userSettings.recordingShortcut ?? ' ')
   }, [userSettings])
 
   const handleSaveProfile = () => {
@@ -144,6 +150,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       allergies: allergies.trim(),
       specialNeeds: specialNeeds.trim(),
       keyboardShortcuts,
+      recordingShortcut,
       mistralContextTurns: contextTurns,
       updatedAt: Date.now()
     }
@@ -735,7 +742,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     : `Hello, my name is ${userName}. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself.`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-3 sm:p-6">
       <audio ref={audioRef} className="hidden" />
       <audio ref={testAudioRef} className="hidden" />
       <input
@@ -749,7 +756,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
               {language === 'fr' ? 'Paramètres' : 'Settings'}
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -981,6 +988,36 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                   : 'Use these keys to quickly select response suggestions on the main page.'}
               </AlertDescription>
             </Alert>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="recordingShortcut" className="font-medium">
+                {language === 'fr' ? 'Touche de démarrage de l\'enregistrement' : 'Recording start key'}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {language === 'fr'
+                  ? 'Appuyez sur cette touche (hors champ de saisie) pour démarrer / arrêter l\'enregistrement.'
+                  : 'Press this key (outside input fields) to start / stop recording.'}
+              </p>
+              <Input
+                id="recordingShortcut"
+                readOnly
+                value={recordingShortcut === ' '
+                  ? (language === 'fr' ? 'Espace' : 'Space')
+                  : recordingShortcut.length === 1
+                    ? recordingShortcut.toUpperCase()
+                    : recordingShortcut}
+                onKeyDown={(e) => {
+                  e.preventDefault()
+                  if (e.key === 'Escape' || e.key === 'Tab') return
+                  setRecordingShortcut(e.key)
+                }}
+                className="text-center font-semibold text-lg max-w-[160px] cursor-pointer"
+                placeholder={language === 'fr' ? 'Cliquez puis appuyez' : 'Click then press'}
+                title={language === 'fr' ? 'Cliquez sur ce champ puis appuyez sur la touche souhaitée' : 'Click this field then press the desired key'}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -1291,18 +1328,18 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                         }`}
                         onClick={() => selectProfile(profile.id)}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                               selectedProfile === profile.id ? 'bg-accent' : 'bg-muted'
                             }`}>
                               <User size={20} weight="fill" className={
                                 selectedProfile === profile.id ? 'text-white' : 'text-muted-foreground'
                               } />
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium">{profile.name}</p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <p className="font-medium truncate max-w-[120px] sm:max-w-none">{profile.name}</p>
                                 <Badge variant="outline" className="text-xs">
                                   {profile.language.toUpperCase()}
                                 </Badge>
@@ -1329,7 +1366,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 shrink-0">
                             <Button
                               size="sm"
                               variant={previewAudio === profile.audioDataUrl ? 'default' : 'ghost'}

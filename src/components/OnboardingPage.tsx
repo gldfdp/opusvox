@@ -22,6 +22,7 @@ const defaultSettings: UserSettings = {
   mistralApiKey: '',
   mistralConnected: false,
   keyboardShortcuts: ['q', 's', 'd', 'f'],
+  recordingShortcut: ' ',
   createdAt: Date.now(),
   updatedAt: Date.now(),
 }

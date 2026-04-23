@@ -27,7 +27,7 @@ export function VisitorLanguageSelector({ selectedLanguage, onSelectLanguage }: 
   })
   
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-foreground">
           <Globe size={24} weight="duotone" />
@@ -52,7 +52,7 @@ export function VisitorLanguageSelector({ selectedLanguage, onSelectLanguage }: 
           />
         </div>
 
-        <ScrollArea className="h-[300px] pr-4">
+        <ScrollArea className="h-[250px] sm:h-[300px] pr-4">
           <div className="grid grid-cols-2 gap-2">
             {filteredLanguages.map((lang) => (
               <Button

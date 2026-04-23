@@ -42,6 +42,7 @@ function AppContent() {
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
     mistralContextTurns: 20,
+    recordingShortcut: ' ',
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -61,6 +62,7 @@ function AppContent() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const audioCtxRef = useRef<AudioContext | null>(null)
+  const audioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
   const analyserIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasSpeechRef = useRef(false)
@@ -79,6 +81,7 @@ function AppContent() {
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
     mistralContextTurns: 20,
+    recordingShortcut: ' ',
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -107,6 +110,29 @@ function AppContent() {
 
     return () => cleanupMobileLifecycle()
   }, [settingsOpen])
+
+  const recordingStateRef = useRef(recordingState)
+  recordingStateRef.current = recordingState
+  // Always-current refs to avoid stale closure issues in keyboard handler and silence timer
+  const handleStartRecordingRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const handleStopRecordingRef = useRef<() => void>(() => {})
+
+  useEffect(() => {
+    const shortcut = currentUserSettings.recordingShortcut ?? ' '
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return
+      if (settingsOpen || mentionsOpen) return
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+      if (e.key === shortcut) {
+        e.preventDefault()
+        if (recordingStateRef.current === 'idle') handleStartRecordingRef.current()
+        else if (recordingStateRef.current === 'recording') handleStopRecordingRef.current()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [settingsOpen, mentionsOpen, currentUserSettings.recordingShortcut])
 
   if (settingsOpen) {
     return <SettingsPage onClose={() => setSettingsOpen(false)} />
@@ -159,7 +185,8 @@ function AppContent() {
       const newDuration = audioBuffer.duration - trimSeconds
       if (newDuration < 0.5) return blob
       const newSamples = Math.floor(newDuration * audioBuffer.sampleRate)
-      const trimmed = new AudioContext().createBuffer(audioBuffer.numberOfChannels, newSamples, audioBuffer.sampleRate)
+      const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, newSamples, audioBuffer.sampleRate)
+      const trimmed = offlineCtx.createBuffer(audioBuffer.numberOfChannels, newSamples, audioBuffer.sampleRate)
       for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
         trimmed.getChannelData(ch).set(audioBuffer.getChannelData(ch).subarray(0, newSamples))
       }
@@ -172,6 +199,7 @@ function AppContent() {
   const stopSilenceDetection = () => {
     if (analyserIntervalRef.current) { clearInterval(analyserIntervalRef.current); analyserIntervalRef.current = null }
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
+    if (audioSourceRef.current) { audioSourceRef.current.disconnect(); audioSourceRef.current = null }
     if (audioCtxRef.current) { audioCtxRef.current.close(); audioCtxRef.current = null }
   }
 
@@ -199,34 +227,35 @@ function AppContent() {
 
       // Silence detection via AnalyserNode
       const audioCtx = new AudioContext()
+      await audioCtx.resume()
       audioCtxRef.current = audioCtx
       const analyser = audioCtx.createAnalyser()
       analyser.fftSize = 2048
-      audioCtx.createMediaStreamSource(stream).connect(analyser)
-      const dataArray = new Uint8Array(analyser.fftSize)
-      const SILENCE_THRESHOLD = 6   // RMS (0-100 scale) below which = silence
+      const sourceNode = audioCtx.createMediaStreamSource(stream)
+      audioSourceRef.current = sourceNode  // keep ref to prevent GC
+      sourceNode.connect(analyser)
+      const dataArray = new Float32Array(analyser.fftSize)
       const SILENCE_DELAY_MS = 3000
 
       let silenceStart: number | null = null
 
       analyserIntervalRef.current = setInterval(() => {
-        analyser.getByteTimeDomainData(dataArray)
+        analyser.getFloatTimeDomainData(dataArray)
         let sum = 0
-        for (let i = 0; i < dataArray.length; i++) {
-          const v = (dataArray[i] - 128) / 128
-          sum += v * v
-        }
-        const rms = Math.sqrt(sum / dataArray.length) * 100
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i] * dataArray[i]
+        const rms = Math.sqrt(sum / dataArray.length)
 
-        if (rms >= SILENCE_THRESHOLD) {
+        if (rms >= 0.01) {
+          // Sound above noise floor — reset silence timer
           hasSpeechRef.current = true
           silenceStart = null
           if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
         } else if (hasSpeechRef.current && silenceStart === null) {
+          // Silence after speech — start countdown
           silenceStart = Date.now()
           silenceTimerRef.current = setTimeout(() => {
             trailingSilenceMsRef.current = Date.now() - (silenceStart ?? Date.now())
-            handleStopRecording()
+            handleStopRecordingRef.current()
           }, SILENCE_DELAY_MS)
         }
       }, 100)
@@ -247,6 +276,10 @@ function AppContent() {
       setRecordingState('processing')
     }
   }
+
+  // Keep refs in sync with latest handler versions (used by keyboard shortcut and silence timer)
+  handleStartRecordingRef.current = handleStartRecording
+  handleStopRecordingRef.current = handleStopRecording
 
 
   const processRecording = async () => {
@@ -597,26 +630,27 @@ function AppContent() {
         </div>
       )}
       
-      <div className={`container mx-auto px-6 py-8 max-w-7xl${needRefresh ? ' pt-20' : ''}`}>
+      <div className={`container mx-auto px-3 sm:px-6 py-4 sm:py-8 max-w-7xl${needRefresh ? ' pt-20' : ''}`}>
         <header className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">{t.app.title}</h1>
-              <p className="text-lg text-muted-foreground">{t.app.subtitle}</p>
+              <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-1 sm:mb-2">{t.app.title}</h1>
+              <p className="text-sm sm:text-lg text-muted-foreground">{t.app.subtitle}</p>
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex gap-1.5 sm:gap-3">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button 
                       variant="outline" 
-                      size="lg"
+                      size="sm"
+                      className="sm:text-base sm:px-4 sm:py-2 sm:h-11"
                       onClick={handleReplayLastResponse}
                       disabled={!lastSpokenResponse || recordingState !== 'idle'}
                     >
-                      <ArrowCounterClockwise size={20} className="mr-2" />
-                      {t.replay.button}
+                      <ArrowCounterClockwise size={20} className="sm:mr-2" />
+                      <span className="hidden sm:inline">{t.replay.button}</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -624,15 +658,16 @@ function AppContent() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <Button variant="outline" size="lg" onClick={() => setSettingsOpen(true)}>
-                <Gear size={20} className="mr-2" />
-                {t.settings.button}
+              <Button variant="outline" size="sm" className="sm:text-base sm:px-4 sm:py-2 sm:h-11" onClick={() => setSettingsOpen(true)}>
+                <Gear size={20} className="sm:mr-2" />
+                <span className="hidden sm:inline">{t.settings.button}</span>
               </Button>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="lg">
-                    <ClockCounterClockwise size={20} className="mr-2" />
-                    {t.history.buttonLabel} ({conversationHistory.length})
+                  <Button variant="outline" size="sm" className="sm:text-base sm:px-4 sm:py-2 sm:h-11">
+                    <ClockCounterClockwise size={20} className="sm:mr-2" />
+                    <span className="hidden sm:inline">{t.history.buttonLabel} ({conversationHistory.length})</span>
+                    <span className="sm:hidden">{conversationHistory.length > 0 ? conversationHistory.length : ''}</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-lg">
@@ -666,7 +701,7 @@ function AppContent() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           <div className="space-y-6">
             {!currentVisitorLanguage && (
               <VisitorLanguageSelector
@@ -675,10 +710,10 @@ function AppContent() {
               />
             )}
             
-            <Card className="p-8">
-              <div className="text-center space-y-6">
+            <Card className="p-4 sm:p-8">
+              <div className="text-center space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-2">{t.recording.listenTitle}</h2>
+                  <h2 className="text-xl sm:text-2xl font-semibold mb-2">{t.recording.listenTitle}</h2>
                   {currentVisitorLanguage && (
                     <p className="text-sm text-accent mb-2">
                       {getLanguageDisplayName(currentVisitorLanguage, language)}
@@ -731,7 +766,7 @@ function AppContent() {
                   )}
                 </div>
 
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-4 sm:py-8">
                   <RecordingButton
                     state={recordingState}
                     onStartRecording={handleStartRecording}
@@ -762,7 +797,7 @@ function AppContent() {
             </Card>
 
             {transcribedText && (
-              <Card className="p-6 bg-secondary/50 border-2">
+              <Card className="p-4 sm:p-6 bg-secondary/50 border-2">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                   {t.transcribed.label}
                 </h3>
@@ -782,7 +817,7 @@ function AppContent() {
 
           <div className="space-y-6">
             {translatedVisitorText && (
-              <Card className="p-5 bg-secondary/50 border-2">
+              <Card className="p-4 sm:p-5 bg-secondary/50 border-2">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                   {language === 'fr' ? 'Ce que dit votre interlocuteur' : "Visitor's message"}
                 </h3>
@@ -818,9 +853,9 @@ function AppContent() {
                 </Button>
               </Card>
             ) : (
-              <Card className="p-8">
+              <Card className="p-4 sm:p-8">
                 <div className="text-center text-muted-foreground space-y-3">
-                  <p className="text-lg">{t.responses.placeholder}</p>
+                  <p className="text-base sm:text-lg">{t.responses.placeholder}</p>
                   <p className="text-sm">{t.responses.getStarted}</p>
                 </div>
               </Card>

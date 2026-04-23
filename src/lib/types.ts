@@ -40,6 +40,7 @@ export interface UserSettings {
   mistralConnected: boolean
   mistralContextTurns: number
   keyboardShortcuts: [string, string, string, string]
+  recordingShortcut: string
   createdAt: number
   updatedAt: number
 }
