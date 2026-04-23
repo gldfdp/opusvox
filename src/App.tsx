@@ -20,6 +20,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
 import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
+import { getSupportedAudioMimeType, isMediaRecorderSupported } from '@/lib/media'
+import { initMobileLifecycle, cleanupMobileLifecycle } from '@/mobile/app-lifecycle'
 import { getLanguageDisplayName } from '@/lib/languages'
 import { AnimatePresence } from 'framer-motion'
 
@@ -77,16 +79,44 @@ function AppContent() {
 
   useEffect(() => {
     loadVoices()
-  }, [])
+
+    initMobileLifecycle({
+      onBack: () => {
+        if (settingsOpen) setSettingsOpen(false)
+      },
+      onBackground: () => {
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop()
+          setRecordingState('processing')
+        }
+        window.speechSynthesis?.cancel()
+      },
+    })
+
+    return () => cleanupMobileLifecycle()
+  }, [settingsOpen])
 
   if (settingsOpen) {
     return <SettingsPage onClose={() => setSettingsOpen(false)} />
   }
 
+  if (!isMediaRecorderSupported()) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-6 text-center text-muted-foreground">
+        {language === 'fr'
+          ? "L'enregistrement audio n'est pas disponible sur cet appareil."
+          : 'Audio recording is not available on this device.'}
+      </div>
+    )
+  }
+
   const handleStartRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+      const { mimeType } = getSupportedAudioMimeType()
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
@@ -125,8 +155,10 @@ function AppContent() {
       setRecordingState('idle')
       return
     }
-    
-    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+
+    const { mimeType, ext } = getSupportedAudioMimeType()
+    const blobType = mimeType || 'audio/webm'
+    const audioBlob = new Blob(audioChunksRef.current, { type: blobType })
     
     let transcribed = ''
     const transcriptionLanguage = currentVisitorLanguage || language
@@ -137,7 +169,7 @@ function AppContent() {
           ? 'Transcription avec Mistral API...' 
           : 'Transcribing with Mistral API...')
         
-        transcribed = await transcribeAudio(audioBlob, transcriptionLanguage, currentUserSettings.mistralApiKey)
+        transcribed = await transcribeAudio(audioBlob, transcriptionLanguage, currentUserSettings.mistralApiKey, ext)
         
         toast.success(transcriptionLanguage === 'fr' 
           ? 'Transcription réussie !' 
