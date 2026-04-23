@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Spinner, CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { CheckCircle, WarningCircle, XCircle, ArrowClockwise } from '@phosphor-icons/react'
 import { useLanguage } from '@/hooks/use-language'
 
 interface MistralStatus {
@@ -87,7 +88,7 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
 
   const getStatusIcon = () => {
     if (status.isChecking) {
-      return <Spinner size={20} className="animate-spin text-muted-foreground" />
+      return <ArrowClockwise size={20} className="animate-spin text-muted-foreground" />
     }
     if (!apiKey) {
       return <WarningCircle size={20} weight="fill" className="text-muted-foreground" />
@@ -145,7 +146,23 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-lg">
           <span>{language === 'fr' ? 'Statut Mistral API' : 'Mistral API Status'}</span>
-          {getStatusIcon()}
+          <div className="flex items-center gap-2">
+            {apiKey && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={checkMistralStatus}
+                disabled={status.isChecking}
+                className="h-8 w-8 p-0"
+              >
+                <ArrowClockwise 
+                  size={16} 
+                  className={status.isChecking ? 'animate-spin' : ''} 
+                />
+              </Button>
+            )}
+            {getStatusIcon()}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
