@@ -34,6 +34,7 @@ import {
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
+import { MistralStatusCard } from '@/components/MistralStatusCard'
 
 const RECORDING_DURATION = 10000
 const MIN_RECORDING_DURATION = 3000
@@ -880,6 +881,8 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             </div>
           </CardContent>
         </Card>
+
+        <MistralStatusCard apiKey={currentSettings.mistralApiKey} />
 
         <Card>
           <CardHeader>
