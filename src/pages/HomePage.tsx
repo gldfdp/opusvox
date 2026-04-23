@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react'
 import { toast, Toaster } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { AppLogo } from '@/components/AppLogo'
 import { useLanguage } from '@/hooks/use-language'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { usePwaInstall } from '@/hooks/use-pwa-install'
@@ -82,7 +83,10 @@ export function HomePage()
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-6 py-4 max-w-6xl flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tight">OpusVox</span>
+          <span className="flex items-center gap-2 text-xl font-bold tracking-tight">
+              <AppLogo size={28} />
+              OpusVox
+            </span>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             {isInstalled

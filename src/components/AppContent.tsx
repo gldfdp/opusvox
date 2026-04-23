@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Toaster, toast } from 'sonner'
 import { ClockCounterClockwiseIcon, SpeakerHighIcon, GearIcon, XIcon, TrashIcon } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
@@ -29,11 +30,13 @@ import { isMediaRecorderSupported } from '@/lib/media'
 import { trimTrailingSeconds } from '@/lib/audio'
 import { DEFAULT_USER_SETTINGS } from '@/lib/constants'
 import { getLanguageDisplayName } from '@/lib/languages'
+import { AppLogo } from '@/components/AppLogo'
 import { AnimatePresence } from 'framer-motion'
 
 export function AppContent()
 {
   const { t, language } = useLanguage()
+  const navigate = useNavigate()
   const [userSettings] = useKV<UserSettings>('user-settings', { ...DEFAULT_USER_SETTINGS, createdAt: Date.now(), updatedAt: Date.now() })
   const [profiles] = useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfileId] = useKV<string | null>('selected-voice-profile', null)
@@ -289,9 +292,15 @@ export function AppContent()
       <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 max-w-7xl">
         <header className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-1 sm:mb-2">{t.app.title}</h1>
-              <p className="text-sm sm:text-lg text-muted-foreground">{t.app.subtitle}</p>
+            <div
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={() => navigate('/')}
+            >
+              <AppLogo className="h-10 sm:h-14 w-auto group-hover:opacity-80 transition-opacity" />
+              <div>
+                <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-1 sm:mb-2 group-hover:text-primary transition-colors">{t.app.title}</h1>
+                <p className="text-sm sm:text-lg text-muted-foreground">{t.app.subtitle}</p>
+              </div>
             </div>
 
             <div className="flex gap-1.5 sm:gap-3">
@@ -358,7 +367,7 @@ export function AppContent()
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-          <div className="space-y-6">
+          <div className="space-y-6 order-2 lg:order-1">
             {!currentVisitorLanguage && (
               <VisitorLanguageSelector
                 selectedLanguage={currentVisitorLanguage}
@@ -464,7 +473,7 @@ export function AppContent()
             />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 order-1 lg:order-2">
             {translatedVisitorText && (
               <Card className="p-4 sm:p-5 bg-secondary/50 border-2">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">

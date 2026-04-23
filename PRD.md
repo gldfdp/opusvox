@@ -2,176 +2,186 @@
 
 ## Vision
 
-OpusVox est une application web PWA d'aide à la communication pour les personnes ayant perdu l'usage de la parole (ALS, AVC, trachéotomie, etc.). Elle permet de capturer la voix du visiteur, de générer des suggestions de réponses contextuelles par IA, et de les synthétiser avec la voix clonée de l'utilisateur.
+OpusVox is a PWA communication assistant for people who have lost the ability to speak (ALS, stroke, tracheotomy, etc.). It captures a visitor's voice, generates contextual AI response suggestions, and speaks them aloud — optionally with the user's own cloned voice.
 
-**Qualités d'expérience :**
-1. **Empowering** — L'interface renforce l'autonomie de l'utilisateur à chaque interaction.
-2. **Responsive** — Transitions immédiates ; tout délai brise le rythme naturel de la conversation.
-3. **Trustworthy** — Confidentialité, fiabilité et hiérarchie visuelle claire. Les données restent locales.
+**Core experience qualities:**
+1. **Empowering** — Every interaction reinforces the user's autonomy.
+2. **Responsive** — Transitions are immediate; any delay breaks the natural rhythm of conversation.
+3. **Trustworthy** — Privacy, reliability, and clear visual hierarchy. All data stays local — only Mistral API calls leave the device.
 
 ---
 
-## État actuel de l'application
+## Current application state
 
 ### Architecture
 
-| Couche | Technologie |
-|--------|-------------|
+| Layer | Technology |
+|-------|------------|
 | Framework | React 18 + Vite |
-| Langage | TypeScript strict |
+| Language | TypeScript strict |
 | UI | shadcn/ui + Tailwind CSS |
 | Animations | Framer Motion |
-| IA | Mistral AI (STT, LLM, TTS, clonage vocal) |
-| Mobile | Capacitor (Android/iOS) |
+| AI | Mistral AI (STT, LLM, TTS, voice cloning) |
+| Routing | React Router v7 |
 | PWA | vite-plugin-pwa |
-| Persistance | localStorage via hook `use-kv` |
+| Persistence | localStorage via `use-kv` hook |
 
-### Structure des fichiers
+### File structure
 
 ```
 src/
-  App.tsx                       # Composant principal (~690 lignes)
+  App.tsx                       # Root component — BrowserRouter + Routes (/ and /app/*)
+  pages/
+    HomePage.tsx                 # Public landing page with hero, features, how-it-works
   components/
-    SettingsPage.tsx             # Paramètres complets (~1 280 lignes)
-    RecordingButton.tsx          # Bouton microphone animé
-    ResponseSuggestions.tsx      # Suggestions de réponses IA
-    ConversationHistory.tsx      # Historique des échanges
-    VoiceIndicator.tsx           # Indicateur voix active
-    VoiceCloning.tsx             # Clonage vocal (dialog)
-    MistralStatusCard.tsx        # Statut connexion Mistral
-    MentionsLegales.tsx          # Page mentions légales
-    OnboardingPage.tsx           # Wizard premier démarrage (3 étapes)
-    TextInitiator.tsx            # Zone de saisie manuelle
-    VisitorLanguageSelector.tsx  # Sélecteur langue visiteur
-    LanguageSwitcher.tsx         # Sélecteur langue interface
-    CustomResponseDialog.tsx     # Dialog réponse personnalisée
+    AppContent.tsx               # Main app UI (~540 lines)
+    AppRouter.tsx                # App-level routing (/app/*)
+    AppLogo.tsx                  # Reusable logo icon component
+    SettingsPage.tsx             # Full settings page (~1 280 lines)
+    RecordingButton.tsx          # Animated microphone button
+    ResponseSuggestions.tsx      # AI response suggestions
+    ConversationHistory.tsx      # Conversation log
+    VoiceIndicator.tsx           # Active voice indicator
+    VoiceCloning.tsx             # Voice cloning dialog
+    MistralStatusCard.tsx        # Mistral connection status
+    MentionsLegales.tsx          # Legal notices page
+    OnboardingPage.tsx           # First-launch wizard (3 steps)
+    TextInitiator.tsx            # Manual text input area
+    VisitorLanguageSelector.tsx  # Visitor language selector
+    LanguageSwitcher.tsx         # Interface language switcher
+    CustomResponseDialog.tsx     # Custom response dialog
   hooks/
-    use-recording.ts             # Enregistrement + détection de silence
-    use-kv.ts                    # Persistance localStorage typée
-    use-language.tsx             # Contexte i18n
+    use-recording.ts             # Recording + silence detection
+    use-pwa-install.ts           # PWA install prompt hook (early-capture pattern)
+    use-kv.ts                    # Typed localStorage persistence
+    use-language.tsx             # i18n context
   lib/
-    i18n.ts                      # Traductions FR/EN (~130 clés, 15 sections)
-    audio.ts                     # Utilitaires audio (WAV encode, trim, duration)
-    constants.ts                 # DEFAULT_USER_SETTINGS partagé
-    types.ts                     # Types TypeScript partagés
-    tts.ts                       # Synthèse vocale (Mistral TTS + Web Speech API)
-    stt.ts                       # Transcription (Mistral STT)
-    mistral.ts                   # Génération de réponses Mistral
-    media.ts                     # Détection format MediaRecorder
-  mobile/
-    app-lifecycle.ts             # Lifecycle Android (back button, background)
+    i18n.ts                      # FR/EN translations (~150 keys, 16 sections)
+    audio.ts                     # Audio utilities (WAV encode, trim, duration)
+    constants.ts                 # Shared constants (DEFAULT_USER_SETTINGS)
+    types.ts                     # Shared TypeScript types
+    tts.ts                       # TTS (Mistral TTS + Web Speech API)
+    stt.ts                       # STT (Mistral STT)
+    mistral.ts                   # Mistral response generation
+    media.ts                     # MediaRecorder format detection
 ```
 
 ---
 
-## Fonctionnalités implémentées
+## Implemented features
 
-### 1. Onboarding
-- Wizard 3 étapes : choix de langue → profil utilisateur → clé API Mistral
-- Skippable à chaque étape
-- Données sauvegardées en localStorage
+### 1. Public homepage (`/`)
+- Animated hero with install button
+- Feature cards, how-it-works section, CTA, footer
+- PWA install prompt with iOS and unsupported-browser fallbacks
+- Navigates to the app at `/app`
 
-### 2. Enregistrement vocal visiteur
-- Bouton microphone + raccourci clavier configurable (espace par défaut)
-- Détection de silence automatique : 3 secondes de silence → arrêt automatique
-- Suppression du blanc de fin avant envoi à l'API
-- Gestion du cas « enregistrement en arrière-plan » (Android)
-- Mode simulation si pas de clé API
+### 2. Onboarding
+- 3-step wizard: language choice → user profile → Mistral API key
+- Skippable at each step
+- Data saved in localStorage
 
-### 3. Transcription (STT)
-- Mistral `voix-large-v3` si clé API configurée
-- Fallback vers transcription simulée
-- Détection automatique de la langue visiteur
+### 3. Visitor voice recording
+- Microphone button + configurable keyboard shortcut (Space by default)
+- Auto silence detection: 3 seconds of silence → automatic stop
+- Trailing silence trimmed before API submission
+- Simulation mode when no API key is set
 
-### 4. Traduction
-- Traduction automatique visiteur→interface si langues différentes
-- Traduction de la réponse interface→visiteur avant synthèse
+### 4. Transcription (STT)
+- Mistral `voix-large-v3` when API key is configured
+- Fallback to simulated transcription
+- Automatic visitor language detection
 
-### 5. Suggestions de réponses
-- Génération par `mistral-medium` avec historique de conversation (configurable, défaut 20 tours)
-- 4 suggestions couvrant différentes intentions
-- Bouton « Charger plus »
-- Réponse personnalisée via dialog
+### 5. Translation
+- Automatic visitor→interface translation when languages differ
+- Response translated interface→visitor before TTS
 
-### 6. Synthèse vocale (TTS)
-- Mistral TTS (`mistral-tts-1`) avec voix clonée si profil vocal sélectionné
-- Fallback Web Speech API
-- Contrôles : rate 0.9, pitch 1, volume 1
+### 6. Response suggestions
+- Generated by `mistral-medium` with conversation history (configurable, default 20 turns)
+- 4 suggestions covering different intents
+- "Load more" button
+- Custom response via dialog
 
-### 7. Clonage de voix
-- Enregistrement 10 secondes de l'utilisateur avec texte guide
-- Import fichier audio (>30s → extraction des 30s centrales)
-- Durée minimum : 3 secondes
-- Envoi à `POST /v1/audio/voices` Mistral (plan payant requis)
-- Statuts : synced / plan_required / error + bouton retry
-- Prévisualisation de l'échantillon + test TTS avec la voix clonée
-- Suppression synchronisée (local + Mistral)
-- Plusieurs profils, sélection active
+### 7. Text-to-speech (TTS)
+- Mistral TTS (`mistral-tts-1`) with cloned voice if a voice profile is selected
+- Web Speech API fallback
+- Controls: rate 0.9, pitch 1, volume 1
 
-### 8. Historique des conversations
-- Sauvegarde automatique après chaque échange
-- Affichage visiteur / utilisateur avec horodatage
-- Rejeu de n'importe quelle réponse passée
-- Suppression individuelle ou globale
-- Persistance localStorage
+### 8. Voice cloning
+- Record 10 seconds with a guide text
+- Import audio file (>30 s → extract central 30 s)
+- Minimum duration: 3 seconds
+- Sent to Mistral `POST /v1/audio/voices` (paid plan required)
+- Statuses: synced / plan_required / error + retry button
+- Sample preview + TTS test with cloned voice
+- Synchronized deletion (local + Mistral)
+- Multiple profiles, active selection
 
-### 9. Paramètres
-- Profil utilisateur (prénom, nom, âge, style de communication, conditions médicales, allergies, besoins spéciaux)
-- Clé API Mistral avec test de connexion
-- Langue de l'interface (FR/EN)
-- Raccourcis clavier réponses (4 touches configurables)
-- Raccourci enregistrement (configurable)
-- Nombre de tours de contexte Mistral
-- Force-refresh (vide le cache service worker)
+### 9. Conversation history
+- Auto-saved after each exchange
+- Visitor / user display with timestamps
+- Replay any past response
+- Individual or full deletion
+- localStorage persistence
 
-### 10. Internationalisation
-- Système i18n maison (`src/lib/i18n.ts`)
-- 2 langues : FR et EN
-- ~130 clés réparties en 15 sections
-- Zéro ternaire `language === 'fr'` dans les composants React
+### 10. Settings
+- User profile (first name, last name, age, communication style, medical conditions, allergies, special needs)
+- Mistral API key with connection test
+- Interface language (FR/EN)
+- Response keyboard shortcuts (4 configurable keys)
+- Recording shortcut (configurable)
+- Mistral context turns count
+- Force-refresh (clears service worker cache)
 
-### 11. PWA & Mobile
+### 11. Internationalisation
+- Custom i18n system (`src/lib/i18n.ts`)
+- 2 languages: FR and EN
+- ~150 keys across 16 sections
+- Zero inline `language === 'fr'` ternaries in React components
+
+### 12. PWA
 - Service worker via vite-plugin-pwa
-- Installation sur Android via Capacitor
-- Gestion bouton retour Android
-- Mise en arrière-plan : arrêt automatique de l'enregistrement
+- Installable on any device via browser install prompt
+- `start_url: /app` — installed PWA opens directly to the app
+- `devOptions.enabled: true` — SW active in dev mode for install testing
 
-### 12. Déploiement
-- Dockerfile + nginx pour la production
+### 13. Deployment
+- Dockerfile + nginx for production
 - docker-compose.yml
+- nginx `try_files` handles SPA routing
 
 ---
 
-## Règles de code
+## Code conventions
 
-- **Linting** : ESLint avec `curly: all`, `brace-style: allman`, `indent: 2`, `react-hooks/exhaustive-deps: error`
-- **Build** : `yarn build` (eslint + tsc + vite)
-- **Formatage** : `npx eslint --fix "src/**/*.{ts,tsx}"`
-- **Constantes partagées** : toujours utiliser `DEFAULT_USER_SETTINGS` de `src/lib/constants.ts`
-- **Traductions** : toujours ajouter les chaînes dans `src/lib/i18n.ts` (FR + EN), jamais de ternaire inline dans les composants
-
----
-
-## Cas limites gérés
-
-| Cas | Comportement |
-|-----|-------------|
-| Pas de microphone | Message d'erreur clair |
-| Clé API absente | Mode simulation avec indicateur |
-| Clé API invalide | Erreur dans paramètres + fallback simulation |
-| Enregistrement trop court | Message d'erreur, retour idle |
-| Fichier audio >30s | Extraction automatique des 30s centrales |
-| Réseau offline | Fallback simulation STT ; TTS échoue proprement |
-| Mistral plan gratuit (clonage vocal) | Badge `plan_required` + message explicatif |
-| Enregistrement en arrière-plan (Android) | Arrêt automatique |
+- **Linting**: ESLint with `curly: all`, `brace-style: allman`, `indent: 2`, `react-hooks/exhaustive-deps: error`
+- **Build**: `yarn build` (eslint + tsc + vite)
+- **Formatting**: `npx eslint --fix "src/**/*.{ts,tsx}"`
+- **Shared constants**: always use `DEFAULT_USER_SETTINGS` from `src/lib/constants.ts`
+- **Translations**: always add strings to `src/lib/i18n.ts` (FR + EN), never use inline ternaries in components
+- **PWA install prompt**: captured before React mounts in `main.tsx`, stored in `window.__pwaInstallPrompt` to avoid race condition
 
 ---
 
-## Améliorations possibles
+## Handled edge cases
 
-- Détection adaptative du niveau de bruit (seuil dynamique au lieu de fixe 0.01 RMS)
-- Export de l'historique (PDF, CSV)
-- Support de langues supplémentaires (ES, DE…)
-- Mode hors-ligne complet avec modèle STT embarqué
-- Accessibilité WCAG AA complète
-- Tests automatisés (unit + e2e)
+| Case | Behaviour |
+|------|-----------|
+| No microphone | Clear error message |
+| No API key | Simulation mode with indicator |
+| Invalid API key | Error in settings + simulation fallback |
+| Recording too short | Error message, return to idle |
+| Audio file >30 s | Auto-extract central 30 s |
+| Network offline | STT simulation fallback; TTS fails gracefully |
+| Mistral free plan (voice cloning) | `plan_required` badge + explanatory message |
+
+---
+
+## Possible improvements
+
+- Adaptive noise level detection (dynamic threshold instead of fixed 0.01 RMS)
+- History export (PDF, CSV)
+- Additional language support (ES, DE…)
+- Full offline mode with embedded STT model
+- Full WCAG AA accessibility compliance
+- Automated tests (unit + e2e)
