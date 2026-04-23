@@ -6,32 +6,37 @@ import { cn } from "@/lib/utils"
 
 function Dialog({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Root>) {
+}: ComponentProps<typeof DialogPrimitive.Root>) 
+{
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
 function DialogTrigger({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Trigger>) {
+}: ComponentProps<typeof DialogPrimitive.Trigger>) 
+{
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 
 function DialogPortal({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Portal>) {
+}: ComponentProps<typeof DialogPrimitive.Portal>) 
+{
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
 function DialogClose({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Close>) {
+}: ComponentProps<typeof DialogPrimitive.Close>) 
+{
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
 function DialogOverlay({
   className,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: ComponentProps<typeof DialogPrimitive.Overlay>) 
+{
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
@@ -48,7 +53,8 @@ function DialogContent({
   className,
   children,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content>) {
+}: ComponentProps<typeof DialogPrimitive.Content>) 
+{
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -70,7 +76,8 @@ function DialogContent({
   )
 }
 
-function DialogHeader({ className, ...props }: ComponentProps<"div">) {
+function DialogHeader({ className, ...props }: ComponentProps<"div">) 
+{
   return (
     <div
       data-slot="dialog-header"
@@ -80,7 +87,8 @@ function DialogHeader({ className, ...props }: ComponentProps<"div">) {
   )
 }
 
-function DialogFooter({ className, ...props }: ComponentProps<"div">) {
+function DialogFooter({ className, ...props }: ComponentProps<"div">) 
+{
   return (
     <div
       data-slot="dialog-footer"
@@ -96,7 +104,8 @@ function DialogFooter({ className, ...props }: ComponentProps<"div">) {
 function DialogTitle({
   className,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Title>) {
+}: ComponentProps<typeof DialogPrimitive.Title>) 
+{
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
@@ -109,7 +118,8 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Description>) {
+}: ComponentProps<typeof DialogPrimitive.Description>) 
+{
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"

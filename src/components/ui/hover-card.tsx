@@ -5,13 +5,15 @@ import { cn } from "@/lib/utils"
 
 function HoverCard({
   ...props
-}: ComponentProps<typeof HoverCardPrimitive.Root>) {
+}: ComponentProps<typeof HoverCardPrimitive.Root>) 
+{
   return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />
 }
 
 function HoverCardTrigger({
   ...props
-}: ComponentProps<typeof HoverCardPrimitive.Trigger>) {
+}: ComponentProps<typeof HoverCardPrimitive.Trigger>) 
+{
   return (
     <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
   )
@@ -22,7 +24,8 @@ function HoverCardContent({
   align = "center",
   sideOffset = 4,
   ...props
-}: ComponentProps<typeof HoverCardPrimitive.Content>) {
+}: ComponentProps<typeof HoverCardPrimitive.Content>) 
+{
   return (
     <HoverCardPrimitive.Portal data-slot="hover-card-portal">
       <HoverCardPrimitive.Content

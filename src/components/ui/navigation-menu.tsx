@@ -12,7 +12,8 @@ function NavigationMenu({
   ...props
 }: ComponentProps<typeof NavigationMenuPrimitive.Root> & {
   viewport?: boolean
-}) {
+}) 
+{
   return (
     <NavigationMenuPrimitive.Root
       data-slot="navigation-menu"
@@ -32,7 +33,8 @@ function NavigationMenu({
 function NavigationMenuList({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.List>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.List>) 
+{
   return (
     <NavigationMenuPrimitive.List
       data-slot="navigation-menu-list"
@@ -48,7 +50,8 @@ function NavigationMenuList({
 function NavigationMenuItem({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Item>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Item>) 
+{
   return (
     <NavigationMenuPrimitive.Item
       data-slot="navigation-menu-item"
@@ -66,7 +69,8 @@ function NavigationMenuTrigger({
   className,
   children,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Trigger>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Trigger>) 
+{
   return (
     <NavigationMenuPrimitive.Trigger
       data-slot="navigation-menu-trigger"
@@ -85,7 +89,8 @@ function NavigationMenuTrigger({
 function NavigationMenuContent({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Content>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Content>) 
+{
   return (
     <NavigationMenuPrimitive.Content
       data-slot="navigation-menu-content"
@@ -102,7 +107,8 @@ function NavigationMenuContent({
 function NavigationMenuViewport({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Viewport>) 
+{
   return (
     <div
       className={cn(
@@ -124,7 +130,8 @@ function NavigationMenuViewport({
 function NavigationMenuLink({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Link>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Link>) 
+{
   return (
     <NavigationMenuPrimitive.Link
       data-slot="navigation-menu-link"
@@ -140,7 +147,8 @@ function NavigationMenuLink({
 function NavigationMenuIndicator({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Indicator>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Indicator>) 
+{
   return (
     <NavigationMenuPrimitive.Indicator
       data-slot="navigation-menu-indicator"

@@ -9,17 +9,22 @@ interface RecordingButtonProps {
   onStopRecording: () => void
 }
 
-export function RecordingButton({ state, onStartRecording, onStopRecording }: RecordingButtonProps) {
+export function RecordingButton({ state, onStartRecording, onStopRecording }: RecordingButtonProps) 
+{
   const { t } = useLanguage()
   const isRecording = state === 'recording'
   const isProcessing = state === 'processing'
   const isSpeaking = state === 'speaking'
   const isDisabled = isProcessing || isSpeaking
 
-  const handleClick = () => {
-    if (isRecording) {
+  const handleClick = () => 
+  {
+    if (isRecording) 
+    {
       onStopRecording()
-    } else if (!isDisabled) {
+    }
+    else if (!isDisabled) 
+    {
       onStartRecording()
     }
   }

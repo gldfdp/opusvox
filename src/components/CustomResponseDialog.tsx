@@ -10,20 +10,25 @@ interface CustomResponseDialogProps {
   onSubmit: (text: string) => void
 }
 
-export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomResponseDialogProps) {
+export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomResponseDialogProps) 
+{
   const { t } = useLanguage()
   const [text, setText] = useState('')
 
-  const handleSubmit = () => {
-    if (text.trim()) {
+  const handleSubmit = () => 
+  {
+    if (text.trim()) 
+    {
       onSubmit(text.trim())
       setText('')
       onOpenChange(false)
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+  const handleKeyDown = (e: React.KeyboardEvent) => 
+  {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) 
+    {
       handleSubmit()
     }
   }
@@ -52,7 +57,8 @@ export function CustomResponseDialog({ open, onOpenChange, onSubmit }: CustomRes
           <div className="flex justify-end gap-3">
             <Button 
               variant="outline" 
-              onClick={() => {
+              onClick={() => 
+{
                 setText('')
                 onOpenChange(false)
               }}

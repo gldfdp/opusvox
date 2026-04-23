@@ -12,7 +12,8 @@ function Slider({
   min = 0,
   max = 100,
   ...props
-}: ComponentProps<typeof SliderPrimitive.Root>) {
+}: ComponentProps<typeof SliderPrimitive.Root>) 
+{
   const _values = useMemo(
     () =>
       Array.isArray(value)

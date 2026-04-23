@@ -21,7 +21,8 @@ function ToggleGroup({
   children,
   ...props
 }: ComponentProps<typeof ToggleGroupPrimitive.Root> &
-  VariantProps<typeof toggleVariants>) {
+  VariantProps<typeof toggleVariants>) 
+{
   return (
     <ToggleGroupPrimitive.Root
       data-slot="toggle-group"
@@ -47,7 +48,8 @@ function ToggleGroupItem({
   size,
   ...props
 }: ComponentProps<typeof ToggleGroupPrimitive.Item> &
-  VariantProps<typeof toggleVariants>) {
+  VariantProps<typeof toggleVariants>) 
+{
   const context = useContext(ToggleGroupContext)
 
   return (

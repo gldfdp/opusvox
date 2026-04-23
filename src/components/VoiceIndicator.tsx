@@ -1,5 +1,6 @@
 import { SpeakerHigh, User, Sparkle } from '@phosphor-icons/react'
 import { Language } from '@/lib/i18n'
+import { useLanguage } from '@/hooks/use-language'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +24,9 @@ const languageLabels: Record<Language, string> = {
   fr: 'Voix Française'
 }
 
-export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, profileName, isMistralTTS }: VoiceIndicatorProps) {
+export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, profileName, isMistralTTS }: VoiceIndicatorProps) 
+{
+  const { t } = useLanguage()
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -68,12 +71,12 @@ export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, p
               </span>
               {isMistralTTS && (
                 <Badge className="bg-gradient-to-r from-accent to-primary text-white text-xs">
-                  {language === 'fr' ? 'Mistral TTS' : 'Mistral TTS'}
+                  {t.voiceIndicator.mistralTts}
                 </Badge>
               )}
               {isClonedVoice && !isMistralTTS && (
                 <Badge className="bg-accent text-xs">
-                  {language === 'fr' ? 'Voix clonée' : 'Cloned Voice'}
+                  {t.voiceIndicator.clonedVoice}
                 </Badge>
               )}
             </div>
@@ -84,12 +87,12 @@ export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, p
             )}
             {isMistralTTS && (
               <p className="text-xs text-muted-foreground">
-                {language === 'fr' ? 'Synthèse vocale IA' : 'AI speech synthesis'}
+                {t.voiceIndicator.aiSpeechSynthesis}
               </p>
             )}
             {isClonedVoice && !isMistralTTS && (
               <p className="text-xs text-muted-foreground">
-                {language === 'fr' ? 'Voix personnalisée' : 'Personalized voice'}
+                {t.voiceIndicator.personalizedVoice}
               </p>
             )}
           </div>

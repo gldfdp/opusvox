@@ -10,13 +10,15 @@ import { cn } from "@/lib/utils"
 
 function ContextMenu({
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Root>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Root>) 
+{
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />
 }
 
 function ContextMenuTrigger({
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Trigger>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Trigger>) 
+{
   return (
     <ContextMenuPrimitive.Trigger data-slot="context-menu-trigger" {...props} />
   )
@@ -24,7 +26,8 @@ function ContextMenuTrigger({
 
 function ContextMenuGroup({
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Group>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Group>) 
+{
   return (
     <ContextMenuPrimitive.Group data-slot="context-menu-group" {...props} />
   )
@@ -32,7 +35,8 @@ function ContextMenuGroup({
 
 function ContextMenuPortal({
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Portal>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Portal>) 
+{
   return (
     <ContextMenuPrimitive.Portal data-slot="context-menu-portal" {...props} />
   )
@@ -40,13 +44,15 @@ function ContextMenuPortal({
 
 function ContextMenuSub({
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Sub>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Sub>) 
+{
   return <ContextMenuPrimitive.Sub data-slot="context-menu-sub" {...props} />
 }
 
 function ContextMenuRadioGroup({
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.RadioGroup>) {
+}: ComponentProps<typeof ContextMenuPrimitive.RadioGroup>) 
+{
   return (
     <ContextMenuPrimitive.RadioGroup
       data-slot="context-menu-radio-group"
@@ -62,7 +68,8 @@ function ContextMenuSubTrigger({
   ...props
 }: ComponentProps<typeof ContextMenuPrimitive.SubTrigger> & {
   inset?: boolean
-}) {
+}) 
+{
   return (
     <ContextMenuPrimitive.SubTrigger
       data-slot="context-menu-sub-trigger"
@@ -82,7 +89,8 @@ function ContextMenuSubTrigger({
 function ContextMenuSubContent({
   className,
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.SubContent>) {
+}: ComponentProps<typeof ContextMenuPrimitive.SubContent>) 
+{
   return (
     <ContextMenuPrimitive.SubContent
       data-slot="context-menu-sub-content"
@@ -98,7 +106,8 @@ function ContextMenuSubContent({
 function ContextMenuContent({
   className,
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Content>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Content>) 
+{
   return (
     <ContextMenuPrimitive.Portal>
       <ContextMenuPrimitive.Content
@@ -121,7 +130,8 @@ function ContextMenuItem({
 }: ComponentProps<typeof ContextMenuPrimitive.Item> & {
   inset?: boolean
   variant?: "default" | "destructive"
-}) {
+}) 
+{
   return (
     <ContextMenuPrimitive.Item
       data-slot="context-menu-item"
@@ -141,7 +151,8 @@ function ContextMenuCheckboxItem({
   children,
   checked,
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.CheckboxItem>) {
+}: ComponentProps<typeof ContextMenuPrimitive.CheckboxItem>) 
+{
   return (
     <ContextMenuPrimitive.CheckboxItem
       data-slot="context-menu-checkbox-item"
@@ -166,7 +177,8 @@ function ContextMenuRadioItem({
   className,
   children,
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.RadioItem>) {
+}: ComponentProps<typeof ContextMenuPrimitive.RadioItem>) 
+{
   return (
     <ContextMenuPrimitive.RadioItem
       data-slot="context-menu-radio-item"
@@ -192,7 +204,8 @@ function ContextMenuLabel({
   ...props
 }: ComponentProps<typeof ContextMenuPrimitive.Label> & {
   inset?: boolean
-}) {
+}) 
+{
   return (
     <ContextMenuPrimitive.Label
       data-slot="context-menu-label"
@@ -209,7 +222,8 @@ function ContextMenuLabel({
 function ContextMenuSeparator({
   className,
   ...props
-}: ComponentProps<typeof ContextMenuPrimitive.Separator>) {
+}: ComponentProps<typeof ContextMenuPrimitive.Separator>) 
+{
   return (
     <ContextMenuPrimitive.Separator
       data-slot="context-menu-separator"
@@ -222,7 +236,8 @@ function ContextMenuSeparator({
 function ContextMenuShortcut({
   className,
   ...props
-}: ComponentProps<"span">) {
+}: ComponentProps<"span">) 
+{
   return (
     <span
       data-slot="context-menu-shortcut"

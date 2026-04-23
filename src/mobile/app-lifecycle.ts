@@ -22,29 +22,41 @@ export interface MobileLifecycleOptions {
 
 const handles: PluginListenerHandle[] = []
 
-export async function initMobileLifecycle(opts: MobileLifecycleOptions): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return
+export async function initMobileLifecycle(opts: MobileLifecycleOptions): Promise<void> 
+{
+  if (!Capacitor.isNativePlatform()) 
+  {
+    return
+  }
 
   // Configure status bar appearance
-  try {
+  try 
+  {
     await StatusBar.setStyle({ style: Style.Dark })
     await StatusBar.setBackgroundColor({ color: '#0f0f0f' })
-  } catch {
+  }
+  catch 
+  {
     // Status bar API not available on all devices
   }
 
   // Hide splash screen after the app shell is ready
-  try {
+  try 
+  {
     await SplashScreen.hide()
-  } catch {
+  }
+  catch 
+  {
     // Already hidden or not supported
   }
 
   // Android back button: delegate to app-level navigation, exit if nothing to close
   handles.push(
-    await App.addListener('backButton', ({ canGoBack }) => {
+    await App.addListener('backButton', ({ canGoBack }) => 
+    {
       opts.onBack()
-      if (!canGoBack) {
+      if (!canGoBack) 
+      {
         App.exitApp()
       }
     })
@@ -52,15 +64,18 @@ export async function initMobileLifecycle(opts: MobileLifecycleOptions): Promise
 
   // Stop active recording / TTS when app is backgrounded
   handles.push(
-    await App.addListener('appStateChange', ({ isActive }) => {
-      if (!isActive) {
+    await App.addListener('appStateChange', ({ isActive }) => 
+    {
+      if (!isActive) 
+      {
         opts.onBackground()
       }
     })
   )
 }
 
-export function cleanupMobileLifecycle(): void {
+export function cleanupMobileLifecycle(): void 
+{
   handles.forEach(h => h.remove())
   handles.length = 0
 }

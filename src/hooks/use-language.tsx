@@ -10,7 +10,8 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
+export function LanguageProvider({ children }: { children: ReactNode }) 
+{
   const [language, setLanguage] = useKV<Language>('app-language', 'en')
   
   const currentLanguage = language || 'en'
@@ -23,9 +24,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useLanguage() {
+export function useLanguage() 
+{
   const context = useContext(LanguageContext)
-  if (!context) {
+  if (!context) 
+  {
     throw new Error('useLanguage must be used within a LanguageProvider')
   }
   return context

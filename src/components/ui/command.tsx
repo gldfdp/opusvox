@@ -16,7 +16,8 @@ import {
 function Command({
   className,
   ...props
-}: ComponentProps<typeof CommandPrimitive>) {
+}: ComponentProps<typeof CommandPrimitive>) 
+{
   return (
     <CommandPrimitive
       data-slot="command"
@@ -37,7 +38,8 @@ function CommandDialog({
 }: ComponentProps<typeof Dialog> & {
   title?: string
   description?: string
-}) {
+}) 
+{
   return (
     <Dialog {...props}>
       <DialogHeader className="sr-only">
@@ -56,7 +58,8 @@ function CommandDialog({
 function CommandInput({
   className,
   ...props
-}: ComponentProps<typeof CommandPrimitive.Input>) {
+}: ComponentProps<typeof CommandPrimitive.Input>) 
+{
   return (
     <div
       data-slot="command-input-wrapper"
@@ -78,7 +81,8 @@ function CommandInput({
 function CommandList({
   className,
   ...props
-}: ComponentProps<typeof CommandPrimitive.List>) {
+}: ComponentProps<typeof CommandPrimitive.List>) 
+{
   return (
     <CommandPrimitive.List
       data-slot="command-list"
@@ -93,7 +97,8 @@ function CommandList({
 
 function CommandEmpty({
   ...props
-}: ComponentProps<typeof CommandPrimitive.Empty>) {
+}: ComponentProps<typeof CommandPrimitive.Empty>) 
+{
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
@@ -106,7 +111,8 @@ function CommandEmpty({
 function CommandGroup({
   className,
   ...props
-}: ComponentProps<typeof CommandPrimitive.Group>) {
+}: ComponentProps<typeof CommandPrimitive.Group>) 
+{
   return (
     <CommandPrimitive.Group
       data-slot="command-group"
@@ -122,7 +128,8 @@ function CommandGroup({
 function CommandSeparator({
   className,
   ...props
-}: ComponentProps<typeof CommandPrimitive.Separator>) {
+}: ComponentProps<typeof CommandPrimitive.Separator>) 
+{
   return (
     <CommandPrimitive.Separator
       data-slot="command-separator"
@@ -135,7 +142,8 @@ function CommandSeparator({
 function CommandItem({
   className,
   ...props
-}: ComponentProps<typeof CommandPrimitive.Item>) {
+}: ComponentProps<typeof CommandPrimitive.Item>) 
+{
   return (
     <CommandPrimitive.Item
       data-slot="command-item"
@@ -151,7 +159,8 @@ function CommandItem({
 function CommandShortcut({
   className,
   ...props
-}: ComponentProps<"span">) {
+}: ComponentProps<"span">) 
+{
   return (
     <span
       data-slot="command-shortcut"

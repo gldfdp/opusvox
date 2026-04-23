@@ -3,6 +3,8 @@ import { useKV } from '@/hooks/use-kv'
 import { UserSettings, VoiceProfile, VoiceRecordingState } from '@/lib/types'
 import { useLanguage } from '@/hooks/use-language'
 import { Language } from '@/lib/i18n'
+import { trimAudioMiddle30s, getAudioDuration } from '@/lib/audio'
+import { DEFAULT_USER_SETTINGS } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -45,24 +47,10 @@ interface SettingsPageProps {
   onClose: () => void
 }
 
-export function SettingsPage({ onClose }: SettingsPageProps) {
-  const { language, setLanguage } = useLanguage()
-  const [userSettings, setUserSettings] = useKV<UserSettings>('user-settings', {
-    firstName: '',
-    lastName: '',
-    age: null,
-    preferredCommunicationStyle: '',
-    medicalConditions: '',
-    allergies: '',
-    specialNeeds: '',
-    mistralApiKey: '',
-    mistralConnected: false,
-    keyboardShortcuts: ['q', 's', 'd', 'f'],
-    mistralContextTurns: 20,
-    recordingShortcut: ' ',
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  })
+export function SettingsPage({ onClose }: SettingsPageProps) 
+{
+  const { language, setLanguage, t } = useLanguage()
+  const [userSettings, setUserSettings] = useKV<UserSettings>('user-settings', { ...DEFAULT_USER_SETTINGS, createdAt: Date.now(), updatedAt: Date.now() })
   
   const [profiles, setProfiles]= useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfile, setSelectedProfile] = useKV<string | null>('selected-voice-profile', null)
@@ -122,8 +110,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   
   const currentProfiles = profiles || []
 
-  useEffect(() => {
-    if (!userSettings) return
+  useEffect(() => 
+  {
+    if (!userSettings) 
+    {
+      return
+    }
     setFirstName(userSettings.firstName || '')
     setLastName(userSettings.lastName || '')
     setAge(userSettings.age?.toString() || '')
@@ -137,7 +129,8 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     setRecordingShortcut(userSettings.recordingShortcut ?? ' ')
   }, [userSettings])
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = () => 
+  {
     const ageNumber = age.trim() ? parseInt(age, 10) : null
     
     const updated: UserSettings = {
@@ -156,18 +149,21 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     }
     
     setUserSettings(updated)
-    toast.success(language === 'fr' ? 'Profil enregistré' : 'Profile saved')
+    toast.success(t.userProfile.saved)
   }
 
-  const handleTestMistralConnection = async () => {
-    if (!apiKey.trim()) {
-      toast.error(language === 'fr' ? 'Veuillez entrer une clé API' : 'Please enter an API key')
+  const handleTestMistralConnection = async () => 
+  {
+    if (!apiKey.trim()) 
+    {
+      toast.error(t.mistralApi.enterApiKey)
       return
     }
 
     setTestingConnection(true)
     
-    try {
+    try 
+    {
       await new Promise(resolve => setTimeout(resolve, 1500))
       
       const updated: UserSettings = {
@@ -178,15 +174,20 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       }
       
       setUserSettings(updated)
-      toast.success(language === 'fr' ? 'Connexion Mistral réussie !' : 'Mistral connection successful!')
-    } catch {
-      toast.error(language === 'fr' ? 'Échec de la connexion Mistral' : 'Mistral connection failed')
-    } finally {
+      toast.success(t.mistralApi.connectionSuccessful)
+    }
+    catch 
+    {
+      toast.error(t.mistralApi.connectionFailed)
+    }
+    finally 
+    {
       setTestingConnection(false)
     }
   }
 
-  const handleDisconnectMistral = () => {
+  const handleDisconnectMistral = () => 
+  {
     const updated: UserSettings = {
       ...currentSettings,
       mistralApiKey: '',
@@ -196,16 +197,19 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     
     setUserSettings(updated)
     setApiKey('')
-    toast.info(language === 'fr' ? 'Mistral déconnecté' : 'Mistral disconnected')
+    toast.info(t.mistralApi.disconnected)
   }
 
-  const startRecording = async () => {
-    if (!profileName.trim()) {
-      toast.error(language === 'fr' ? 'Veuillez entrer un nom pour le profil vocal' : 'Please enter a name for the voice profile')
+  const startRecording = async () => 
+  {
+    if (!profileName.trim()) 
+    {
+      toast.error(t.voiceProfiles.enterVoiceName)
       return
     }
 
-    try {
+    try 
+    {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -221,13 +225,16 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
       
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+      mediaRecorder.ondataavailable = (event) => 
+      {
+        if (event.data.size > 0) 
+        {
           audioChunksRef.current.push(event.data)
         }
       }
       
-      mediaRecorder.onstop = async () => {
+      mediaRecorder.onstop = async () => 
+      {
         stream.getTracks().forEach(track => track.stop())
         await processRecording()
       }
@@ -236,40 +243,45 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       setRecordingState('recording')
       setRecordingProgress(0)
       
-      progressIntervalRef.current = window.setInterval(() => {
-        setRecordingProgress(prev => {
+      progressIntervalRef.current = window.setInterval(() => 
+      {
+        setRecordingProgress(prev => 
+        {
           const next = prev + (100 / (RECORDING_DURATION / 100))
           return next >= 100 ? 100 : next
         })
       }, 100)
       
-      recordingTimerRef.current = window.setTimeout(() => {
+      recordingTimerRef.current = window.setTimeout(() => 
+      {
         stopRecording()
       }, RECORDING_DURATION)
       
-      toast.success(language === 'fr' 
-        ? 'Enregistrement démarré - lisez le texte affiché' 
-        : 'Recording started - read the displayed text')
+      toast.success(t.voiceProfiles.recordingStarted)
       
-    } catch (error) {
-      toast.error(language === 'fr' 
-        ? 'Impossible d\'accéder au microphone' 
-        : 'Could not access microphone')
+    }
+    catch (error) 
+    {
+      toast.error(t.voiceProfiles.microphoneError)
       console.error('Microphone access error:', error)
       setRecordingState('error')
     }
   }
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+  const stopRecording = () => 
+  {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') 
+    {
       mediaRecorderRef.current.stop()
       
-      if (recordingTimerRef.current) {
+      if (recordingTimerRef.current) 
+      {
         clearTimeout(recordingTimerRef.current)
         recordingTimerRef.current = null
       }
       
-      if (progressIntervalRef.current) {
+      if (progressIntervalRef.current) 
+      {
         clearInterval(progressIntervalRef.current)
         progressIntervalRef.current = null
       }
@@ -278,10 +290,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     }
   }
 
-  const processRecording = async () => {
-    if (audioChunksRef.current.length === 0) {
+  const processRecording = async () => 
+  {
+    if (audioChunksRef.current.length === 0) 
+    {
       setRecordingState('error')
-      toast.error(language === 'fr' ? 'Aucun audio enregistré' : 'No audio recorded')
+      toast.error(t.voiceProfiles.noAudioRecorded)
       return
     }
 
@@ -289,15 +303,15 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     
     const audioDuration = await getAudioDuration(audioBlob)
     
-    if (audioDuration < MIN_RECORDING_DURATION) {
+    if (audioDuration < MIN_RECORDING_DURATION) 
+    {
       setRecordingState('error')
-      toast.error(language === 'fr' 
-        ? 'Enregistrement trop court (minimum 3 secondes)' 
-        : 'Recording too short (minimum 3 seconds)')
+      toast.error(t.voiceProfiles.recordingTooShort)
       return
     }
 
-    const audioDataUrl = await new Promise<string>((resolve, reject) => {
+    const audioDataUrl = await new Promise<string>((resolve, reject) => 
+    {
       const reader = new FileReader()
       reader.onloadend = () => resolve(reader.result as string)
       reader.onerror = reject
@@ -313,13 +327,20 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       duration: audioDuration
     }
 
-    if (currentSettings.mistralApiKey) {
+    if (currentSettings.mistralApiKey) 
+    {
       const { voiceId, syncError, errorDetail } = await registerVoiceWithMistral(audioDataUrl, newProfile.name, 'webm')
-      if (voiceId) {
+      if (voiceId) 
+      {
         newProfile.mistralVoiceId = voiceId
-      } else if (syncError) {
+      }
+      else if (syncError) 
+      {
         newProfile.mistralSyncError = syncError
-        if (errorDetail) toast.warning(errorDetail, { description: 'Mistral API' })
+        if (errorDetail) 
+        {
+          toast.warning(errorDetail, { description: 'Mistral API' })
+        }
       }
     }
 
@@ -328,123 +349,50 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     setRecordingState('success')
     setProfileName('')
 
-    toast.success(language === 'fr'
-      ? `Profil vocal "${newProfile.name}" créé avec succès`
-      : `Voice profile "${newProfile.name}" created successfully`)
+    toast.success(t.voiceProfiles.profileCreatedNamed(newProfile.name))
 
-    setTimeout(() => {
+    setTimeout(() => 
+    {
       setRecordingState('idle')
       setRecordingProgress(0)
     }, 1500)
   }
 
-  const audioBufferToWavDataUrl = (buffer: AudioBuffer): string => {
-    const numChannels = buffer.numberOfChannels
-    const sampleRate = buffer.sampleRate
-    const numSamples = buffer.length
-    const dataLength = numSamples * numChannels * 2
-    const wavBuffer = new ArrayBuffer(44 + dataLength)
-    const view = new DataView(wavBuffer)
-    const writeStr = (offset: number, str: string) => {
-      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
-    }
-    writeStr(0, 'RIFF')
-    view.setUint32(4, 36 + dataLength, true)
-    writeStr(8, 'WAVE')
-    writeStr(12, 'fmt ')
-    view.setUint32(16, 16, true)
-    view.setUint16(20, 1, true)
-    view.setUint16(22, numChannels, true)
-    view.setUint32(24, sampleRate, true)
-    view.setUint32(28, sampleRate * numChannels * 2, true)
-    view.setUint16(32, numChannels * 2, true)
-    view.setUint16(34, 16, true)
-    writeStr(36, 'data')
-    view.setUint32(40, dataLength, true)
-    let offset = 44
-    for (let i = 0; i < numSamples; i++) {
-      for (let ch = 0; ch < numChannels; ch++) {
-        const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]))
-        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
-        offset += 2
-      }
-    }
-    const bytes = new Uint8Array(wavBuffer)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-    return `data:audio/wav;base64,${btoa(binary)}`
-  }
-
-  const trimAudioMiddle30s = async (audioDataUrl: string): Promise<{ dataUrl: string; trimmed: boolean }> => {
-    const MAX_DURATION = 30
-    const base64 = audioDataUrl.split(',')[1]
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-
-    const audioCtx = new AudioContext()
-    try {
-      const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer.slice(0))
-      if (audioBuffer.duration <= MAX_DURATION) return { dataUrl: audioDataUrl, trimmed: false }
-
-      const sampleRate = audioBuffer.sampleRate
-      const numChannels = audioBuffer.numberOfChannels
-      const startTime = (audioBuffer.duration - MAX_DURATION) / 2
-      const startSample = Math.floor(startTime * sampleRate)
-      const trimSamples = Math.floor(MAX_DURATION * sampleRate)
-
-      const trimmedBuffer = audioCtx.createBuffer(numChannels, trimSamples, sampleRate)
-      for (let ch = 0; ch < numChannels; ch++) {
-        const src = audioBuffer.getChannelData(ch)
-        const dst = trimmedBuffer.getChannelData(ch)
-        for (let i = 0; i < trimSamples; i++) dst[i] = src[startSample + i]
-      }
-
-      return { dataUrl: audioBufferToWavDataUrl(trimmedBuffer), trimmed: true }
-    } finally {
-      audioCtx.close()
-    }
-  }
-
-  const getAudioDuration = (blob: Blob): Promise<number> => {
-    return new Promise((resolve) => {
-      const audio = new Audio()
-      audio.addEventListener('loadedmetadata', () => {
-        resolve(audio.duration * 1000)
-        URL.revokeObjectURL(audio.src)
-      })
-      audio.src = URL.createObjectURL(blob)
-    })
-  }
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
+  {
     const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!profileName.trim()) {
-      toast.error(language === 'fr' ? 'Veuillez entrer un nom pour le profil vocal' : 'Please enter a name for the voice profile')
+    if (!file) 
+    {
       return
     }
 
-    if (!file.type.startsWith('audio/')) {
-      toast.error(language === 'fr' ? 'Veuillez sélectionner un fichier audio' : 'Please select an audio file')
+    if (!profileName.trim()) 
+    {
+      toast.error(t.voiceProfiles.enterVoiceName)
+      return
+    }
+
+    if (!file.type.startsWith('audio/')) 
+    {
+      toast.error(t.voiceProfiles.selectAudioFile)
       return
     }
 
     setUploadingFile(true)
 
-    try {
+    try 
+    {
       const audioDuration = await getAudioDuration(file)
 
-      if (audioDuration < MIN_RECORDING_DURATION) {
-        toast.error(language === 'fr'
-          ? 'Audio trop court (minimum 3 secondes)'
-          : 'Audio too short (minimum 3 seconds)')
+      if (audioDuration < MIN_RECORDING_DURATION) 
+      {
+        toast.error(t.voiceProfiles.audioTooShort)
         setUploadingFile(false)
         return
       }
 
-      const rawDataUrl = await new Promise<string>((resolve, reject) => {
+      const rawDataUrl = await new Promise<string>((resolve, reject) => 
+      {
         const reader = new FileReader()
         reader.onloadend = () => resolve(reader.result as string)
         reader.onerror = reject
@@ -453,13 +401,15 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
       let audioDataUrl = rawDataUrl
       let finalDuration = audioDuration
-      if (audioDuration > 30000) {
-        toast.info(language === 'fr'
-          ? 'Fichier trop long — extraction des 30 secondes centrales…'
-          : 'File too long — extracting middle 30 seconds…')
+      if (audioDuration > 30000) 
+      {
+        toast.info(t.voiceProfiles.fileTooLong)
         const { dataUrl, trimmed } = await trimAudioMiddle30s(rawDataUrl)
         audioDataUrl = dataUrl
-        if (trimmed) finalDuration = 30000
+        if (trimmed) 
+        {
+          finalDuration = 30000
+        }
       }
 
       const newProfile: VoiceProfile = {
@@ -471,19 +421,26 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         duration: finalDuration
       }
 
-      if (currentSettings.mistralApiKey) {
-        toast.info(language === 'fr' ? 'Enregistrement de la voix chez Mistral...' : 'Registering voice with Mistral...')
+      if (currentSettings.mistralApiKey) 
+      {
+        toast.info(t.voiceProfiles.registeringVoice)
         const ext = file.type.includes('wav') ? 'wav'
           : file.type.includes('mp3') || file.type.includes('mpeg') ? 'mp3'
-          : file.type.includes('ogg') ? 'ogg'
-          : file.type.includes('flac') ? 'flac'
-          : 'wav'
+            : file.type.includes('ogg') ? 'ogg'
+              : file.type.includes('flac') ? 'flac'
+                : 'wav'
         const { voiceId, syncError, errorDetail } = await registerVoiceWithMistral(audioDataUrl, newProfile.name, ext)
-        if (voiceId) {
+        if (voiceId) 
+        {
           newProfile.mistralVoiceId = voiceId
-        } else if (syncError) {
+        }
+        else if (syncError) 
+        {
           newProfile.mistralSyncError = syncError
-          if (errorDetail) toast.warning(errorDetail, { description: 'Mistral API' })
+          if (errorDetail) 
+          {
+            toast.warning(errorDetail, { description: 'Mistral API' })
+          }
         }
       }
 
@@ -492,54 +449,66 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       setProfileName('')
       setUploadingFile(false)
 
-      toast.success(language === 'fr'
-        ? `Profil vocal "${newProfile.name}" créé avec succès`
-        : `Voice profile "${newProfile.name}" created successfully`)
-    } catch {
-      toast.error(language === 'fr' ? 'Erreur lors du téléchargement' : 'Upload error')
+      toast.success(t.voiceProfiles.profileCreatedNamed(newProfile.name))
+    }
+    catch 
+    {
+      toast.error(t.voiceProfiles.uploadError)
       setUploadingFile(false)
     }
   }
 
-  const deleteProfile = async (profileId: string) => {
+  const deleteProfile = async (profileId: string) => 
+  {
     const profile = (profiles || []).find(p => p.id === profileId)
 
-    if (profile?.mistralVoiceId && currentSettings.mistralApiKey) {
-      try {
+    if (profile?.mistralVoiceId && currentSettings.mistralApiKey) 
+    {
+      try 
+      {
         await fetch(`https://api.mistral.ai/v1/audio/voices/${profile.mistralVoiceId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${currentSettings.mistralApiKey}` }
         })
         console.log('Voice deleted from Mistral:', profile.mistralVoiceId)
-      } catch (error) {
+      }
+      catch (error) 
+      {
         console.warn('Failed to delete voice from Mistral:', error)
       }
     }
 
-    setProfiles((current) => {
+    setProfiles((current) => 
+    {
       const updated = (current || []).filter(p => p.id !== profileId)
       return updated
     })
 
-    if (selectedProfile === profileId) {
+    if (selectedProfile === profileId) 
+    {
       setSelectedProfile(null)
     }
 
-    toast.success(language === 'fr' ? 'Profil vocal supprimé' : 'Voice profile deleted')
+    toast.success(t.voiceProfiles.deleted)
   }
 
-  const selectProfile = (profileId: string | null) => {
+  const selectProfile = (profileId: string | null) => 
+  {
     setSelectedProfile(profileId)
-    if (profileId === null) {
-      toast.info(language === 'fr' 
-        ? 'Voix système par défaut activée' 
-        : 'Default system voice activated')
+    if (profileId === null) 
+    {
+      toast.info(t.voiceProfiles.defaultSystemVoice)
     }
   }
 
-  const registerVoiceWithMistral = async (audioDataUrl: string, name: string, ext: string): Promise<{ voiceId: string | null; syncError: 'plan' | 'error' | null; errorDetail: string | null }> => {
-    if (!currentSettings.mistralApiKey) return { voiceId: null, syncError: null, errorDetail: null }
-    try {
+  const registerVoiceWithMistral = async (audioDataUrl: string, name: string, ext: string): Promise<{ voiceId: string | null; syncError: 'plan' | 'error' | null; errorDetail: string | null }> => 
+  {
+    if (!currentSettings.mistralApiKey) 
+    {
+      return { voiceId: null, syncError: null, errorDetail: null }
+    }
+    try 
+    {
       const base64Audio = audioDataUrl.split(',')[1]
       const response = await fetch('https://api.mistral.ai/v1/audio/voices', {
         method: 'POST',
@@ -553,55 +522,76 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           sample_filename: `voice-${Date.now()}.${ext}`
         })
       })
-      if (!response.ok) {
+      if (!response.ok) 
+      {
         const errorText = await response.text()
         console.warn('Mistral voice registration failed:', errorText)
         let errorDetail: string | null = null
-        try { errorDetail = JSON.parse(errorText)?.detail ?? errorText } catch { errorDetail = errorText }
+        try 
+        {
+          errorDetail = JSON.parse(errorText)?.detail ?? errorText 
+        }
+        catch 
+        {
+          errorDetail = errorText 
+        }
         const isPlanError = response.status === 403 && errorText.toLowerCase().includes('paid plan')
         return { voiceId: null, syncError: isPlanError ? 'plan' : 'error', errorDetail }
       }
       const data = await response.json()
       console.log('Voice registered with Mistral, id:', data.id)
       return { voiceId: data.id as string, syncError: null, errorDetail: null }
-    } catch (error) {
+    }
+    catch (error) 
+    {
       console.warn('Failed to register voice with Mistral:', error)
       return { voiceId: null, syncError: 'error', errorDetail: String(error) }
     }
   }
 
-  const retryVoiceRegistration = async (profile: VoiceProfile) => {
+  const retryVoiceRegistration = async (profile: VoiceProfile) => 
+  {
     setRetryingVoice(profile.id)
-    try {
+    try 
+    {
       const mimeMatch = profile.audioDataUrl.match(/data:audio\/([^;]+)/)
       const ext = mimeMatch?.[1] === 'mpeg' ? 'mp3' : (mimeMatch?.[1] ?? 'wav')
       const { voiceId, syncError, errorDetail } = await registerVoiceWithMistral(profile.audioDataUrl, profile.name, ext)
-      if (voiceId) {
+      if (voiceId) 
+      {
         setProfiles(current => (current || []).map(p =>
           p.id === profile.id ? { ...p, mistralVoiceId: voiceId, mistralSyncError: undefined } : p
         ))
-        toast.success(language === 'fr' ? 'Voix synchronisée avec Mistral' : 'Voice synced with Mistral')
-      } else {
+        toast.success(t.voiceProfiles.syncedMistral)
+      }
+      else 
+      {
         setProfiles(current => (current || []).map(p =>
           p.id === profile.id ? { ...p, mistralSyncError: syncError ?? 'error' } : p
         ))
-        toast.error(errorDetail
-          ?? (language === 'fr' ? 'Échec de la synchronisation avec Mistral' : 'Failed to sync with Mistral'),
-          { description: language === 'fr' ? 'Erreur Mistral API' : 'Mistral API error' }
+        toast.error(errorDetail ?? t.voiceProfiles.syncFailed,
+          { description: t.voiceProfiles.syncError }
         )
       }
-    } finally {
+    }
+    finally 
+    {
       setRetryingVoice(null)
     }
   }
 
 
-  const playPreview = (audioDataUrl: string) => {
-    if (previewAudio === audioDataUrl) {
+  const playPreview = (audioDataUrl: string) => 
+  {
+    if (previewAudio === audioDataUrl) 
+    {
       audioRef.current?.pause()
       setPreviewAudio(null)
-    } else {
-      if (audioRef.current) {
+    }
+    else 
+    {
+      if (audioRef.current) 
+      {
         audioRef.current.src = audioDataUrl
         audioRef.current.play()
         setPreviewAudio(audioDataUrl)
@@ -610,16 +600,18 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     }
   }
 
-  const testVoice = async (profile: VoiceProfile) => {
-    if (!currentSettings.mistralApiKey) {
-      toast.error(language === 'fr' 
-        ? 'Veuillez configurer votre clé API Mistral dans les paramètres pour tester la voix'
-        : 'Please configure your Mistral API key in settings to test the voice')
+  const testVoice = async (profile: VoiceProfile) => 
+  {
+    if (!currentSettings.mistralApiKey) 
+    {
+      toast.error(t.voiceProfiles.testVoiceNoKey)
       return
     }
 
-    if (testingVoice === profile.id) {
-      if (testAudioRef.current) {
+    if (testingVoice === profile.id) 
+    {
+      if (testAudioRef.current) 
+      {
         testAudioRef.current.pause()
         testAudioRef.current.src = ''
       }
@@ -629,19 +621,17 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
     setTestingVoice(profile.id)
     
-    const testText = language === 'fr'
-      ? `Bonjour, je suis ${currentSettings.firstName || 'Marie'}. Voici un aperçu de ma voix clonée.`
-      : `Hello, I am ${currentSettings.firstName || 'John'}. This is a preview of my cloned voice.`
+    const testText = t.voiceProfiles.testText(currentSettings.firstName || t.userProfile.defaultFirstName)
 
-    try {
-      toast.info(language === 'fr' 
-        ? 'Génération de l\'aperçu vocal...' 
-        : 'Generating voice preview...')
+    try 
+    {
+      toast.info(t.voiceProfiles.generatingVoicePreview)
 
       const speed = 0.9
 
       const base64Audio = profile.audioDataUrl.split(',')[1]
-      if (!base64Audio) {
+      if (!base64Audio) 
+      {
         throw new Error('Invalid audio data')
       }
 
@@ -662,7 +652,8 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         body: JSON.stringify(requestBody)
       })
 
-      if (!ttsResponse.ok) {
+      if (!ttsResponse.ok) 
+      {
         const errorText = await ttsResponse.text().catch(() => '')
         console.error('Mistral TTS test error:', {
           status: ttsResponse.status,
@@ -675,43 +666,50 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       const audioBlob = await ttsResponse.blob()
       const audioUrl = URL.createObjectURL(audioBlob)
 
-      if (testAudioRef.current) {
+      if (testAudioRef.current) 
+      {
         testAudioRef.current.src = audioUrl
         testAudioRef.current.volume = 1
         
-        testAudioRef.current.onended = () => {
+        testAudioRef.current.onended = () => 
+        {
           URL.revokeObjectURL(audioUrl)
           setTestingVoice(null)
         }
 
-        testAudioRef.current.onerror = () => {
+        testAudioRef.current.onerror = () => 
+        {
           URL.revokeObjectURL(audioUrl)
           setTestingVoice(null)
-          toast.error(language === 'fr' ? 'Erreur de lecture audio' : 'Audio playback error')
+          toast.error(t.voiceProfiles.audioPlaybackError)
         }
 
         await testAudioRef.current.play()
-        toast.success(language === 'fr' ? 'Lecture de l\'aperçu vocal' : 'Playing voice preview')
+        toast.success(t.voiceProfiles.playingPreview)
       }
-    } catch (error) {
+    }
+    catch (error) 
+    {
       console.error('Voice test error:', error)
       setTestingVoice(null)
-      toast.error(language === 'fr' 
-        ? 'Erreur lors du test de la voix. Vérifiez votre clé API Mistral.'
-        : 'Error testing voice. Check your Mistral API key.')
+      toast.error(t.voiceProfiles.voiceTestError)
     }
   }
 
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+  const cancelRecording = () => 
+  {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') 
+    {
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
     }
     
-    if (recordingTimerRef.current) {
+    if (recordingTimerRef.current) 
+    {
       clearTimeout(recordingTimerRef.current)
     }
-    if (progressIntervalRef.current) {
+    if (progressIntervalRef.current) 
+    {
       clearInterval(progressIntervalRef.current)
     }
     
@@ -720,26 +718,30 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     audioChunksRef.current = []
   }
 
-  const handleForceRefresh = async () => {
-    toast.info(language === 'fr' ? 'Vidage du cache en cours…' : 'Clearing cache…')
-    try {
-      if ('serviceWorker' in navigator) {
+  const handleForceRefresh = async () => 
+  {
+    toast.info(t.appSettings.clearingCache)
+    try 
+    {
+      if ('serviceWorker' in navigator) 
+      {
         const registrations = await navigator.serviceWorker.getRegistrations()
         await Promise.all(registrations.map(r => r.unregister()))
       }
-      if ('caches' in window) {
+      if ('caches' in window) 
+      {
         const keys = await caches.keys()
         await Promise.all(keys.map(k => caches.delete(k)))
       }
-    } finally {
+    }
+    finally 
+    {
       window.location.reload()
     }
   }
 
-  const userName = currentSettings.firstName || (language === 'fr' ? 'Marie' : 'John')
-  const sampleText = language === 'fr'
-    ? `Bonjour, je m'appelle ${userName}. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer.`
-    : `Hello, my name is ${userName}. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself.`
+  const userName = currentSettings.firstName || t.userProfile.defaultFirstName
+  const sampleText = t.userProfile.sampleText(userName)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-3 sm:p-6">
@@ -757,16 +759,14 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {language === 'fr' ? 'Paramètres' : 'Settings'}
+              {t.settings.title}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {language === 'fr' 
-                ? 'Configurez votre profil et vos préférences' 
-                : 'Configure your profile and preferences'}
+              {t.appSettings.subtitle}
             </p>
           </div>
           <Button onClick={onClose} variant="outline">
-            {language === 'fr' ? 'Fermer' : 'Close'}
+            {t.appSettings.close}
           </Button>
         </div>
 
@@ -774,18 +774,16 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Translate size={24} weight="fill" className="text-primary" />
-              {language === 'fr' ? 'Langue de l\'interface' : 'Interface Language'}
+              {t.appSettings.interfaceLanguageTitle}
             </CardTitle>
             <CardDescription>
-              {language === 'fr' 
-                ? 'Sélectionnez la langue de l\'application' 
-                : 'Select the application language'}
+              {t.appSettings.interfaceLanguageDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="language-select">
-                {language === 'fr' ? 'Langue' : 'Language'}
+                {t.language.label}
               </Label>
               <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
                 <SelectTrigger id="language-select">
@@ -797,9 +795,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                {language === 'fr' 
-                  ? 'Cela affectera toute l\'interface et les réponses générées' 
-                  : 'This will affect the entire interface and generated responses'}
+                {t.appSettings.interfaceLanguageHint}
               </p>
             </div>
           </CardContent>
@@ -809,51 +805,49 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User size={24} weight="fill" className="text-primary" />
-              {language === 'fr' ? 'Profil utilisateur' : 'User Profile'}
+              {t.userProfile.title}
             </CardTitle>
             <CardDescription>
-              {language === 'fr' 
-                ? 'Informations personnelles pour personnaliser votre expérience' 
-                : 'Personal information to personalize your experience'}
+              {t.userProfile.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">
-                  {language === 'fr' ? 'Prénom' : 'First Name'}
+                  {t.userProfile.firstName}
                 </Label>
                 <Input
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder={language === 'fr' ? 'Entrez votre prénom' : 'Enter your first name'}
+                  placeholder={t.userProfile.firstNamePlaceholder}
                 />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="lastName">
-                  {language === 'fr' ? 'Nom' : 'Last Name'}
+                  {t.userProfile.lastName}
                 </Label>
                 <Input
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder={language === 'fr' ? 'Entrez votre nom' : 'Enter your last name'}
+                  placeholder={t.userProfile.lastNamePlaceholder}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="age">
-                {language === 'fr' ? 'Âge' : 'Age'}
+                {t.userProfile.age}
               </Label>
               <Input
                 id="age"
                 type="number"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                placeholder={language === 'fr' ? 'Entrez votre âge' : 'Enter your age'}
+                placeholder={t.userProfile.agePlaceholder}
                 min="0"
                 max="150"
               />
@@ -861,31 +855,29 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="communicationStyle">
-                {language === 'fr' ? 'Style de communication préféré' : 'Preferred Communication Style'}
+                {t.userProfile.communicationStyle}
               </Label>
               <Select value={communicationStyle} onValueChange={(value) => setCommunicationStyle(value as UserSettings['preferredCommunicationStyle'])}>
                 <SelectTrigger id="communicationStyle">
-                  <SelectValue placeholder={language === 'fr' ? 'Sélectionnez un style' : 'Select a style'} />
+                  <SelectValue placeholder={t.userProfile.selectStyle} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="formal">
-                    {language === 'fr' ? 'Formel' : 'Formal'}
+                    {t.userProfile.formal}
                   </SelectItem>
                   <SelectItem value="casual">
-                    {language === 'fr' ? 'Décontracté' : 'Casual'}
+                    {t.userProfile.casual}
                   </SelectItem>
                   <SelectItem value="professional">
-                    {language === 'fr' ? 'Professionnel' : 'Professional'}
+                    {t.userProfile.professional}
                   </SelectItem>
                   <SelectItem value="friendly">
-                    {language === 'fr' ? 'Amical' : 'Friendly'}
+                    {t.userProfile.friendly}
                   </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                {language === 'fr' 
-                  ? 'Cela influencera le ton des suggestions de réponses générées' 
-                  : 'This will influence the tone of generated response suggestions'}
+                {t.userProfile.communicationStyleHint}
               </p>
             </div>
 
@@ -894,52 +886,46 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             <div className="space-y-2">
               <Label htmlFor="medicalConditions" className="flex items-center gap-2">
                 <Heart size={18} weight="fill" className="text-accent" />
-                {language === 'fr' ? 'Conditions médicales' : 'Medical Conditions'}
+                {t.userProfile.medicalConditions}
               </Label>
               <Textarea
                 id="medicalConditions"
                 value={medicalConditions}
                 onChange={(e) => setMedicalConditions(e.target.value)}
-                placeholder={language === 'fr' 
-                  ? 'Entrez toute condition médicale pertinente pour les conversations...' 
-                  : 'Enter any medical conditions relevant to conversations...'}
+                placeholder={t.userProfile.medicalConditionsPlaceholder}
                 rows={3}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="allergies">
-                {language === 'fr' ? 'Allergies' : 'Allergies'}
+                {t.userProfile.allergies}
               </Label>
               <Textarea
                 id="allergies"
                 value={allergies}
                 onChange={(e) => setAllergies(e.target.value)}
-                placeholder={language === 'fr' 
-                  ? 'Listez vos allergies (nourriture, médicaments, etc.)...' 
-                  : 'List your allergies (food, medications, etc.)...'}
+                placeholder={t.userProfile.allergiesPlaceholder}
                 rows={2}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="specialNeeds">
-                {language === 'fr' ? 'Besoins spéciaux' : 'Special Needs'}
+                {t.userProfile.specialNeeds}
               </Label>
               <Textarea
                 id="specialNeeds"
                 value={specialNeeds}
                 onChange={(e) => setSpecialNeeds(e.target.value)}
-                placeholder={language === 'fr' 
-                  ? 'Toute information supplémentaire utile pour la communication...' 
-                  : 'Any additional information useful for communication...'}
+                placeholder={t.userProfile.specialNeedsPlaceholder}
                 rows={3}
               />
             </div>
             
             <Button onClick={handleSaveProfile} className="w-full sm:w-auto">
               <FloppyDisk size={20} className="mr-2" weight="fill" />
-              {language === 'fr' ? 'Enregistrer le profil' : 'Save Profile'}
+              {t.userProfile.save}
             </Button>
           </CardContent>
         </Card>
@@ -948,12 +934,10 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span className="text-primary text-2xl">⌨️</span>
-              {language === 'fr' ? 'Raccourcis clavier' : 'Keyboard Shortcuts'}
+              {t.shortcuts.title}
             </CardTitle>
             <CardDescription>
-              {language === 'fr' 
-                ? 'Configurez les touches pour sélectionner rapidement les réponses suggérées' 
-                : 'Configure keys to quickly select suggested responses'}
+              {t.shortcuts.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -961,14 +945,16 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               {[0, 1, 2, 3].map((index) => (
                 <div key={index} className="space-y-2">
                   <Label htmlFor={`shortcut-${index}`}>
-                    {language === 'fr' ? 'Réponse' : 'Response'} {index + 1}
+                    {t.shortcuts.responseLabel} {index + 1}
                   </Label>
                   <Input
                     id={`shortcut-${index}`}
                     value={keyboardShortcuts[index]}
-                    onChange={(e) => {
+                    onChange={(e) => 
+{
                       const newKey = e.target.value.toLowerCase().slice(-1)
-                      if (newKey && /^[a-z]$/.test(newKey)) {
+                      if (newKey && /^[a-z]$/.test(newKey)) 
+{
                         const newShortcuts: [string, string, string, string] = [...keyboardShortcuts] as [string, string, string, string]
                         newShortcuts[index] = newKey
                         setKeyboardShortcuts(newShortcuts)
@@ -983,9 +969,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             </div>
             <Alert className="bg-muted/50">
               <AlertDescription>
-                {language === 'fr' 
-                  ? 'Utilisez ces touches pour sélectionner rapidement les suggestions de réponses sur la page principale.' 
-                  : 'Use these keys to quickly select response suggestions on the main page.'}
+                {t.shortcuts.hint}
               </AlertDescription>
             </Alert>
 
@@ -993,29 +977,31 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="recordingShortcut" className="font-medium">
-                {language === 'fr' ? 'Touche de démarrage de l\'enregistrement' : 'Recording start key'}
+                {t.shortcuts.recordingStartKey}
               </Label>
               <p className="text-sm text-muted-foreground">
-                {language === 'fr'
-                  ? 'Appuyez sur cette touche (hors champ de saisie) pour démarrer / arrêter l\'enregistrement.'
-                  : 'Press this key (outside input fields) to start / stop recording.'}
+                {t.shortcuts.recordingStartKeyDesc}
               </p>
               <Input
                 id="recordingShortcut"
                 readOnly
                 value={recordingShortcut === ' '
-                  ? (language === 'fr' ? 'Espace' : 'Space')
+                  ? t.shortcuts.spaceKey
                   : recordingShortcut.length === 1
                     ? recordingShortcut.toUpperCase()
                     : recordingShortcut}
-                onKeyDown={(e) => {
+                onKeyDown={(e) => 
+{
                   e.preventDefault()
-                  if (e.key === 'Escape' || e.key === 'Tab') return
+                  if (e.key === 'Escape' || e.key === 'Tab') 
+{
+return
+}
                   setRecordingShortcut(e.key)
                 }}
                 className="text-center font-semibold text-lg max-w-[160px] cursor-pointer"
-                placeholder={language === 'fr' ? 'Cliquez puis appuyez' : 'Click then press'}
-                title={language === 'fr' ? 'Cliquez sur ce champ puis appuyez sur la touche souhaitée' : 'Click this field then press the desired key'}
+                placeholder={t.shortcuts.clickThenPress}
+                title={t.shortcuts.clickThenPressTitle}
               />
             </div>
           </CardContent>
@@ -1025,12 +1011,10 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Key size={24} weight="fill" className="text-primary" />
-              {language === 'fr' ? 'API Mistral' : 'Mistral API'}
+              {t.mistralApi.title}
             </CardTitle>
             <CardDescription>
-              {language === 'fr' 
-                ? 'Connectez votre compte Mistral pour les tâches d\'IA avancées' 
-                : 'Connect your Mistral account for advanced AI tasks'}
+              {t.mistralApi.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1038,27 +1022,23 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               <Alert className="bg-accent/10 border-accent/30">
                 <CheckCircle size={20} weight="fill" className="text-accent" />
                 <AlertDescription className="ml-2">
-                  <strong>{language === 'fr' ? 'Connecté' : 'Connected'}</strong>
+                  <strong>{t.mistralApi.connected}</strong>
                   <br />
-                  {language === 'fr' 
-                    ? 'Votre clé API Mistral est configurée et active' 
-                    : 'Your Mistral API key is configured and active'}
+                  {t.mistralApi.connectedAlert}
                 </AlertDescription>
               </Alert>
             ) : (
               <Alert>
                 <Warning size={20} weight="fill" />
                 <AlertDescription className="ml-2">
-                  {language === 'fr' 
-                    ? 'Aucune clé API configurée. Les suggestions de réponses utilisent l\'API Spark par défaut.' 
-                    : 'No API key configured. Response suggestions use the default Spark API.'}
+                  {t.mistralApi.noApiKeyAlert}
                 </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
               <Label htmlFor="mistralApiKey">
-                {language === 'fr' ? 'Clé API Mistral' : 'Mistral API Key'}
+                {t.mistralApi.keyLabel}
               </Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1067,7 +1047,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                     type={showApiKey ? 'text' : 'password'}
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={language === 'fr' ? 'sk-...' : 'sk-...'}
+                    placeholder="sk-..."
                     disabled={currentSettings.mistralConnected}
                   />
                   <Button
@@ -1082,9 +1062,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                {language === 'fr' 
-                  ? 'Obtenez votre clé API sur console.mistral.ai' 
-                  : 'Get your API key from console.mistral.ai'}
+                {t.mistralApi.getKeyHint}
               </p>
             </div>
 
@@ -1092,7 +1070,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               {currentSettings.mistralConnected ? (
                 <Button onClick={handleDisconnectMistral} variant="outline">
                   <X size={20} className="mr-2" />
-                  {language === 'fr' ? 'Déconnecter' : 'Disconnect'}
+                  {t.mistralApi.disconnect}
                 </Button>
               ) : (
                 <Button 
@@ -1102,12 +1080,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                   {testingConnection ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      {language === 'fr' ? 'Test en cours...' : 'Testing...'}
+                      {t.mistralApi.testing}
                     </>
                   ) : (
                     <>
                       <CheckCircle size={20} className="mr-2" weight="fill" />
-                      {language === 'fr' ? 'Tester la connexion' : 'Test Connection'}
+                      {t.mistralApi.testConnection}
                     </>
                   )}
                 </Button>
@@ -1118,27 +1096,27 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="contextTurns">
-                {language === 'fr' 
-                  ? 'Échanges envoyés à Mistral pour le contexte' 
-                  : 'Exchanges sent to Mistral for context'}
+                {t.mistralApi.contextTurnsLabel}
               </Label>
               <div className="flex items-center gap-3">
                 <Input
                   id="contextTurns"
                   type="number"
                   value={contextTurns}
-                  onChange={(e) => {
+                  onChange={(e) => 
+{
                     const val = parseInt(e.target.value)
-                    if (!isNaN(val) && val >= 1 && val <= 100) setContextTurns(val)
+                    if (!isNaN(val) && val >= 1 && val <= 100) 
+{
+setContextTurns(val)
+}
                   }}
                   min={1}
                   max={100}
                   className="w-24"
                 />
                 <p className="text-sm text-muted-foreground">
-                  {language === 'fr' 
-                    ? 'Nombre de derniers échanges inclus dans chaque requête (1–100)' 
-                    : 'Number of recent exchanges included in each request (1–100)'}
+                  {t.mistralApi.contextTurnsDesc}
                 </p>
               </div>
             </div>
@@ -1151,25 +1129,23 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Microphone size={24} weight="fill" className="text-primary" />
-              {language === 'fr' ? 'Voix personnalisée' : 'Voice Cloning'}
+              {t.voiceProfiles.title}
             </CardTitle>
             <CardDescription>
-              {language === 'fr' 
-                ? 'Enregistrez ou téléchargez un échantillon de votre voix' 
-                : 'Record or upload a sample of your voice'}
+              {t.voiceProfiles.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="profile-name">
-                  {language === 'fr' ? 'Nom du profil vocal' : 'Voice Profile Name'}
+                  {t.voiceProfiles.nameLabel}
                 </Label>
                 <Input
                   id="profile-name"
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  placeholder={language === 'fr' ? 'Ex: Ma voix' : 'Ex: My Voice'}
+                  placeholder={t.voiceProfiles.namePlaceholder}
                   disabled={recordingState !== 'idle' || uploadingFile}
                 />
               </div>
@@ -1178,7 +1154,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 <div className="space-y-3">
                   <Alert className="bg-accent/10 border-accent/30">
                     <AlertDescription className="text-sm">
-                      <strong>{language === 'fr' ? '📝 Texte à lire :' : '📝 Text to read:'}</strong>
+                      <strong>{t.voiceProfiles.textToRead}</strong>
                       <p className="mt-2 leading-relaxed">{sampleText}</p>
                     </AlertDescription>
                   </Alert>
@@ -1190,7 +1166,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                       className="flex-1"
                     >
                       <Microphone size={20} className="mr-2" weight="fill" />
-                      {language === 'fr' ? 'Enregistrer' : 'Record'}
+                      {t.voiceProfiles.record}
                     </Button>
                     <Button 
                       onClick={() => fileInputRef.current?.click()}
@@ -1199,7 +1175,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                       className="flex-1"
                     >
                       <CloudArrowUp size={20} className="mr-2" weight="fill" />
-                      {language === 'fr' ? 'Télécharger' : 'Upload'}
+                      {t.voiceProfiles.upload}
                     </Button>
                   </div>
                 </div>
@@ -1213,7 +1189,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 >
                   <Alert className="bg-accent/10 border-accent/30">
                     <AlertDescription className="text-sm">
-                      <strong>{language === 'fr' ? '📝 Lisez ce texte :' : '📝 Read this text:'}</strong>
+                      <strong>{t.voiceProfiles.readThisText}</strong>
                       <p className="mt-2 leading-relaxed">{sampleText}</p>
                     </AlertDescription>
                   </Alert>
@@ -1232,18 +1208,18 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                     <Progress value={recordingProgress} className="h-2" />
                     
                     <p className="text-center text-sm text-muted-foreground">
-                      {language === 'fr' ? 'Enregistrement en cours...' : 'Recording in progress...'}
+                      {t.voiceProfiles.recordingInProgress}
                     </p>
                   </div>
 
                   <div className="flex justify-center gap-3">
                     <Button onClick={stopRecording} variant="default">
                       <Check size={20} className="mr-2" />
-                      {language === 'fr' ? 'Terminer' : 'Finish'}
+                      {t.voiceProfiles.finish}
                     </Button>
                     <Button onClick={cancelRecording} variant="outline">
                       <X size={20} className="mr-2" />
-                      {language === 'fr' ? 'Annuler' : 'Cancel'}
+                      {t.voiceProfiles.cancel}
                     </Button>
                   </div>
                 </motion.div>
@@ -1257,7 +1233,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 >
                   <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
                   <p className="text-muted-foreground">
-                    {language === 'fr' ? 'Traitement de l\'enregistrement...' : 'Processing recording...'}
+                    {t.voiceProfiles.processing}
                   </p>
                 </motion.div>
               )}
@@ -1272,7 +1248,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                     <Check size={48} weight="bold" className="text-accent" />
                   </div>
                   <p className="text-lg font-semibold">
-                    {language === 'fr' ? 'Profil vocal créé !' : 'Voice profile created!'}
+                    {t.voiceProfiles.profileCreated}
                   </p>
                 </motion.div>
               )}
@@ -1287,10 +1263,10 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                     <X size={48} weight="bold" className="text-destructive" />
                   </div>
                   <p className="text-lg font-semibold text-destructive">
-                    {language === 'fr' ? 'Erreur d\'enregistrement' : 'Recording error'}
+                    {t.voiceProfiles.recordingError}
                   </p>
                   <Button onClick={() => setRecordingState('idle')} variant="outline">
-                    {language === 'fr' ? 'Réessayer' : 'Try Again'}
+                    {t.voiceProfiles.tryAgain}
                   </Button>
                 </motion.div>
               )}
@@ -1303,7 +1279,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 >
                   <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
                   <p className="text-muted-foreground">
-                    {language === 'fr' ? 'Téléchargement en cours...' : 'Uploading...'}
+                    {t.voiceProfiles.uploading}
                   </p>
                 </motion.div>
               )}
@@ -1314,7 +1290,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             {currentProfiles.length > 0 && (
               <div className="space-y-3">
                 <h3 className="font-semibold text-lg">
-                  {language === 'fr' ? 'Profils vocaux enregistrés' : 'Saved Voice Profiles'}
+                  {t.voiceProfiles.savedProfiles}
                 </h3>
                 <ScrollArea className="h-64 rounded-md border p-4">
                   <div className="space-y-2">
@@ -1345,7 +1321,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                                 </Badge>
                                 {selectedProfile === profile.id && (
                                   <Badge className="bg-accent text-xs">
-                                    {language === 'fr' ? 'Actif' : 'Active'}
+                                    {t.voiceProfiles.active}
                                   </Badge>
                                 )}
                                 {currentSettings.mistralApiKey && !profile.mistralVoiceId && (
@@ -1356,8 +1332,8 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                                   }`}>
                                     <Warning size={10} weight="fill" />
                                     {profile.mistralSyncError === 'plan'
-                                      ? (language === 'fr' ? 'Plan payant requis' : 'Paid plan required')
-                                      : (language === 'fr' ? 'Non sync. Mistral' : 'Not synced')}
+                                      ? t.voiceProfiles.paidPlanRequired
+                                      : t.voiceProfiles.notSynced}
                                   </Badge>
                                 )}
                               </div>
@@ -1370,13 +1346,14 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                             <Button
                               size="sm"
                               variant={previewAudio === profile.audioDataUrl ? 'default' : 'ghost'}
-                              onClick={(e) => {
+                              onClick={(e) => 
+{
                                 e.stopPropagation()
                                 playPreview(profile.audioDataUrl)
                               }}
                               title={previewAudio === profile.audioDataUrl
-                                ? (language === 'fr' ? 'Arrêter la lecture' : 'Stop playback')
-                                : (language === 'fr' ? 'Écouter l\'enregistrement original' : 'Play original recording')}
+                                ? t.voiceProfiles.stopPlayback
+                                : t.voiceProfiles.playOriginal}
                             >
                               {previewAudio === profile.audioDataUrl
                                 ? <Stop size={16} weight="fill" />
@@ -1385,12 +1362,13 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                             <Button
                               size="sm"
                               variant={testingVoice === profile.id ? 'default' : 'ghost'}
-                              onClick={(e) => {
+                              onClick={(e) => 
+{
                                 e.stopPropagation()
                                 testVoice(profile)
                               }}
                               disabled={testingVoice !== null && testingVoice !== profile.id}
-                              title={language === 'fr' ? 'Tester la voix clonée avec Mistral TTS' : 'Test cloned voice with Mistral TTS'}
+                              title={t.voiceProfiles.testClonedVoice}
                             >
                               <Waveform size={16} weight={testingVoice === profile.id ? 'fill' : 'regular'} className={testingVoice === profile.id ? 'animate-pulse' : ''} />
                             </Button>
@@ -1398,12 +1376,13 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={(e) => {
+                                onClick={(e) => 
+{
                                   e.stopPropagation()
                                   retryVoiceRegistration(profile)
                                 }}
                                 disabled={retryingVoice !== null}
-                                title={language === 'fr' ? 'Réessayer la synchronisation avec Mistral' : 'Retry Mistral sync'}
+                                title={t.voiceProfiles.retrySyncMistral}
                                 className="text-orange-500 hover:text-orange-600"
                               >
                                 <ArrowsClockwise size={16} className={retryingVoice === profile.id ? 'animate-spin' : ''} />
@@ -1412,11 +1391,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => {
+                              onClick={(e) => 
+{
                                 e.stopPropagation()
                                 deleteProfile(profile.id)
                               }}
-                              title={language === 'fr' ? 'Supprimer le profil' : 'Delete profile'}
+                              title={t.voiceProfiles.deleteProfile}
                             >
                               <Trash size={16} className="text-destructive" />
                             </Button>
@@ -1434,12 +1414,10 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ArrowsClockwise size={20} />
-              {language === 'fr' ? 'Application' : 'Application'}
+              {t.appSettings.applicationTitle}
             </CardTitle>
             <CardDescription>
-              {language === 'fr'
-                ? 'Forcer le rechargement complet sans cache en cas de problème'
-                : 'Force a full reload without cache if something seems broken'}
+              {t.appSettings.applicationDesc}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1449,7 +1427,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               onClick={handleForceRefresh}
             >
               <ArrowsClockwise size={16} />
-              {language === 'fr' ? 'Vider le cache et recharger' : 'Clear cache and reload'}
+              {t.appSettings.clearCacheAndReload}
             </Button>
           </CardContent>
         </Card>

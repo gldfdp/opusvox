@@ -5,11 +5,13 @@ import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal"
 
 import { cn } from "@/lib/utils"
 
-function Breadcrumb({ ...props }: ComponentProps<"nav">) {
+function Breadcrumb({ ...props }: ComponentProps<"nav">) 
+{
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />
 }
 
-function BreadcrumbList({ className, ...props }: ComponentProps<"ol">) {
+function BreadcrumbList({ className, ...props }: ComponentProps<"ol">) 
+{
   return (
     <ol
       data-slot="breadcrumb-list"
@@ -22,7 +24,8 @@ function BreadcrumbList({ className, ...props }: ComponentProps<"ol">) {
   )
 }
 
-function BreadcrumbItem({ className, ...props }: ComponentProps<"li">) {
+function BreadcrumbItem({ className, ...props }: ComponentProps<"li">) 
+{
   return (
     <li
       data-slot="breadcrumb-item"
@@ -38,7 +41,8 @@ function BreadcrumbLink({
   ...props
 }: ComponentProps<"a"> & {
   asChild?: boolean
-}) {
+}) 
+{
   const Comp = asChild ? Slot : "a"
 
   return (
@@ -50,7 +54,8 @@ function BreadcrumbLink({
   )
 }
 
-function BreadcrumbPage({ className, ...props }: ComponentProps<"span">) {
+function BreadcrumbPage({ className, ...props }: ComponentProps<"span">) 
+{
   return (
     <span
       data-slot="breadcrumb-page"
@@ -67,7 +72,8 @@ function BreadcrumbSeparator({
   children,
   className,
   ...props
-}: ComponentProps<"li">) {
+}: ComponentProps<"li">) 
+{
   return (
     <li
       data-slot="breadcrumb-separator"
@@ -84,7 +90,8 @@ function BreadcrumbSeparator({
 function BreadcrumbEllipsis({
   className,
   ...props
-}: ComponentProps<"span">) {
+}: ComponentProps<"span">) 
+{
   return (
     <span
       data-slot="breadcrumb-ellipsis"

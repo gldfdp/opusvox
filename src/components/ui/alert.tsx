@@ -23,7 +23,8 @@ function Alert({
   className,
   variant,
   ...props
-}: ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+}: ComponentProps<"div"> & VariantProps<typeof alertVariants>) 
+{
   return (
     <div
       data-slot="alert"
@@ -34,7 +35,8 @@ function Alert({
   )
 }
 
-function AlertTitle({ className, ...props }: ComponentProps<"div">) {
+function AlertTitle({ className, ...props }: ComponentProps<"div">) 
+{
   return (
     <div
       data-slot="alert-title"
@@ -50,7 +52,8 @@ function AlertTitle({ className, ...props }: ComponentProps<"div">) {
 function AlertDescription({
   className,
   ...props
-}: ComponentProps<"div">) {
+}: ComponentProps<"div">) 
+{
   return (
     <div
       data-slot="alert-description"

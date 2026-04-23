@@ -47,15 +47,23 @@ export const MISTRAL_SUPPORTED_LANGUAGES: MistralLanguage[] = [
   { code: 'sl', nameEn: 'Slovenian', nameFr: 'Slovène', nameNative: 'Slovenščina', flag: '🇸🇮' },
 ]
 
-export function getLanguageName(languageCode: string, displayLanguage: 'en' | 'fr'): string {
+export function getLanguageName(languageCode: string, displayLanguage: 'en' | 'fr'): string 
+{
   const language = MISTRAL_SUPPORTED_LANGUAGES.find(l => l.code === languageCode)
-  if (!language) return languageCode
+  if (!language) 
+  {
+    return languageCode
+  }
   return displayLanguage === 'fr' ? language.nameFr : language.nameEn
 }
 
-export function getLanguageDisplayName(languageCode: string, displayLanguage: 'en' | 'fr'): string {
+export function getLanguageDisplayName(languageCode: string, displayLanguage: 'en' | 'fr'): string 
+{
   const language = MISTRAL_SUPPORTED_LANGUAGES.find(l => l.code === languageCode)
-  if (!language) return languageCode
+  if (!language) 
+  {
+    return languageCode
+  }
   const translatedName = displayLanguage === 'fr' ? language.nameFr : language.nameEn
   return `${language.flag} ${translatedName}`
 }

@@ -11,19 +11,24 @@ interface TextInitiatorProps {
   disabled?: boolean
 }
 
-export function TextInitiator({ onTextSubmit, disabled = false }: TextInitiatorProps) {
+export function TextInitiator({ onTextSubmit, disabled = false }: TextInitiatorProps) 
+{
   const { t } = useLanguage()
   const [inputText, setInputText] = useState('')
 
-  const handleSubmit = () => {
-    if (inputText.trim() && !disabled) {
+  const handleSubmit = () => 
+  {
+    if (inputText.trim() && !disabled) 
+    {
       onTextSubmit(inputText.trim())
       setInputText('')
     }
   }
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => 
+  {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') 
+    {
       e.preventDefault()
       handleSubmit()
     }

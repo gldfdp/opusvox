@@ -15,7 +15,8 @@ interface MistralMessage {
   content: string
 }
 
-export function detectLanguage(text: string): string {
+export function detectLanguage(text: string): string 
+{
   const frenchWords = ['le', 'la', 'les', 'de', 'des', 'un', 'une', 'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'oui', 'non', 'bonjour', 'merci', 'est', 'suis', 'êtes', 'sont', 'comment', 'ça', 'va', 'bien', 'pas', 'avec', 'pour', 'dans', 'ce', 'cette', 'ces', 'quel', 'quelle', 'quoi', 'qui', 'où', 'quand', 'pourquoi']
   const englishWords = ['the', 'a', 'an', 'is', 'are', 'am', 'was', 'were', 'yes', 'no', 'hello', 'thank', 'you', 'i', 'we', 'they', 'he', 'she', 'how', 'what', 'where', 'when', 'why', 'who', 'with', 'for', 'in', 'this', 'that', 'these', 'those', 'good', 'bad', 'well', 'not']
   
@@ -25,20 +26,30 @@ export function detectLanguage(text: string): string {
   let frenchScore = 0
   let englishScore = 0
   
-  words.forEach(word => {
-    if (frenchWords.includes(word)) frenchScore++
-    if (englishWords.includes(word)) englishScore++
+  words.forEach(word => 
+  {
+    if (frenchWords.includes(word)) 
+    {
+      frenchScore++
+    }
+    if (englishWords.includes(word)) 
+    {
+      englishScore++
+    }
   })
   
-  if (lowerText.match(/[àâäéèêëïîôùûüÿç]/)) {
+  if (lowerText.match(/[àâäéèêëïîôùûüÿç]/)) 
+  {
     frenchScore += 3
   }
   
   return frenchScore > englishScore ? 'fr' : 'en'
 }
 
-export async function translateText(text: string, targetLanguage: string, apiKey: string): Promise<string> {
-  try {
+export async function translateText(text: string, targetLanguage: string, apiKey: string): Promise<string> 
+{
+  try 
+  {
     const { MISTRAL_SUPPORTED_LANGUAGES } = await import('./languages')
     const targetLangInfo = MISTRAL_SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage)
     const targetLangName = targetLangInfo?.nameNative || targetLanguage
@@ -62,13 +73,16 @@ export async function translateText(text: string, targetLanguage: string, apiKey
       })
     })
 
-    if (!response.ok) {
+    if (!response.ok) 
+    {
       throw new Error(`Translation API error: ${response.status}`)
     }
 
     const data = await response.json()
     return data.choices[0].message.content.trim()
-  } catch (error) {
+  }
+  catch (error) 
+  {
     console.error('Translation error:', error)
     return text
   }
@@ -76,31 +90,36 @@ export async function translateText(text: string, targetLanguage: string, apiKey
 
 export async function generateResponseSuggestions(
   context: MistralResponseContext
-): Promise<ResponseSuggestion[]> {
+): Promise<ResponseSuggestion[]> 
+{
   const { transcribedText, language, conversationHistory, apiKey, userSettings, contextTurns = 20, excludeTexts = [] } = context
   
-  if (!apiKey) {
+  if (!apiKey) 
+  {
     console.warn('No Mistral API key provided, using fallback responses')
     return getFallbackResponses(transcribedText, language)
   }
 
   const userContextParts: string[] = []
   
-  if (userSettings?.firstName) {
+  if (userSettings?.firstName) 
+  {
     const nameContext = language === 'fr' 
       ? `L'utilisateur s'appelle ${userSettings.firstName}${userSettings.lastName ? ` ${userSettings.lastName}` : ''}.`
       : `The user's name is ${userSettings.firstName}${userSettings.lastName ? ` ${userSettings.lastName}` : ''}.`
     userContextParts.push(nameContext)
   }
   
-  if (userSettings?.age) {
+  if (userSettings?.age) 
+  {
     const ageContext = language === 'fr'
       ? `L'utilisateur a ${userSettings.age} ans.`
       : `The user is ${userSettings.age} years old.`
     userContextParts.push(ageContext)
   }
   
-  if (userSettings?.preferredCommunicationStyle) {
+  if (userSettings?.preferredCommunicationStyle) 
+  {
     const styleMap: Record<string, { fr: string; en: string }> = {
       'formal': { fr: 'formel', en: 'formal' },
       'casual': { fr: 'décontracté', en: 'casual' },
@@ -108,7 +127,8 @@ export async function generateResponseSuggestions(
       'friendly': { fr: 'amical', en: 'friendly' }
     }
     const styleName = styleMap[userSettings.preferredCommunicationStyle]
-    if (styleName) {
+    if (styleName) 
+    {
       const styleContext = language === 'fr'
         ? `Style de communication préféré : ${styleName.fr}. Adaptez le ton des réponses en conséquence.`
         : `Preferred communication style: ${styleName.en}. Adapt the tone of responses accordingly.`
@@ -116,21 +136,24 @@ export async function generateResponseSuggestions(
     }
   }
   
-  if (userSettings?.medicalConditions) {
+  if (userSettings?.medicalConditions) 
+  {
     const medicalContext = language === 'fr'
       ? `Conditions médicales : ${userSettings.medicalConditions}`
       : `Medical conditions: ${userSettings.medicalConditions}`
     userContextParts.push(medicalContext)
   }
   
-  if (userSettings?.allergies) {
+  if (userSettings?.allergies) 
+  {
     const allergyContext = language === 'fr'
       ? `Allergies : ${userSettings.allergies}`
       : `Allergies: ${userSettings.allergies}`
     userContextParts.push(allergyContext)
   }
   
-  if (userSettings?.specialNeeds) {
+  if (userSettings?.specialNeeds) 
+  {
     const specialNeedsContext = language === 'fr'
       ? `Besoins spéciaux : ${userSettings.specialNeeds}`
       : `Special needs: ${userSettings.specialNeeds}`
@@ -189,7 +212,8 @@ Return ONLY a valid JSON object with the following structure (no text before or 
   ]
 
   const recentHistory = conversationHistory.slice(-contextTurns)
-  for (const turn of recentHistory) {
+  for (const turn of recentHistory) 
+  {
     messages.push({
       role: 'user',
       content: `Visitor's message: "${turn.visitorInput}"`
@@ -215,7 +239,8 @@ Return ONLY a valid JSON object with the following structure (no text before or 
     content: `Visitor's new message: "${transcribedText}"\n\nGenerate 4 response suggestions now.${excludeClause}`
   })
 
-  try {
+  try 
+  {
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -231,7 +256,8 @@ Return ONLY a valid JSON object with the following structure (no text before or 
       })
     })
 
-    if (!response.ok) {
+    if (!response.ok) 
+    {
       const errorText = await response.text()
       console.error('Mistral API error:', response.status, errorText)
       throw new Error(`Mistral API error: ${response.status}`)
@@ -239,14 +265,16 @@ Return ONLY a valid JSON object with the following structure (no text before or 
 
     const data = await response.json()
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) 
+    {
       throw new Error('Invalid response format from Mistral API')
     }
 
     const content = data.choices[0].message.content
     const parsed = JSON.parse(content)
     
-    if (parsed.responses && Array.isArray(parsed.responses)) {
+    if (parsed.responses && Array.isArray(parsed.responses)) 
+    {
       const responses = parsed.responses.map((r: { id: string; text: string; intent: string }) => ({
         id: r.id || Math.random().toString(36).substring(7),
         text: r.text,
@@ -255,7 +283,8 @@ Return ONLY a valid JSON object with the following structure (no text before or 
       
       const detectedLang = detectLanguage(responses[0].text)
       
-      if (detectedLang !== language) {
+      if (detectedLang !== language) 
+      {
         const translatedResponses = await Promise.all(
           responses.map(async (response: ResponseSuggestion) => ({
             ...response,
@@ -269,16 +298,20 @@ Return ONLY a valid JSON object with the following structure (no text before or 
     }
     
     throw new Error('Invalid response format from Mistral API')
-  } catch (error) {
+  }
+  catch (error) 
+  {
     console.error('Error generating responses with Mistral:', error)
     return getFallbackResponses(transcribedText, language)
   }
 }
 
-function getFallbackResponses(input: string, language: string): ResponseSuggestion[] {
+function getFallbackResponses(input: string, language: string): ResponseSuggestion[] 
+{
   const lowerInput = input.toLowerCase()
   
-  if (language === 'fr') {
+  if (language === 'fr') 
+  {
     const responseMap: Record<string, ResponseSuggestion[]> = {
       'comment': [
         { id: '1', text: "Je vais bien, merci de demander.", intent: 'positive' },
@@ -306,13 +339,17 @@ function getFallbackResponses(input: string, language: string): ResponseSuggesti
       ]
     }
     
-    for (const [key, value] of Object.entries(responseMap)) {
-      if (lowerInput.includes(key)) {
+    for (const [key, value] of Object.entries(responseMap)) 
+    {
+      if (lowerInput.includes(key)) 
+      {
         return value
       }
     }
     return responseMap.default
-  } else {
+  }
+  else 
+  {
     const responseMap: Record<string, ResponseSuggestion[]> = {
       'feeling': [
         { id: '1', text: "I'm feeling okay, thank you for asking.", intent: 'positive' },
@@ -340,8 +377,10 @@ function getFallbackResponses(input: string, language: string): ResponseSuggesti
       ]
     }
     
-    for (const [key, value] of Object.entries(responseMap)) {
-      if (lowerInput.includes(key)) {
+    for (const [key, value] of Object.entries(responseMap)) 
+    {
+      if (lowerInput.includes(key)) 
+      {
         return value
       }
     }

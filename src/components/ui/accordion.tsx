@@ -6,14 +6,16 @@ import { cn } from "@/lib/utils"
 
 function Accordion({
   ...props
-}: ComponentProps<typeof AccordionPrimitive.Root>) {
+}: ComponentProps<typeof AccordionPrimitive.Root>) 
+{
   return <AccordionPrimitive.Root data-slot="accordion" {...props} />
 }
 
 function AccordionItem({
   className,
   ...props
-}: ComponentProps<typeof AccordionPrimitive.Item>) {
+}: ComponentProps<typeof AccordionPrimitive.Item>) 
+{
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
@@ -27,7 +29,8 @@ function AccordionTrigger({
   className,
   children,
   ...props
-}: ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: ComponentProps<typeof AccordionPrimitive.Trigger>) 
+{
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
@@ -49,7 +52,8 @@ function AccordionContent({
   className,
   children,
   ...props
-}: ComponentProps<typeof AccordionPrimitive.Content>) {
+}: ComponentProps<typeof AccordionPrimitive.Content>) 
+{
   return (
     <AccordionPrimitive.Content
       data-slot="accordion-content"

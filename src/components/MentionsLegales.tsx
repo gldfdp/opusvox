@@ -8,7 +8,8 @@ interface MentionsLegalesProps {
   onClose: () => void
 }
 
-export function MentionsLegales({ onClose }: MentionsLegalesProps) {
+export function MentionsLegales({ onClose }: MentionsLegalesProps) 
+{
   const { language } = useLanguage()
 
   const fr = language === 'fr'

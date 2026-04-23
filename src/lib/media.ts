@@ -19,16 +19,23 @@ const CANDIDATES: AudioMimeInfo[] = [
 
 let cached: AudioMimeInfo | null = null
 
-export function getSupportedAudioMimeType(): AudioMimeInfo {
-  if (cached) return cached
+export function getSupportedAudioMimeType(): AudioMimeInfo 
+{
+  if (cached) 
+  {
+    return cached
+  }
 
-  if (typeof MediaRecorder === 'undefined') {
+  if (typeof MediaRecorder === 'undefined') 
+  {
     cached = { mimeType: '', ext: 'audio' }
     return cached
   }
 
-  for (const candidate of CANDIDATES) {
-    if (MediaRecorder.isTypeSupported(candidate.mimeType)) {
+  for (const candidate of CANDIDATES) 
+  {
+    if (MediaRecorder.isTypeSupported(candidate.mimeType)) 
+    {
       cached = candidate
       return cached
     }
@@ -39,6 +46,7 @@ export function getSupportedAudioMimeType(): AudioMimeInfo {
   return cached
 }
 
-export function isMediaRecorderSupported(): boolean {
+export function isMediaRecorderSupported(): boolean 
+{
   return typeof MediaRecorder !== 'undefined'
 }

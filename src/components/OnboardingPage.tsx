@@ -4,6 +4,7 @@ import { useKV } from '@/hooks/use-kv'
 import { useLanguage } from '@/hooks/use-language'
 import { UserSettings } from '@/lib/types'
 import { Language } from '@/lib/i18n'
+import { DEFAULT_USER_SETTINGS } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,29 +12,14 @@ import { Eye, EyeSlash } from '@phosphor-icons/react'
 
 const TOTAL_STEPS = 3
 
-const defaultSettings: UserSettings = {
-  firstName: '',
-  lastName: '',
-  age: null,
-  preferredCommunicationStyle: '',
-  medicalConditions: '',
-  allergies: '',
-  specialNeeds: '',
-  mistralApiKey: '',
-  mistralConnected: false,
-  keyboardShortcuts: ['q', 's', 'd', 'f'],
-  recordingShortcut: ' ',
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-}
-
 interface OnboardingPageProps {
   onComplete: () => void
 }
 
-export function OnboardingPage({ onComplete }: OnboardingPageProps) {
+export function OnboardingPage({ onComplete }: OnboardingPageProps) 
+{
   const { t, language, setLanguage } = useLanguage()
-  const [, setUserSettings] = useKV<UserSettings>('user-settings', defaultSettings)
+  const [, setUserSettings] = useKV<UserSettings>('user-settings', { ...DEFAULT_USER_SETTINGS, createdAt: Date.now(), updatedAt: Date.now() })
 
   const [step, setStep] = useState(1)
   const [direction, setDirection] = useState(1)
@@ -42,24 +28,28 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
   const [apiKey, setApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
 
-  const goNext = () => {
+  const goNext = () => 
+  {
     setDirection(1)
     setStep(s => s + 1)
   }
 
-  const goBack = () => {
+  const goBack = () => 
+  {
     setDirection(-1)
     setStep(s => s - 1)
   }
 
-  const handleLanguageSelect = (lang: Language) => {
+  const handleLanguageSelect = (lang: Language) => 
+  {
     setLanguage(lang)
     goNext()
   }
 
-  const handleFinish = () => {
+  const handleFinish = () => 
+  {
     setUserSettings({
-      ...defaultSettings,
+      ...DEFAULT_USER_SETTINGS,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       mistralApiKey: apiKey.trim(),
@@ -156,7 +146,8 @@ function Step1Language({
   t: ReturnType<typeof useLanguage>['t']
   selectedLanguage: Language
   onSelect: (l: Language) => void
-}) {
+}) 
+{
   const langs: { code: Language; label: string; flag: string }[] = [
     { code: 'fr', label: 'Français', flag: '🇫🇷' },
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -208,7 +199,8 @@ function Step2Profile({
   onLastNameChange: (v: string) => void
   onBack: () => void
   onNext: () => void
-}) {
+}) 
+{
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -273,7 +265,8 @@ function Step3Mistral({
   onToggleShow: () => void
   onBack: () => void
   onFinish: () => void
-}) {
+}) 
+{
   return (
     <div className="space-y-8">
       <div className="text-center">

@@ -9,7 +9,8 @@ const languageNames: Record<Language, string> = {
   fr: 'Français'
 }
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher() 
+{
   const { language, setLanguage } = useLanguage()
 
   return (

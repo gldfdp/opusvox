@@ -23,20 +23,30 @@ export function ResponseSuggestions({
   loadingMore = false,
   disabled = false,
   keyboardShortcuts = ['q', 's', 'd', 'f']
-}: ResponseSuggestionsProps) {
-  const { t, language } = useLanguage()
+}: ResponseSuggestionsProps) 
+{
+  const { t } = useLanguage()
   
-  useEffect(() => {
-    if (disabled || suggestions.length === 0) return
+  useEffect(() => 
+  {
+    if (disabled || suggestions.length === 0) 
+    {
+      return
+    }
 
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleKeyPress = (e: KeyboardEvent) => 
+    {
       const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) 
+      {
+        return
+      }
 
       const key = e.key.toLowerCase()
       const index = keyboardShortcuts.indexOf(key)
       
-      if (index !== -1 && index < suggestions.length) {
+      if (index !== -1 && index < suggestions.length) 
+      {
         e.preventDefault()
         onSelectResponse(suggestions[index].text)
       }
@@ -86,8 +96,8 @@ export function ResponseSuggestions({
         >
           <ArrowsClockwise size={16} className={`mr-2 ${loadingMore ? 'animate-spin' : ''}`} />
           {loadingMore
-            ? (language === 'fr' ? 'Chargement…' : 'Loading…')
-            : (language === 'fr' ? 'Voir d\'autres suggestions' : 'Load more suggestions')}
+            ? t.responseSuggestions.loading
+            : t.responseSuggestions.loadMore}
         </Button>
       )}
 

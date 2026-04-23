@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 function RadioGroup({
   className,
   ...props
-}: ComponentProps<typeof RadioGroupPrimitive.Root>) {
+}: ComponentProps<typeof RadioGroupPrimitive.Root>) 
+{
   return (
     <RadioGroupPrimitive.Root
       data-slot="radio-group"
@@ -22,7 +23,8 @@ function RadioGroup({
 function RadioGroupItem({
   className,
   ...props
-}: ComponentProps<typeof RadioGroupPrimitive.Item>) {
+}: ComponentProps<typeof RadioGroupPrimitive.Item>) 
+{
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"

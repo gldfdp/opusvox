@@ -22,6 +22,9 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      "curly": ["error", "all"],
+      "brace-style": ["error", "allman"],
+      "indent": ["error", 2, { "SwitchCase": 1, "ignoredNodes": ["TemplateLiteral *", "JSXElement", "JSXElement *", "JSXAttribute", "JSXIdentifier", "JSXNamespacedName", "JSXMemberExpression", "JSXSpreadAttribute", "JSXExpressionContainer", "JSXOpeningElement", "JSXClosingElement", "JSXFragment", "JSXOpeningFragment", "JSXClosingFragment", "JSXText", "JSXEmptyExpression", "JSXSpreadChild"] }],
     },
   },
   // shadcn/ui generated files and hook files may co-export helpers — relax react-refresh there

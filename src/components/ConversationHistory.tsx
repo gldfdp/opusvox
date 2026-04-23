@@ -18,10 +18,12 @@ export function ConversationHistory({
   onDelete,
   onReplay,
   disabled = false,
-}: ConversationHistoryProps) {
+}: ConversationHistoryProps) 
+{
   const { t } = useLanguage();
 
-  if (history.length === 0) {
+  if (history.length === 0) 
+  {
     return (
       <div className="flex items-center justify-center h-full p-8 text-center">
         <p className="text-muted-foreground text-lg">{t.history.empty}</p>

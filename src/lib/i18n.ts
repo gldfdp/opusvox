@@ -93,6 +93,175 @@ export interface Translations {
     title: string
     description: string
   }
+  appMisc: {
+    audioRecordingNotAvailable: string
+    errorGeneratingResponses: string
+    errorLoadingSuggestions: string
+    translatingText: string
+    translatingResponse: string
+    translating: string
+    historyCleared: string
+    newVersionAvailable: string
+    updateNow: string
+    clearAll: string
+    change: string
+    mistralTtsEnabled: string
+    mistralSttEnabled: string
+    simulationMode: string
+    visitorsMessage: string
+    dismiss: string
+    legalNotice: string
+  }
+  voiceIndicator: {
+    mistralTts: string
+    clonedVoice: string
+    aiSpeechSynthesis: string
+    personalizedVoice: string
+  }
+  mistralStatus: {
+    checking: string
+    notConfigured: string
+    connectionError: string
+    connected: string
+    unknown: string
+    now: string
+    title: string
+    connection: string
+    configureApiKey: string
+    usageLimits: string
+    remainingRequests: string
+    resetsIn: string
+    connectedNoLimits: string
+    transcriptionStt: string
+    speechSynthesisTts: string
+    responseGeneration: string
+    active: string
+    simulated: string
+    offline: string
+  }
+  responseSuggestions: {
+    loading: string
+    loadMore: string
+  }
+  visitorSelector: {
+    searchPlaceholder: string
+  }
+  appSettings: {
+    subtitle: string
+    close: string
+    interfaceLanguageTitle: string
+    interfaceLanguageDesc: string
+    interfaceLanguageHint: string
+    applicationTitle: string
+    applicationDesc: string
+    clearCacheAndReload: string
+    clearingCache: string
+  }
+  userProfile: {
+    title: string
+    description: string
+    firstName: string
+    firstNamePlaceholder: string
+    lastName: string
+    lastNamePlaceholder: string
+    age: string
+    agePlaceholder: string
+    communicationStyle: string
+    communicationStyleHint: string
+    selectStyle: string
+    formal: string
+    casual: string
+    professional: string
+    friendly: string
+    medicalConditions: string
+    medicalConditionsPlaceholder: string
+    allergies: string
+    allergiesPlaceholder: string
+    specialNeeds: string
+    specialNeedsPlaceholder: string
+    save: string
+    saved: string
+    defaultFirstName: string
+    sampleText: (name: string) => string
+  }
+  shortcuts: {
+    title: string
+    description: string
+    responseLabel: string
+    hint: string
+    recordingStartKey: string
+    recordingStartKeyDesc: string
+    spaceKey: string
+    clickThenPress: string
+    clickThenPressTitle: string
+  }
+  mistralApi: {
+    title: string
+    description: string
+    connected: string
+    connectedAlert: string
+    noApiKeyAlert: string
+    keyLabel: string
+    getKeyHint: string
+    contextTurnsLabel: string
+    contextTurnsDesc: string
+    disconnect: string
+    testing: string
+    testConnection: string
+    enterApiKey: string
+    connectionSuccessful: string
+    connectionFailed: string
+    disconnected: string
+  }
+  voiceProfiles: {
+    title: string
+    description: string
+    nameLabel: string
+    namePlaceholder: string
+    textToRead: string
+    readThisText: string
+    record: string
+    upload: string
+    recordingInProgress: string
+    finish: string
+    cancel: string
+    processing: string
+    profileCreated: string
+    recordingError: string
+    tryAgain: string
+    uploading: string
+    savedProfiles: string
+    active: string
+    paidPlanRequired: string
+    notSynced: string
+    stopPlayback: string
+    playOriginal: string
+    testClonedVoice: string
+    retrySyncMistral: string
+    deleteProfile: string
+    noAudioRecorded: string
+    selectAudioFile: string
+    enterVoiceName: string
+    registeringVoice: string
+    uploadError: string
+    deleted: string
+    syncedMistral: string
+    syncFailed: string
+    syncError: string
+    audioPlaybackError: string
+    playingPreview: string
+    recordingStarted: string
+    microphoneError: string
+    recordingTooShort: string
+    profileCreatedNamed: (name: string) => string
+    audioTooShort: string
+    fileTooLong: string
+    defaultSystemVoice: string
+    testVoiceNoKey: string
+    testText: (name: string) => string
+    generatingVoicePreview: string
+    voiceTestError: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -186,6 +355,175 @@ export const translations: Record<Language, Translations> = {
     visitorLanguage: {
       title: 'Visitor language',
       description: 'Select the language your visitor will speak in'
+    },
+    appMisc: {
+      audioRecordingNotAvailable: 'Audio recording is not available on this device.',
+      errorGeneratingResponses: 'Error generating responses',
+      errorLoadingSuggestions: 'Error loading more suggestions',
+      translatingText: 'Translating text...',
+      translatingResponse: 'Translating response...',
+      translating: 'Translating...',
+      historyCleared: 'History cleared',
+      newVersionAvailable: '🔄 New version available',
+      updateNow: 'Update now',
+      clearAll: 'Clear all',
+      change: 'Change',
+      mistralTtsEnabled: 'Mistral TTS enabled',
+      mistralSttEnabled: 'Mistral STT enabled',
+      simulationMode: 'Simulation mode',
+      visitorsMessage: "Visitor's message",
+      dismiss: 'Dismiss — no response needed',
+      legalNotice: 'Legal Notice'
+    },
+    voiceIndicator: {
+      mistralTts: 'Mistral TTS',
+      clonedVoice: 'Cloned Voice',
+      aiSpeechSynthesis: 'AI speech synthesis',
+      personalizedVoice: 'Personalized voice'
+    },
+    mistralStatus: {
+      checking: 'Checking...',
+      notConfigured: 'Not configured',
+      connectionError: 'Connection error',
+      connected: 'Connected',
+      unknown: 'Unknown',
+      now: 'Now',
+      title: 'Mistral API Status',
+      connection: 'Connection',
+      configureApiKey: 'Configure your Mistral API key to enable advanced transcription and speech synthesis.',
+      usageLimits: 'Usage Limits',
+      remainingRequests: 'Remaining requests',
+      resetsIn: 'Resets in',
+      connectedNoLimits: 'API connected successfully. Usage limit information not available.',
+      transcriptionStt: 'Transcription (STT)',
+      speechSynthesisTts: 'Speech Synthesis (TTS)',
+      responseGeneration: 'Response Generation',
+      active: 'Active',
+      simulated: 'Simulated',
+      offline: 'Offline'
+    },
+    responseSuggestions: {
+      loading: 'Loading…',
+      loadMore: 'Load more suggestions'
+    },
+    visitorSelector: {
+      searchPlaceholder: 'Search for a language...'
+    },
+    appSettings: {
+      subtitle: 'Configure your profile and preferences',
+      close: 'Close',
+      interfaceLanguageTitle: 'Interface Language',
+      interfaceLanguageDesc: 'Select the application language',
+      interfaceLanguageHint: 'This will affect the entire interface and generated responses',
+      applicationTitle: 'Application',
+      applicationDesc: 'Force a full reload without cache if something seems broken',
+      clearCacheAndReload: 'Clear cache and reload',
+      clearingCache: 'Clearing cache…'
+    },
+    userProfile: {
+      title: 'User Profile',
+      description: 'Personal information to personalize your experience',
+      firstName: 'First Name',
+      firstNamePlaceholder: 'Enter your first name',
+      lastName: 'Last Name',
+      lastNamePlaceholder: 'Enter your last name',
+      age: 'Age',
+      agePlaceholder: 'Enter your age',
+      communicationStyle: 'Preferred Communication Style',
+      communicationStyleHint: 'This will influence the tone of generated response suggestions',
+      selectStyle: 'Select a style',
+      formal: 'Formal',
+      casual: 'Casual',
+      professional: 'Professional',
+      friendly: 'Friendly',
+      medicalConditions: 'Medical Conditions',
+      medicalConditionsPlaceholder: 'Enter any medical conditions relevant to conversations...',
+      allergies: 'Allergies',
+      allergiesPlaceholder: 'List your allergies (food, medications, etc.)...',
+      specialNeeds: 'Special Needs',
+      specialNeedsPlaceholder: 'Any additional information useful for communication...',
+      save: 'Save Profile',
+      saved: 'Profile saved',
+      defaultFirstName: 'John',
+      sampleText: (name: string) => `Hello, my name is ${name}. I use this application to communicate with my loved ones. This technology allows me to keep my voice and continue expressing myself.`
+    },
+    shortcuts: {
+      title: 'Keyboard Shortcuts',
+      description: 'Configure keys to quickly select suggested responses',
+      responseLabel: 'Response',
+      hint: 'Use these keys to quickly select response suggestions on the main page.',
+      recordingStartKey: 'Recording start key',
+      recordingStartKeyDesc: 'Press this key (outside input fields) to start / stop recording.',
+      spaceKey: 'Space',
+      clickThenPress: 'Click then press',
+      clickThenPressTitle: 'Click this field then press the desired key'
+    },
+    mistralApi: {
+      title: 'Mistral API',
+      description: 'Connect your Mistral account for advanced AI tasks',
+      connected: 'Connected',
+      connectedAlert: 'Your Mistral API key is configured and active',
+      noApiKeyAlert: 'No API key configured. Response suggestions use the default Spark API.',
+      keyLabel: 'Mistral API Key',
+      getKeyHint: 'Get your API key from console.mistral.ai',
+      contextTurnsLabel: 'Exchanges sent to Mistral for context',
+      contextTurnsDesc: 'Number of recent exchanges included in each request (1–100)',
+      disconnect: 'Disconnect',
+      testing: 'Testing...',
+      testConnection: 'Test Connection',
+      enterApiKey: 'Please enter an API key',
+      connectionSuccessful: 'Mistral connection successful!',
+      connectionFailed: 'Mistral connection failed',
+      disconnected: 'Mistral disconnected'
+    },
+    voiceProfiles: {
+      title: 'Voice Cloning',
+      description: 'Record or upload a sample of your voice',
+      nameLabel: 'Voice Profile Name',
+      namePlaceholder: 'Ex: My Voice',
+      textToRead: '📝 Text to read:',
+      readThisText: '📝 Read this text:',
+      record: 'Record',
+      upload: 'Upload',
+      recordingInProgress: 'Recording in progress...',
+      finish: 'Finish',
+      cancel: 'Cancel',
+      processing: 'Processing recording...',
+      profileCreated: 'Voice profile created!',
+      recordingError: 'Recording error',
+      tryAgain: 'Try Again',
+      uploading: 'Uploading...',
+      savedProfiles: 'Saved Voice Profiles',
+      active: 'Active',
+      paidPlanRequired: 'Paid plan required',
+      notSynced: 'Not synced',
+      stopPlayback: 'Stop playback',
+      playOriginal: 'Play original recording',
+      testClonedVoice: 'Test cloned voice with Mistral TTS',
+      retrySyncMistral: 'Retry Mistral sync',
+      deleteProfile: 'Delete profile',
+      noAudioRecorded: 'No audio recorded',
+      selectAudioFile: 'Please select an audio file',
+      enterVoiceName: 'Please enter a name for the voice profile',
+      registeringVoice: 'Registering voice with Mistral...',
+      uploadError: 'Upload error',
+      deleted: 'Voice profile deleted',
+      syncedMistral: 'Voice synced with Mistral',
+      syncFailed: 'Failed to sync with Mistral',
+      syncError: 'Mistral API error',
+      audioPlaybackError: 'Audio playback error',
+      playingPreview: 'Playing voice preview',
+      recordingStarted: 'Recording started - read the displayed text',
+      microphoneError: 'Could not access microphone',
+      recordingTooShort: 'Recording too short (minimum 3 seconds)',
+      profileCreatedNamed: (name: string) => `Voice profile "${name}" created successfully`,
+      audioTooShort: 'Audio too short (minimum 3 seconds)',
+      fileTooLong: 'File too long — extracting middle 30 seconds…',
+      defaultSystemVoice: 'Default system voice activated',
+      testVoiceNoKey: 'Please configure your Mistral API key in settings to test the voice',
+      testText: (name: string) => `Hello, I am ${name}. This is a preview of my cloned voice.`,
+      generatingVoicePreview: 'Generating voice preview...',
+      voiceTestError: 'Error testing voice. Check your Mistral API key.'
     }
   },
   fr: {
@@ -278,10 +616,180 @@ export const translations: Record<Language, Translations> = {
     visitorLanguage: {
       title: 'Langue du visiteur',
       description: 'Sélectionnez la langue dans laquelle votre visiteur parlera'
+    },
+    appMisc: {
+      audioRecordingNotAvailable: "L'enregistrement audio n'est pas disponible sur cet appareil.",
+      errorGeneratingResponses: 'Erreur lors de la génération des réponses',
+      errorLoadingSuggestions: 'Erreur lors du chargement des suggestions',
+      translatingText: 'Traduction du texte en cours...',
+      translatingResponse: 'Traduction de la réponse en cours...',
+      translating: 'Traduction en cours...',
+      historyCleared: 'Historique effacé',
+      newVersionAvailable: '🔄 Nouvelle version disponible',
+      updateNow: 'Mettre à jour',
+      clearAll: 'Tout effacer',
+      change: 'Changer',
+      mistralTtsEnabled: 'Mistral TTS activé',
+      mistralSttEnabled: 'Mistral STT activé',
+      simulationMode: 'Mode simulation',
+      visitorsMessage: 'Ce que dit votre interlocuteur',
+      dismiss: 'Ignorer — pas de réponse nécessaire',
+      legalNotice: 'Mentions légales'
+    },
+    voiceIndicator: {
+      mistralTts: 'Mistral TTS',
+      clonedVoice: 'Voix clonée',
+      aiSpeechSynthesis: 'Synthèse vocale IA',
+      personalizedVoice: 'Voix personnalisée'
+    },
+    mistralStatus: {
+      checking: 'Vérification...',
+      notConfigured: 'Non configurée',
+      connectionError: 'Erreur de connexion',
+      connected: 'Connectée',
+      unknown: 'Inconnue',
+      now: 'Maintenant',
+      title: 'Statut Mistral API',
+      connection: 'Connexion',
+      configureApiKey: 'Configurez votre clé API Mistral pour activer la transcription et la synthèse vocale avancées.',
+      usageLimits: "Limites d'utilisation",
+      remainingRequests: 'Requêtes restantes',
+      resetsIn: 'Réinitialisation dans',
+      connectedNoLimits: "API connectée avec succès. Les informations de limite d'utilisation ne sont pas disponibles.",
+      transcriptionStt: 'Transcription (STT)',
+      speechSynthesisTts: 'Synthèse vocale (TTS)',
+      responseGeneration: 'Génération de réponses',
+      active: 'Actif',
+      simulated: 'Simulé',
+      offline: 'Hors-ligne'
+    },
+    responseSuggestions: {
+      loading: 'Chargement…',
+      loadMore: "Voir d'autres suggestions"
+    },
+    visitorSelector: {
+      searchPlaceholder: 'Rechercher une langue...'
+    },
+    appSettings: {
+      subtitle: 'Configurez votre profil et vos préférences',
+      close: 'Fermer',
+      interfaceLanguageTitle: "Langue de l'interface",
+      interfaceLanguageDesc: "Sélectionnez la langue de l'application",
+      interfaceLanguageHint: "Cela affectera toute l'interface et les réponses générées",
+      applicationTitle: 'Application',
+      applicationDesc: 'Forcer le rechargement complet sans cache en cas de problème',
+      clearCacheAndReload: 'Vider le cache et recharger',
+      clearingCache: 'Vidage du cache en cours…'
+    },
+    userProfile: {
+      title: 'Profil utilisateur',
+      description: 'Informations personnelles pour personnaliser votre expérience',
+      firstName: 'Prénom',
+      firstNamePlaceholder: 'Entrez votre prénom',
+      lastName: 'Nom',
+      lastNamePlaceholder: 'Entrez votre nom',
+      age: 'Âge',
+      agePlaceholder: 'Entrez votre âge',
+      communicationStyle: 'Style de communication préféré',
+      communicationStyleHint: 'Cela influencera le ton des suggestions de réponses générées',
+      selectStyle: 'Sélectionnez un style',
+      formal: 'Formel',
+      casual: 'Décontracté',
+      professional: 'Professionnel',
+      friendly: 'Amical',
+      medicalConditions: 'Conditions médicales',
+      medicalConditionsPlaceholder: 'Entrez toute condition médicale pertinente pour les conversations...',
+      allergies: 'Allergies',
+      allergiesPlaceholder: 'Listez vos allergies (nourriture, médicaments, etc.)...',
+      specialNeeds: 'Besoins spéciaux',
+      specialNeedsPlaceholder: 'Toute information supplémentaire utile pour la communication...',
+      save: 'Enregistrer le profil',
+      saved: 'Profil enregistré',
+      defaultFirstName: 'Marie',
+      sampleText: (name: string) => `Bonjour, je m'appelle ${name}. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer.`
+    },
+    shortcuts: {
+      title: 'Raccourcis clavier',
+      description: 'Configurez les touches pour sélectionner rapidement les réponses suggérées',
+      responseLabel: 'Réponse',
+      hint: 'Utilisez ces touches pour sélectionner rapidement les suggestions de réponses sur la page principale.',
+      recordingStartKey: "Touche de démarrage de l'enregistrement",
+      recordingStartKeyDesc: "Appuyez sur cette touche (hors champ de saisie) pour démarrer / arrêter l'enregistrement.",
+      spaceKey: 'Espace',
+      clickThenPress: 'Cliquez puis appuyez',
+      clickThenPressTitle: 'Cliquez sur ce champ puis appuyez sur la touche souhaitée'
+    },
+    mistralApi: {
+      title: 'Mistral API',
+      description: "Connectez votre compte Mistral pour les tâches d'IA avancées",
+      connected: 'Connecté',
+      connectedAlert: 'Votre clé API Mistral est configurée et active',
+      noApiKeyAlert: "Aucune clé API configurée. Les suggestions de réponses utilisent l'API Spark par défaut.",
+      keyLabel: 'Clé API Mistral',
+      getKeyHint: 'Obtenez votre clé API sur console.mistral.ai',
+      contextTurnsLabel: 'Échanges envoyés à Mistral pour le contexte',
+      contextTurnsDesc: 'Nombre de derniers échanges inclus dans chaque requête (1–100)',
+      disconnect: 'Déconnecter',
+      testing: 'Test en cours...',
+      testConnection: 'Tester la connexion',
+      enterApiKey: 'Veuillez entrer une clé API',
+      connectionSuccessful: 'Connexion Mistral réussie !',
+      connectionFailed: 'Échec de la connexion Mistral',
+      disconnected: 'Mistral déconnecté'
+    },
+    voiceProfiles: {
+      title: 'Voix personnalisée',
+      description: 'Enregistrez ou téléchargez un échantillon de votre voix',
+      nameLabel: 'Nom du profil vocal',
+      namePlaceholder: 'Ex: Ma voix',
+      textToRead: '📝 Texte à lire :',
+      readThisText: '📝 Lisez ce texte :',
+      record: 'Enregistrer',
+      upload: 'Télécharger',
+      recordingInProgress: 'Enregistrement en cours...',
+      finish: 'Terminer',
+      cancel: 'Annuler',
+      processing: "Traitement de l'enregistrement...",
+      profileCreated: 'Profil vocal créé !',
+      recordingError: "Erreur d'enregistrement",
+      tryAgain: 'Réessayer',
+      uploading: 'Téléchargement en cours...',
+      savedProfiles: 'Profils vocaux enregistrés',
+      active: 'Actif',
+      paidPlanRequired: 'Plan payant requis',
+      notSynced: 'Non sync. Mistral',
+      stopPlayback: 'Arrêter la lecture',
+      playOriginal: "Écouter l'enregistrement original",
+      testClonedVoice: 'Tester la voix clonée avec Mistral TTS',
+      retrySyncMistral: 'Réessayer la synchronisation avec Mistral',
+      deleteProfile: 'Supprimer le profil',
+      noAudioRecorded: 'Aucun audio enregistré',
+      selectAudioFile: 'Veuillez sélectionner un fichier audio',
+      enterVoiceName: 'Veuillez entrer un nom pour le profil vocal',
+      registeringVoice: 'Enregistrement de la voix chez Mistral...',
+      uploadError: 'Erreur lors du téléchargement',
+      deleted: 'Profil vocal supprimé',
+      syncedMistral: 'Voix synchronisée avec Mistral',
+      syncFailed: 'Échec de la synchronisation avec Mistral',
+      syncError: 'Erreur Mistral API',
+      audioPlaybackError: 'Erreur de lecture audio',
+      playingPreview: "Lecture de l'aperçu vocal",
+      recordingStarted: 'Enregistrement démarré - lisez le texte affiché',
+      microphoneError: "Impossible d'accéder au microphone",
+      recordingTooShort: 'Enregistrement trop court (minimum 3 secondes)',
+      profileCreatedNamed: (name: string) => `Profil vocal "${name}" créé avec succès`,
+      audioTooShort: 'Audio trop court (minimum 3 secondes)',
+      fileTooLong: 'Fichier trop long — extraction des 30 secondes centrales…',
+      defaultSystemVoice: 'Voix système par défaut activée',
+      testVoiceNoKey: 'Veuillez configurer votre clé API Mistral dans les paramètres pour tester la voix',
+      testText: (name: string) => `Bonjour, je suis ${name}. Voici un aperçu de ma voix clonée.`,
+      generatingVoicePreview: "Génération de l'aperçu vocal...",
+      voiceTestError: 'Erreur lors du test de la voix. Vérifiez votre clé API Mistral.'
     }
   }
 }
 
-export function getTranslations(language: Language): Translations {
+export function getTranslations(language: Language): Translations 
+{
   return translations[language]
 }

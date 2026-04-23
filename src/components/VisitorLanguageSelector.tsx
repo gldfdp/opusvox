@@ -12,11 +12,13 @@ interface VisitorLanguageSelectorProps {
   onSelectLanguage: (language: string) => void
 }
 
-export function VisitorLanguageSelector({ selectedLanguage, onSelectLanguage }: VisitorLanguageSelectorProps) {
+export function VisitorLanguageSelector({ selectedLanguage, onSelectLanguage }: VisitorLanguageSelectorProps) 
+{
   const { t, language } = useLanguage()
   const [searchTerm, setSearchTerm] = useState('')
   
-  const filteredLanguages = MISTRAL_SUPPORTED_LANGUAGES.filter(lang => {
+  const filteredLanguages = MISTRAL_SUPPORTED_LANGUAGES.filter(lang => 
+  {
     const searchLower = searchTerm.toLowerCase()
     return (
       lang.nameEn.toLowerCase().includes(searchLower) ||
@@ -45,7 +47,7 @@ export function VisitorLanguageSelector({ selectedLanguage, onSelectLanguage }: 
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            placeholder={language === 'fr' ? 'Rechercher une langue...' : 'Search for a language...'}
+            placeholder={t.visitorSelector.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

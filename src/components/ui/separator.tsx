@@ -10,7 +10,8 @@ function Separator({
   orientation = "horizontal",
   decorative = true,
   ...props
-}: ComponentProps<typeof SeparatorPrimitive.Root>) {
+}: ComponentProps<typeof SeparatorPrimitive.Root>) 
+{
   return (
     <SeparatorPrimitive.Root
       data-slot="separator-root"

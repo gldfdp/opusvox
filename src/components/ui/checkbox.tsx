@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 function Checkbox({
   className,
   ...props
-}: ComponentProps<typeof CheckboxPrimitive.Root>) {
+}: ComponentProps<typeof CheckboxPrimitive.Root>) 
+{
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"

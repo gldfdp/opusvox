@@ -6,7 +6,8 @@ import MoreHorizontalIcon from "lucide-react/dist/esm/icons/more-horizontal"
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 
-function Pagination({ className, ...props }: ComponentProps<"nav">) {
+function Pagination({ className, ...props }: ComponentProps<"nav">) 
+{
   return (
     <nav
       role="navigation"
@@ -21,7 +22,8 @@ function Pagination({ className, ...props }: ComponentProps<"nav">) {
 function PaginationContent({
   className,
   ...props
-}: ComponentProps<"ul">) {
+}: ComponentProps<"ul">) 
+{
   return (
     <ul
       data-slot="pagination-content"
@@ -31,7 +33,8 @@ function PaginationContent({
   )
 }
 
-function PaginationItem({ ...props }: ComponentProps<"li">) {
+function PaginationItem({ ...props }: ComponentProps<"li">) 
+{
   return <li data-slot="pagination-item" {...props} />
 }
 
@@ -45,7 +48,8 @@ function PaginationLink({
   isActive,
   size = "icon",
   ...props
-}: PaginationLinkProps) {
+}: PaginationLinkProps) 
+{
   return (
     <a
       aria-current={isActive ? "page" : undefined}
@@ -66,7 +70,8 @@ function PaginationLink({
 function PaginationPrevious({
   className,
   ...props
-}: ComponentProps<typeof PaginationLink>) {
+}: ComponentProps<typeof PaginationLink>) 
+{
   return (
     <PaginationLink
       aria-label="Go to previous page"
@@ -83,7 +88,8 @@ function PaginationPrevious({
 function PaginationNext({
   className,
   ...props
-}: ComponentProps<typeof PaginationLink>) {
+}: ComponentProps<typeof PaginationLink>) 
+{
   return (
     <PaginationLink
       aria-label="Go to next page"
@@ -100,7 +106,8 @@ function PaginationNext({
 function PaginationEllipsis({
   className,
   ...props
-}: ComponentProps<"span">) {
+}: ComponentProps<"span">) 
+{
   return (
     <span
       aria-hidden

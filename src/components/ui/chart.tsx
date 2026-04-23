@@ -22,10 +22,12 @@ type ChartContextProps = {
 
 const ChartContext = createContext<ChartContextProps | null>(null)
 
-function useChart() {
+function useChart() 
+{
   const context = useContext(ChartContext)
 
-  if (!context) {
+  if (!context) 
+  {
     throw new Error("useChart must be used within a <ChartContainer />")
   }
 
@@ -43,7 +45,8 @@ function ChartContainer({
   children: ComponentProps<
     typeof RechartsPrimitive.ResponsiveContainer
   >["children"]
-}) {
+}) 
+{
   const uniqueId = useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
 
@@ -67,12 +70,14 @@ function ChartContainer({
   )
 }
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => 
+{
   const colorConfig = Object.entries(config).filter(
     ([, config]) => config.theme || config.color
   )
 
-  if (!colorConfig.length) {
+  if (!colorConfig.length) 
+  {
     return null
   }
 
@@ -84,7 +89,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
-  .map(([key, itemConfig]) => {
+  .map(([key, itemConfig]) => 
+{
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
@@ -123,11 +129,14 @@ function ChartTooltipContent({
     indicator?: "line" | "dot" | "dashed"
     nameKey?: string
     labelKey?: string
-  }) {
+  }) 
+{
   const { config } = useChart()
 
-  const tooltipLabel = useMemo(() => {
-    if (hideLabel || !payload?.length) {
+  const tooltipLabel = useMemo(() => 
+  {
+    if (hideLabel || !payload?.length) 
+    {
       return null
     }
 
@@ -139,7 +148,8 @@ function ChartTooltipContent({
         ? config[label as keyof typeof config]?.label || label
         : itemConfig?.label
 
-    if (labelFormatter) {
+    if (labelFormatter) 
+    {
       return (
         <div className={cn("font-medium", labelClassName)}>
           {labelFormatter(value, payload)}
@@ -147,7 +157,8 @@ function ChartTooltipContent({
       )
     }
 
-    if (!value) {
+    if (!value) 
+    {
       return null
     }
 
@@ -162,7 +173,8 @@ function ChartTooltipContent({
     labelKey,
   ])
 
-  if (!active || !payload?.length) {
+  if (!active || !payload?.length) 
+  {
     return null
   }
 
@@ -177,7 +189,8 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload.map((item, index) => {
+        {payload.map((item, index) => 
+{
           const key = `${nameKey || item.name || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
           const indicatorColor = color || item.payload.fill || item.color
@@ -258,10 +271,12 @@ function ChartLegendContent({
   Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
     hideIcon?: boolean
     nameKey?: string
-  }) {
+  }) 
+{
   const { config } = useChart()
 
-  if (!payload?.length) {
+  if (!payload?.length) 
+  {
     return null
   }
 
@@ -273,7 +288,8 @@ function ChartLegendContent({
         className
       )}
     >
-      {payload.map((item) => {
+      {payload.map((item) => 
+{
         const key = `${nameKey || item.dataKey || "value"}`
         const itemConfig = getPayloadConfigFromPayload(config, item, key)
 
@@ -307,8 +323,10 @@ function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
   key: string
-) {
-  if (typeof payload !== "object" || payload === null) {
+) 
+{
+  if (typeof payload !== "object" || payload === null) 
+  {
     return undefined
   }
 
@@ -324,13 +342,16 @@ function getPayloadConfigFromPayload(
   if (
     key in payload &&
     typeof payload[key as keyof typeof payload] === "string"
-  ) {
+  ) 
+  {
     configLabelKey = payload[key as keyof typeof payload] as string
-  } else if (
+  }
+  else if (
     payloadPayload &&
     key in payloadPayload &&
     typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
-  ) {
+  ) 
+  {
     configLabelKey = payloadPayload[
       key as keyof typeof payloadPayload
     ] as string

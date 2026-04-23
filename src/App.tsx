@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { useKV } from '@/hooks/use-kv'
+import { useRecording } from '@/hooks/use-recording'
 import { Toaster, toast } from 'sonner'
 import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, X, Trash, ArrowsClockwise } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
@@ -18,38 +19,25 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
+import { ConversationTurn, ResponseSuggestion, VoiceProfile, UserSettings } from '@/lib/types'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
 import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
-import { getSupportedAudioMimeType, isMediaRecorderSupported } from '@/lib/media'
+import { isMediaRecorderSupported } from '@/lib/media'
+import { trimTrailingSeconds } from '@/lib/audio'
+import { DEFAULT_USER_SETTINGS } from '@/lib/constants'
 import { initMobileLifecycle, cleanupMobileLifecycle } from '@/mobile/app-lifecycle'
 import { getLanguageDisplayName } from '@/lib/languages'
 import { AnimatePresence } from 'framer-motion'
 
-function AppContent() {
+function AppContent() 
+{
   const { t, language } = useLanguage()
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
-  const [userSettings] = useKV<UserSettings>('user-settings', {
-    firstName: '',
-    lastName: '',
-    age: null,
-    preferredCommunicationStyle: '',
-    medicalConditions: '',
-    allergies: '',
-    specialNeeds: '',
-    mistralApiKey: '',
-    mistralConnected: false,
-    keyboardShortcuts: ['q', 's', 'd', 'f'],
-    mistralContextTurns: 20,
-    recordingShortcut: ' ',
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  })
+  const [userSettings] = useKV<UserSettings>('user-settings', { ...DEFAULT_USER_SETTINGS, createdAt: Date.now(), updatedAt: Date.now() })
   const [profiles] = useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfileId] = useKV<string | null>('selected-voice-profile', null)
   const [visitorLanguage, setVisitorLanguage] = useKV<string | null>('visitor-language', null)
-  const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [translatedVisitorText, setTranslatedVisitorText] = useState('')
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
@@ -58,33 +46,95 @@ function AppContent() {
   const [mentionsOpen, setMentionsOpen] = useState(false)
   const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false)
   const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: string} | null>(null)
-  
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const audioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
-  const analyserIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasSpeechRef = useRef(false)
-  const trailingSilenceMsRef = useRef(0)
-  
-  const conversationHistory = history || []
-  const currentUserSettings = userSettings || {
-    firstName: '',
-    lastName: '',
-    age: null,
-    preferredCommunicationStyle: '',
-    medicalConditions: '',
-    allergies: '',
-    specialNeeds: '',
-    mistralApiKey: '',
-    mistralConnected: false,
-    keyboardShortcuts: ['q', 's', 'd', 'f'],
-    mistralContextTurns: 20,
-    recordingShortcut: ' ',
-    createdAt: Date.now(),
-    updatedAt: Date.now()
+
+  const processRecording = async (audioBlob: Blob, trailingSilenceMs: number, _mimeType: string, ext: string): Promise<void> => 
+  {
+    setRecordingState('processing')
+
+    if (audioBlob.size === 0) 
+    {
+      toast.error(t.recording.toastError)
+      setRecordingState('idle')
+      return
+    }
+
+    let finalBlob = audioBlob
+    const trailingSec = trailingSilenceMs / 1000
+    if (trailingSec > 0) 
+    {
+      finalBlob = await trimTrailingSeconds(audioBlob, trailingSec)
+    }
+
+    let transcribed = ''
+    const transcriptionLanguage = currentVisitorLanguage || language
+
+    if (isTranscriptionAvailable(currentUserSettings.mistralApiKey)) 
+    {
+      try 
+      {
+        toast.info(transcriptionLanguage === 'fr'
+          ? 'Transcription avec Mistral API...'
+          : 'Transcribing with Mistral API...')
+
+        transcribed = await transcribeAudio(finalBlob, transcriptionLanguage, currentUserSettings.mistralApiKey, ext)
+
+        toast.success(transcriptionLanguage === 'fr'
+          ? 'Transcription réussie !'
+          : 'Transcription successful!')
+      }
+      catch (error) 
+      {
+        console.error('Mistral transcription error:', error)
+        toast.error(transcriptionLanguage === 'fr'
+          ? 'Erreur de transcription - utilisation du mode simulé'
+          : 'Transcription error - using simulated mode')
+
+        await new Promise(resolve => setTimeout(resolve, 800))
+        transcribed = getSimulatedTranscription(transcriptionLanguage)
+      }
+    }
+    else 
+    {
+      toast.info(transcriptionLanguage === 'fr'
+        ? 'Mode simulation (configurez Mistral API dans les paramètres pour une vraie transcription)'
+        : 'Simulation mode (configure Mistral API in settings for real transcription)')
+
+      await new Promise(resolve => setTimeout(resolve, 800))
+      transcribed = getSimulatedTranscription(transcriptionLanguage)
+    }
+
+    setTranscribedText(transcribed)
+
+    if (currentVisitorLanguage && currentVisitorLanguage !== language && currentUserSettings.mistralApiKey) 
+    {
+      try 
+      {
+        const { translateText } = await import('@/lib/mistral')
+        const translated = await translateText(transcribed, language, currentUserSettings.mistralApiKey)
+        setTranslatedVisitorText(translated)
+      }
+      catch 
+      {
+        setTranslatedVisitorText('')
+      }
+    }
+    else 
+    {
+      setTranslatedVisitorText('')
+    }
+
+    await generateResponses(transcribed)
+    setRecordingState('idle')
   }
+
+  const { recordingState, setRecordingState, startRecording, stopRecording } = useRecording({
+    onComplete: processRecording,
+    toastStarted: t.recording.toastStarted,
+    toastPermissionDenied: t.recording.toastPermissionDenied,
+  })
+
+  const conversationHistory = history || []
+  const currentUserSettings = userSettings || DEFAULT_USER_SETTINGS
   
   const currentProfiles = profiles || []
   const currentVoiceProfile = selectedProfileId 
@@ -92,18 +142,24 @@ function AppContent() {
     : null
   const currentVisitorLanguage = visitorLanguage || null
 
-  useEffect(() => {
+  const stopRecordingRef = useRef(stopRecording)
+  stopRecordingRef.current = stopRecording
+
+  useEffect(() => 
+  {
     loadVoices()
 
     initMobileLifecycle({
-      onBack: () => {
-        if (settingsOpen) setSettingsOpen(false)
-      },
-      onBackground: () => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          mediaRecorderRef.current.stop()
-          setRecordingState('processing')
+      onBack: () => 
+      {
+        if (settingsOpen) 
+        {
+          setSettingsOpen(false)
         }
+      },
+      onBackground: () => 
+      {
+        stopRecordingRef.current()
         window.speechSynthesis?.cancel()
       },
     })
@@ -115,244 +171,71 @@ function AppContent() {
   recordingStateRef.current = recordingState
   // Always-current refs to avoid stale closure issues in keyboard handler and silence timer
   const handleStartRecordingRef = useRef<() => Promise<void>>(() => Promise.resolve())
-  const handleStopRecordingRef = useRef<() => void>(() => {})
+  const handleStopRecordingRef = useRef<() => void>(() => 
+  {})
 
-  useEffect(() => {
+  useEffect(() => 
+  {
     const shortcut = currentUserSettings.recordingShortcut ?? ' '
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return
-      if (settingsOpen || mentionsOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => 
+    {
+      if (e.repeat) 
+      {
+        return
+      }
+      if (settingsOpen || mentionsOpen) 
+      {
+        return
+      }
       const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
-      if (e.key === shortcut) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) 
+      {
+        return
+      }
+      if (e.key === shortcut) 
+      {
         e.preventDefault()
-        if (recordingStateRef.current === 'idle') handleStartRecordingRef.current()
-        else if (recordingStateRef.current === 'recording') handleStopRecordingRef.current()
+        if (recordingStateRef.current === 'idle') 
+        {
+          handleStartRecordingRef.current()
+        }
+        else if (recordingStateRef.current === 'recording') 
+        {
+          handleStopRecordingRef.current()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [settingsOpen, mentionsOpen, currentUserSettings.recordingShortcut])
 
-  if (settingsOpen) {
+  if (settingsOpen) 
+  {
     return <SettingsPage onClose={() => setSettingsOpen(false)} />
   }
 
-  if (mentionsOpen) {
+  if (mentionsOpen) 
+  {
     return <MentionsLegales onClose={() => setMentionsOpen(false)} />
   }
 
-  if (!isMediaRecorderSupported()) {
+  if (!isMediaRecorderSupported()) 
+  {
     return (
       <div className="flex items-center justify-center min-h-screen p-6 text-center text-muted-foreground">
-        {language === 'fr'
-          ? "L'enregistrement audio n'est pas disponible sur cet appareil."
-          : 'Audio recording is not available on this device.'}
+        {t.appMisc.audioRecordingNotAvailable}
       </div>
     )
   }
 
-  const audioBufferToWavBlob = (buffer: AudioBuffer): Blob => {
-    const numChannels = buffer.numberOfChannels
-    const sampleRate = buffer.sampleRate
-    const numSamples = buffer.length
-    const dataLength = numSamples * numChannels * 2
-    const wav = new ArrayBuffer(44 + dataLength)
-    const view = new DataView(wav)
-    const str = (off: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)) }
-    str(0, 'RIFF'); view.setUint32(4, 36 + dataLength, true); str(8, 'WAVE'); str(12, 'fmt ')
-    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numChannels, true)
-    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * numChannels * 2, true)
-    view.setUint16(32, numChannels * 2, true); view.setUint16(34, 16, true); str(36, 'data')
-    view.setUint32(40, dataLength, true)
-    let off = 44
-    for (let i = 0; i < numSamples; i++) {
-      for (let ch = 0; ch < numChannels; ch++) {
-        const s = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]))
-        view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2
-      }
-    }
-    return new Blob([wav], { type: 'audio/wav' })
-  }
+  // Keep refs in sync with latest handler versions (used by keyboard shortcut)
+  handleStartRecordingRef.current = startRecording
+  handleStopRecordingRef.current = stopRecording
 
-  const trimTrailingSeconds = async (blob: Blob, trimSeconds: number): Promise<Blob> => {
-    if (trimSeconds <= 0) return blob
-    try {
-      const arrayBuffer = await blob.arrayBuffer()
-      const audioCtx = new AudioContext()
-      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
-      await audioCtx.close()
-      const newDuration = audioBuffer.duration - trimSeconds
-      if (newDuration < 0.5) return blob
-      const newSamples = Math.floor(newDuration * audioBuffer.sampleRate)
-      const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, newSamples, audioBuffer.sampleRate)
-      const trimmed = offlineCtx.createBuffer(audioBuffer.numberOfChannels, newSamples, audioBuffer.sampleRate)
-      for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
-        trimmed.getChannelData(ch).set(audioBuffer.getChannelData(ch).subarray(0, newSamples))
-      }
-      return audioBufferToWavBlob(trimmed)
-    } catch {
-      return blob
-    }
-  }
-
-  const stopSilenceDetection = () => {
-    if (analyserIntervalRef.current) { clearInterval(analyserIntervalRef.current); analyserIntervalRef.current = null }
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
-    if (audioSourceRef.current) { audioSourceRef.current.disconnect(); audioSourceRef.current = null }
-    if (audioCtxRef.current) { audioCtxRef.current.close(); audioCtxRef.current = null }
-  }
-
-  const handleStartRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const { mimeType } = getSupportedAudioMimeType()
-      const mediaRecorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
-      hasSpeechRef.current = false
-      trailingSilenceMsRef.current = 0
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data)
-      }
-
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(track => track.stop())
-        stopSilenceDetection()
-        await processRecording()
-      }
-
-      // Silence detection via AnalyserNode
-      const audioCtx = new AudioContext()
-      await audioCtx.resume()
-      audioCtxRef.current = audioCtx
-      const analyser = audioCtx.createAnalyser()
-      analyser.fftSize = 2048
-      const sourceNode = audioCtx.createMediaStreamSource(stream)
-      audioSourceRef.current = sourceNode  // keep ref to prevent GC
-      sourceNode.connect(analyser)
-      const dataArray = new Float32Array(analyser.fftSize)
-      const SILENCE_DELAY_MS = 3000
-
-      let silenceStart: number | null = null
-
-      analyserIntervalRef.current = setInterval(() => {
-        analyser.getFloatTimeDomainData(dataArray)
-        let sum = 0
-        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i] * dataArray[i]
-        const rms = Math.sqrt(sum / dataArray.length)
-
-        if (rms >= 0.01) {
-          // Sound above noise floor — reset silence timer
-          hasSpeechRef.current = true
-          silenceStart = null
-          if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
-        } else if (hasSpeechRef.current && silenceStart === null) {
-          // Silence after speech — start countdown
-          silenceStart = Date.now()
-          silenceTimerRef.current = setTimeout(() => {
-            trailingSilenceMsRef.current = Date.now() - (silenceStart ?? Date.now())
-            handleStopRecordingRef.current()
-          }, SILENCE_DELAY_MS)
-        }
-      }, 100)
-
-      mediaRecorder.start()
-      setRecordingState('recording')
-      toast.info(t.recording.toastStarted)
-    } catch (error) {
-      toast.error(t.recording.toastPermissionDenied)
-      console.error('Error accessing microphone:', error)
-    }
-  }
-
-  const handleStopRecording = () => {
-    stopSilenceDetection()
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop()
-      setRecordingState('processing')
-    }
-  }
-
-  // Keep refs in sync with latest handler versions (used by keyboard shortcut and silence timer)
-  handleStartRecordingRef.current = handleStartRecording
-  handleStopRecordingRef.current = handleStopRecording
-
-
-  const processRecording = async () => {
-    setRecordingState('processing')
-    
-    if (audioChunksRef.current.length === 0) {
-      toast.error(t.recording.toastError)
-      setRecordingState('idle')
-      return
-    }
-
-    const { mimeType, ext } = getSupportedAudioMimeType()
-    const blobType = mimeType || 'audio/webm'
-    let audioBlob = new Blob(audioChunksRef.current, { type: blobType })
-
-    const trailingSec = trailingSilenceMsRef.current / 1000
-    if (trailingSec > 0) {
-      audioBlob = await trimTrailingSeconds(audioBlob, trailingSec)
-      trailingSilenceMsRef.current = 0
-    }
-    
-    let transcribed = ''
-    const transcriptionLanguage = currentVisitorLanguage || language
-    
-    if (isTranscriptionAvailable(currentUserSettings.mistralApiKey)) {
-      try {
-        toast.info(transcriptionLanguage === 'fr' 
-          ? 'Transcription avec Mistral API...' 
-          : 'Transcribing with Mistral API...')
-        
-        transcribed = await transcribeAudio(audioBlob, transcriptionLanguage, currentUserSettings.mistralApiKey, ext)
-        
-        toast.success(transcriptionLanguage === 'fr' 
-          ? 'Transcription réussie !' 
-          : 'Transcription successful!')
-      } catch (error) {
-        console.error('Mistral transcription error:', error)
-        toast.error(transcriptionLanguage === 'fr' 
-          ? 'Erreur de transcription - utilisation du mode simulé' 
-          : 'Transcription error - using simulated mode')
-        
-        await new Promise(resolve => setTimeout(resolve, 800))
-        transcribed = getSimulatedTranscription(transcriptionLanguage)
-      }
-    } else {
-      toast.info(transcriptionLanguage === 'fr' 
-        ? 'Mode simulation (configurez Mistral API dans les paramètres pour une vraie transcription)' 
-        : 'Simulation mode (configure Mistral API in settings for real transcription)')
-      
-      await new Promise(resolve => setTimeout(resolve, 800))
-      transcribed = getSimulatedTranscription(transcriptionLanguage)
-    }
-    
-    setTranscribedText(transcribed)
-
-    if (currentVisitorLanguage && currentVisitorLanguage !== language && currentUserSettings.mistralApiKey) {
-      try {
-        const { translateText } = await import('@/lib/mistral')
-        const translated = await translateText(transcribed, language, currentUserSettings.mistralApiKey)
-        setTranslatedVisitorText(translated)
-      } catch {
-        setTranslatedVisitorText('')
-      }
-    } else {
-      setTranslatedVisitorText('')
-    }
-
-    await generateResponses(transcribed)
-    setRecordingState('idle')
-  }
-
-  const generateResponses = async (input: string) => {
-    try {
+  const generateResponses = async (input: string) => 
+  {
+    try 
+    {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
       
       const responses = await generateResponseSuggestions({
@@ -365,19 +248,23 @@ function AppContent() {
       })
       
       setSuggestions(responses)
-    } catch (error) {
+    }
+    catch (error) 
+    {
       console.error('Error generating responses:', error)
-      const responseLanguage = currentVisitorLanguage || language
-      toast.error(responseLanguage === 'fr' 
-        ? 'Erreur lors de la génération des réponses'
-        : 'Error generating responses')
+      toast.error(t.appMisc.errorGeneratingResponses)
     }
   }
 
-  const loadMoreSuggestions = async () => {
-    if (!transcribedText || loadingMoreSuggestions) return
+  const loadMoreSuggestions = async () => 
+  {
+    if (!transcribedText || loadingMoreSuggestions) 
+    {
+      return
+    }
     setLoadingMoreSuggestions(true)
-    try {
+    try 
+    {
       const { generateResponseSuggestions } = await import('@/lib/mistral')
       const more = await generateResponseSuggestions({
         transcribedText,
@@ -392,32 +279,36 @@ function AppContent() {
         ...prev,
         ...more.map(s => ({ ...s, id: `more-${Date.now()}-${s.id}` }))
       ])
-    } catch (error) {
+    }
+    catch (error) 
+    {
       console.error('Error loading more suggestions:', error)
-      toast.error(language === 'fr'
-        ? 'Erreur lors du chargement des suggestions'
-        : 'Error loading more suggestions')
-    } finally {
+      toast.error(t.appMisc.errorLoadingSuggestions)
+    }
+    finally 
+    {
       setLoadingMoreSuggestions(false)
     }
   }
 
-  const handleTextSubmit = async (text: string) => {
+  const handleTextSubmit = async (text: string) => 
+  {
     await speakUserInitiatedText(text)
   }
 
-  const speakUserInitiatedText = async (text: string) => {
+  const speakUserInitiatedText = async (text: string) => 
+  {
     setRecordingState('speaking')
     const responseLanguage = currentVisitorLanguage || language
     toast.success(t.recording.toastSpeaking)
     
-    try {
+    try 
+    {
       let textToSpeak = text
       
-      if (responseLanguage !== language && currentUserSettings.mistralApiKey) {
-        toast.info(language === 'fr' 
-          ? 'Traduction du texte en cours...' 
-          : 'Translating text...')
+      if (responseLanguage !== language && currentUserSettings.mistralApiKey) 
+      {
+        toast.info(t.appMisc.translatingText)
         
         const { translateText } = await import('@/lib/mistral')
         textToSpeak = await translateText(text, responseLanguage, currentUserSettings.mistralApiKey)
@@ -441,14 +332,17 @@ function AppContent() {
       
       setRecordingState('idle')
       saveUserInitiatedConversation(text)
-    } catch (error) {
+    }
+    catch (error) 
+    {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
       console.error('TTS error:', error)
     }
   }
 
-  const saveUserInitiatedConversation = (userText: string) => {
+  const saveUserInitiatedConversation = (userText: string) => 
+  {
     const newTurn: ConversationTurn = {
       id: Date.now().toString(),
       timestamp: Date.now(),
@@ -457,33 +351,37 @@ function AppContent() {
       isCustomResponse: false
     }
     
-    setHistory((currentHistory) => {
+    setHistory((currentHistory) => 
+    {
       const current = currentHistory || []
       return [...current, newTurn]
     })
   }
 
-  const handleSelectResponse = async (responseText: string) => {
+  const handleSelectResponse = async (responseText: string) => 
+  {
     await speakResponse(responseText, false)
   }
 
-  const handleCustomResponse = (responseText: string) => {
+  const handleCustomResponse = (responseText: string) => 
+  {
     speakResponse(responseText, true)
   }
 
-  const speakResponse = async (responseText: string, isCustom: boolean) => {
+  const speakResponse = async (responseText: string, isCustom: boolean) => 
+  {
     setRecordingState('speaking')
     toast.success(t.recording.toastSpeaking)
     
-    try {
+    try 
+    {
       let textToSpeak = responseText
       const targetLanguage = currentVisitorLanguage || language
       const languageToSpeak: string = targetLanguage
       
-      if (targetLanguage !== language && currentUserSettings.mistralApiKey) {
-        toast.info(language === 'fr' 
-          ? 'Traduction de la réponse en cours...' 
-          : 'Translating response...')
+      if (targetLanguage !== language && currentUserSettings.mistralApiKey) 
+      {
+        toast.info(t.appMisc.translatingResponse)
         
         const { translateText } = await import('@/lib/mistral')
         textToSpeak = await translateText(responseText, targetLanguage, currentUserSettings.mistralApiKey)
@@ -507,15 +405,19 @@ function AppContent() {
       
       setRecordingState('idle')
       saveConversationTurn(responseText, isCustom)
-    } catch (error) {
+    }
+    catch (error) 
+    {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
       console.error('TTS error:', error)
     }
   }
 
-  const handleReplayLastResponse = async () => {
-    if (!lastSpokenResponse) {
+  const handleReplayLastResponse = async () => 
+  {
+    if (!lastSpokenResponse) 
+    {
       toast.error(t.replay.toastNoResponse)
       return
     }
@@ -523,7 +425,8 @@ function AppContent() {
     setRecordingState('speaking')
     toast.info(t.replay.toastReplaying)
     
-    try {
+    try 
+    {
       await speak({
         text: lastSpokenResponse.text,
         language: lastSpokenResponse.language,
@@ -535,23 +438,31 @@ function AppContent() {
       })
       
       setRecordingState('idle')
-    } catch (error) {
+    }
+    catch (error) 
+    {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
       console.error('TTS replay error:', error)
     }
   }
 
-  const handleReplayFromHistory = async (turn: ConversationTurn) => {
-    if (recordingState !== 'idle') return
+  const handleReplayFromHistory = async (turn: ConversationTurn) => 
+  {
+    if (recordingState !== 'idle') 
+    {
+      return
+    }
     setRecordingState('speaking')
 
-    try {
+    try 
+    {
       const targetLanguage = turn.visitorLanguage || language
       let textToSpeak = turn.userResponse
 
-      if (targetLanguage !== language && currentUserSettings.mistralApiKey) {
-        toast.info(language === 'fr' ? 'Traduction en cours...' : 'Translating...')
+      if (targetLanguage !== language && currentUserSettings.mistralApiKey) 
+      {
+        toast.info(t.appMisc.translating)
         const { translateText } = await import('@/lib/mistral')
         textToSpeak = await translateText(turn.userResponse, targetLanguage, currentUserSettings.mistralApiKey)
       }
@@ -567,14 +478,17 @@ function AppContent() {
       })
 
       setRecordingState('idle')
-    } catch (error) {
+    }
+    catch (error) 
+    {
       setRecordingState('idle')
       toast.error(t.recording.toastError)
       console.error('History replay error:', error)
     }
   }
 
-  const saveConversationTurn = (userResponse: string, isCustom: boolean) => {
+  const saveConversationTurn = (userResponse: string, isCustom: boolean) => 
+  {
     const newTurn: ConversationTurn = {
       id: Date.now().toString(),
       timestamp: Date.now(),
@@ -584,7 +498,8 @@ function AppContent() {
       visitorLanguage: currentVisitorLanguage || language
     }
     
-    setHistory((currentHistory) => {
+    setHistory((currentHistory) => 
+    {
       const current = currentHistory || []
       return [...current, newTurn]
     })
@@ -594,17 +509,20 @@ function AppContent() {
     setSuggestions([])
   }
 
-  const handleDeleteConversation = (id: string) => {
-    setHistory((currentHistory) => {
+  const handleDeleteConversation = (id: string) => 
+  {
+    setHistory((currentHistory) => 
+    {
       const current = currentHistory || []
       return current.filter(turn => turn.id !== id)
     })
     toast.success(t.history.deleteConfirm)
   }
 
-  const handleClearHistory = () => {
+  const handleClearHistory = () => 
+  {
     setHistory([])
-    toast.success(language === 'fr' ? 'Historique effacé' : 'History cleared')
+    toast.success(t.appMisc.historyCleared)
   }
 
 
@@ -616,7 +534,7 @@ function AppContent() {
       {needRefresh && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between shadow-lg">
           <span className="text-sm font-medium">
-            {language === 'fr' ? '🔄 Nouvelle version disponible' : '🔄 New version available'}
+            {t.appMisc.newVersionAvailable}
           </span>
           <Button
             size="sm"
@@ -625,7 +543,7 @@ function AppContent() {
             className="ml-4"
           >
             <ArrowsClockwise size={16} className="mr-2" />
-            {language === 'fr' ? 'Mettre à jour' : 'Update now'}
+            {t.appMisc.updateNow}
           </Button>
         </div>
       )}
@@ -682,7 +600,7 @@ function AppContent() {
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash size={16} className="mr-2" />
-                          {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+                          {t.appMisc.clearAll}
                         </Button>
                       )}
                     </div>
@@ -720,7 +638,8 @@ function AppContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
+                        onClick={() => 
+{
                           setVisitorLanguage(null)
                           setTranscribedText('')
                           setTranslatedVisitorText('')
@@ -728,7 +647,7 @@ function AppContent() {
                         }}
                         className="ml-2 h-6 text-xs"
                       >
-                        {language === 'fr' ? 'Changer' : 'Change'}
+                        {t.appMisc.change}
                       </Button>
                     </p>
                   )}
@@ -744,21 +663,21 @@ function AppContent() {
                         <div className="flex items-center gap-2 text-primary text-sm">
                           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                           <span className="font-medium">
-                            {language === 'fr' ? 'Mistral TTS activé' : 'Mistral TTS enabled'}
+                            {t.appMisc.mistralTtsEnabled}
                           </span>
                         </div>
                       ) : isTranscriptionAvailable(currentUserSettings.mistralApiKey) ? (
                         <div className="flex items-center gap-2 text-accent text-sm">
                           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                           <span className="font-medium">
-                            {language === 'fr' ? 'Mistral STT activé' : 'Mistral STT enabled'}
+                            {t.appMisc.mistralSttEnabled}
                           </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
                           <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
                           <span>
-                            {language === 'fr' ? 'Mode simulation' : 'Simulation mode'}
+                            {t.appMisc.simulationMode}
                           </span>
                         </div>
                       )}
@@ -769,8 +688,8 @@ function AppContent() {
                 <div className="flex justify-center py-4 sm:py-8">
                   <RecordingButton
                     state={recordingState}
-                    onStartRecording={handleStartRecording}
-                    onStopRecording={handleStopRecording}
+                    onStartRecording={startRecording}
+                    onStopRecording={stopRecording}
                   />
                 </div>
 
@@ -819,7 +738,7 @@ function AppContent() {
             {translatedVisitorText && (
               <Card className="p-4 sm:p-5 bg-secondary/50 border-2">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                  {language === 'fr' ? 'Ce que dit votre interlocuteur' : "Visitor's message"}
+                  {t.appMisc.visitorsMessage}
                 </h3>
                 <p className="conversation-text text-base text-foreground leading-relaxed">
                   {translatedVisitorText}
@@ -842,14 +761,15 @@ function AppContent() {
                   size="sm"
                   className="w-full mt-3 text-muted-foreground hover:text-destructive"
                   disabled={recordingState !== 'idle'}
-                  onClick={() => {
+                  onClick={() => 
+{
                     setTranscribedText('')
                     setTranslatedVisitorText('')
                     setSuggestions([])
                   }}
                 >
                   <X size={16} className="mr-2" />
-                  {language === 'fr' ? 'Ignorer — pas de réponse nécessaire' : 'Dismiss — no response needed'}
+                  {t.appMisc.dismiss}
                 </Button>
               </Card>
             ) : (
@@ -877,24 +797,27 @@ function AppContent() {
           className="text-xs text-muted-foreground hover:text-foreground"
           onClick={() => setMentionsOpen(true)}
         >
-          {language === 'fr' ? 'Mentions légales' : 'Legal Notice'}
+          {t.appMisc.legalNotice}
         </Button>
       </footer>
     </div>
   )
 }
 
-function AppRouter() {
+function AppRouter() 
+{
   const [onboardingCompleted, setOnboardingCompleted] = useKV<boolean>('onboarding-completed', false)
 
   // Still loading from IDB – render nothing to avoid flashing onboarding for returning users
-  if (onboardingCompleted === undefined) {
+  if (onboardingCompleted === undefined) 
+  {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background" />
     )
   }
 
-  if (!onboardingCompleted) {
+  if (!onboardingCompleted) 
+  {
     return (
       <>
         <Toaster position="top-center" />
@@ -906,7 +829,8 @@ function AppRouter() {
   return <AppContent />
 }
 
-function App() {
+function App() 
+{
   return (
     <LanguageProvider>
       <AppRouter />

@@ -15,7 +15,8 @@ let currentVoiceProfile: VoiceProfile | null = null
 let isUsingClonedVoice = false
 let isUsingMistralTTS = false
 
-export function getPreferredVoice(language: string): SpeechSynthesisVoice | null {
+export function getPreferredVoice(language: string): SpeechSynthesisVoice | null 
+{
   const voices = speechSynthesis.getVoices()
   
   const languageMap: Record<string, string[]> = {
@@ -61,45 +62,61 @@ export function getPreferredVoice(language: string): SpeechSynthesisVoice | null
   
   const preferredLangs = languageMap[language] || [language]
   
-  for (const lang of preferredLangs) {
+  for (const lang of preferredLangs) 
+  {
     const voice = voices.find(v => v.lang.startsWith(lang))
-    if (voice) return voice
+    if (voice) 
+    {
+      return voice
+    }
   }
   
   return voices.find(v => v.lang.startsWith(language)) || voices[0] || null
 }
 
-export function getCurrentVoice(): SpeechSynthesisVoice | null {
+export function getCurrentVoice(): SpeechSynthesisVoice | null 
+{
   return currentVoice
 }
 
-export function getCurrentVoiceProfile(): VoiceProfile | null {
+export function getCurrentVoiceProfile(): VoiceProfile | null 
+{
   return currentVoiceProfile
 }
 
-export function isClonedVoice(): boolean {
+export function isClonedVoice(): boolean 
+{
   return isUsingClonedVoice
 }
 
-export function isMistralTTS(): boolean {
+export function isMistralTTS(): boolean 
+{
   return isUsingMistralTTS
 }
 
-export function isTTSAvailable(apiKey?: string): boolean {
+export function isTTSAvailable(apiKey?: string): boolean 
+{
   return !!apiKey && apiKey.trim().length > 0
 }
 
-export async function speak(options: TTSOptions): Promise<void> {
-  if (isTTSAvailable(options.apiKey)) {
+export async function speak(options: TTSOptions): Promise<void> 
+{
+  if (isTTSAvailable(options.apiKey)) 
+  {
     return speakWithMistralTTS(options)
-  } else if (options.voiceProfile && options.voiceProfile.language === options.language) {
+  }
+  else if (options.voiceProfile && options.voiceProfile.language === options.language) 
+  {
     return speakWithClonedVoice(options)
-  } else {
+  }
+  else 
+  {
     return speakWithSystemVoice(options)
   }
 }
 
-async function convertAudioToWav(audioDataUrl: string): Promise<string> {
+async function convertAudioToWav(audioDataUrl: string): Promise<string> 
+{
   const response = await fetch(audioDataUrl)
   const arrayBuffer = await response.arrayBuffer()
 
@@ -111,7 +128,8 @@ async function convertAudioToWav(audioDataUrl: string): Promise<string> {
   const sampleRate = audioBuffer.sampleRate
   const samples = audioBuffer.getChannelData(0)
   const pcm = new Int16Array(samples.length)
-  for (let i = 0; i < samples.length; i++) {
+  for (let i = 0; i < samples.length; i++) 
+  {
     const s = Math.max(-1, Math.min(1, samples[i]))
     pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff
   }
@@ -119,8 +137,12 @@ async function convertAudioToWav(audioDataUrl: string): Promise<string> {
   const dataLength = pcm.length * 2
   const buffer = new ArrayBuffer(44 + dataLength)
   const view = new DataView(buffer)
-  const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
+  const writeStr = (offset: number, str: string) => 
+  {
+    for (let i = 0; i < str.length; i++) 
+    {
+      view.setUint8(offset + i, str.charCodeAt(i))
+    }
   }
   writeStr(0, 'RIFF')
   view.setUint32(4, 36 + dataLength, true)
@@ -140,25 +162,34 @@ async function convertAudioToWav(audioDataUrl: string): Promise<string> {
 
   const bytes = new Uint8Array(buffer)
   let binary = ''
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+  for (let i = 0; i < bytes.length; i++) 
+  {
+    binary += String.fromCharCode(bytes[i])
+  }
   return btoa(binary)
 }
 
-async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
-  if (!options.apiKey) {
+async function speakWithMistralTTS(options: TTSOptions): Promise<void> 
+{
+  if (!options.apiKey) 
+  {
     return speakWithSystemVoice(options)
   }
 
-  try {
+  try 
+  {
     isUsingMistralTTS = true
     currentVoiceProfile = options.voiceProfile || null
     isUsingClonedVoice = !!options.voiceProfile
 
-    if (options.voiceProfile?.audioDataUrl) {
-      try {
+    if (options.voiceProfile?.audioDataUrl) 
+    {
+      try 
+      {
         let clonedRequestBody: Record<string, unknown>
 
-        if (options.voiceProfile.mistralVoiceId) {
+        if (options.voiceProfile.mistralVoiceId) 
+        {
           clonedRequestBody = {
             model: 'voxtral-mini-tts-2603',
             input: options.text,
@@ -166,12 +197,17 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
             response_format: 'wav',
           }
           console.log('Using saved Mistral voice id:', options.voiceProfile.mistralVoiceId)
-        } else {
+        }
+        else 
+        {
           const audioDataUrl = options.voiceProfile.audioDataUrl
           let base64Audio: string
-          try {
+          try 
+          {
             base64Audio = await convertAudioToWav(audioDataUrl)
-          } catch {
+          }
+          catch 
+          {
             base64Audio = audioDataUrl.includes(',') ? audioDataUrl.split(',')[1] : audioDataUrl
           }
           clonedRequestBody = {
@@ -192,7 +228,8 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
           body: JSON.stringify(clonedRequestBody)
         })
 
-        if (!clonedResponse.ok) {
+        if (!clonedResponse.ok) 
+        {
           const errorText = await clonedResponse.text().catch(() => '')
           console.error('Mistral TTS (cloned) API error:', {
             status: clonedResponse.status,
@@ -205,23 +242,29 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
         const contentType = clonedResponse.headers.get('content-type') || ''
         let clonedAudioBlob: Blob
 
-        if (contentType.includes('application/json')) {
+        if (contentType.includes('application/json')) 
+        {
           const jsonData = await clonedResponse.json()
           console.log('Mistral TTS (cloned) JSON response keys:', Object.keys(jsonData))
           const audioBase64: string = jsonData.audio ?? jsonData.data ?? jsonData.audio_data ?? ''
-          if (!audioBase64) {
+          if (!audioBase64) 
+          {
             console.error('Mistral TTS (cloned) JSON response (no audio field):', JSON.stringify(jsonData).slice(0, 500))
             throw new Error('Mistral TTS: no audio field in JSON response')
           }
           const audioBytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))
           clonedAudioBlob = new Blob([audioBytes], { type: 'audio/wav' })
-        } else {
+        }
+        else 
+        {
           clonedAudioBlob = await clonedResponse.blob()
         }
 
         console.log('Successfully used cloned voice profile:', options.voiceProfile.name)
         return playAudio(clonedAudioBlob, options.volume ?? 1)
-      } catch (error) {
+      }
+      catch (error) 
+      {
         console.warn('Failed to use cloned voice, falling back to default voice:', error)
       }
     }
@@ -244,7 +287,8 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
       body: JSON.stringify(requestBody)
     })
 
-    if (!response.ok) {
+    if (!response.ok) 
+    {
       const errorText = await response.text().catch(() => '')
       console.error('Mistral TTS API error:', {
         status: response.status,
@@ -257,23 +301,29 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
     const defaultContentType = response.headers.get('content-type') || ''
     let audioBlob: Blob
 
-    if (defaultContentType.includes('application/json')) {
+    if (defaultContentType.includes('application/json')) 
+    {
       const jsonData = await response.json()
       console.log('Mistral TTS JSON response keys:', Object.keys(jsonData))
       const audioBase64: string = jsonData.audio ?? jsonData.data ?? jsonData.audio_data ?? ''
-      if (!audioBase64) {
+      if (!audioBase64) 
+      {
         console.error('Mistral TTS JSON response (no audio field):', JSON.stringify(jsonData).slice(0, 500))
         throw new Error('Mistral TTS: no audio field in JSON response')
       }
       const audioBytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))
       audioBlob = new Blob([audioBytes], { type: 'audio/wav' })
-    } else {
+    }
+    else 
+    {
       audioBlob = await response.blob()
     }
 
     console.log('Mistral TTS response blob:', audioBlob.type, audioBlob.size)
     return playAudio(audioBlob, options.volume ?? 1)
-  } catch (error) {
+  }
+  catch (error) 
+  {
     isUsingMistralTTS = false
     currentVoiceProfile = null
     isUsingClonedVoice = false
@@ -282,24 +332,28 @@ async function speakWithMistralTTS(options: TTSOptions): Promise<void> {
   }
 }
 
-function getDefaultMistralVoice(): string {
+function getDefaultMistralVoice(): string 
+{
   // Mistral TTS voices — catalog: en_paul_neutral (US), gb_oliver_neutral (UK male), gb_jane_neutral (UK female)
   // The model is multilingual: an English voice can synthesize any supported language.
   return 'en_paul_neutral'
 }
 
 
-async function playAudio(audioBlob: Blob, volume: number): Promise<void> {
+async function playAudio(audioBlob: Blob, volume: number): Promise<void> 
+{
   const blob = audioBlob.type && audioBlob.type !== 'application/octet-stream'
     ? audioBlob
     : new Blob([audioBlob], { type: 'audio/wav' })
   const audioUrl = URL.createObjectURL(blob)
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => 
+  {
     const audio = new Audio(audioUrl)
     audio.volume = volume
 
-    audio.onended = () => {
+    audio.onended = () => 
+    {
       URL.revokeObjectURL(audioUrl)
       isUsingMistralTTS = false
       currentVoiceProfile = null
@@ -307,7 +361,8 @@ async function playAudio(audioBlob: Blob, volume: number): Promise<void> {
       resolve()
     }
 
-    audio.onerror = (event) => {
+    audio.onerror = (event) => 
+    {
       URL.revokeObjectURL(audioUrl)
       isUsingMistralTTS = false
       currentVoiceProfile = null
@@ -316,7 +371,8 @@ async function playAudio(audioBlob: Blob, volume: number): Promise<void> {
       reject(new Error('Failed to play Mistral TTS audio'))
     }
 
-    audio.play().catch((error) => {
+    audio.play().catch((error) => 
+    {
       URL.revokeObjectURL(audioUrl)
       isUsingMistralTTS = false
       currentVoiceProfile = null
@@ -326,22 +382,27 @@ async function playAudio(audioBlob: Blob, volume: number): Promise<void> {
   })
 }
 
-async function speakWithClonedVoice(options: TTSOptions): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!options.voiceProfile) {
+async function speakWithClonedVoice(options: TTSOptions): Promise<void> 
+{
+  return new Promise((resolve, reject) => 
+  {
+    if (!options.voiceProfile) 
+    {
       speakWithSystemVoice(options).then(resolve).catch(reject)
       return
     }
 
     const audio = new Audio()
     
-    audio.onended = () => {
+    audio.onended = () => 
+    {
       currentVoiceProfile = null
       isUsingClonedVoice = false
       resolve()
     }
     
-    audio.onerror = () => {
+    audio.onerror = () => 
+    {
       currentVoiceProfile = null
       isUsingClonedVoice = false
       console.warn('Cloned voice playback failed, falling back to system voice')
@@ -354,16 +415,20 @@ async function speakWithClonedVoice(options: TTSOptions): Promise<void> {
     audio.src = options.voiceProfile.audioDataUrl
     audio.playbackRate = options.rate ?? 0.9
     audio.volume = options.volume ?? 1
-    audio.play().catch((error) => {
+    audio.play().catch((error) => 
+    {
       console.warn('Failed to play cloned voice:', error)
       speakWithSystemVoice(options).then(resolve).catch(reject)
     })
   })
 }
 
-function speakWithSystemVoice(options: TTSOptions): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!('speechSynthesis' in window)) {
+function speakWithSystemVoice(options: TTSOptions): Promise<void> 
+{
+  return new Promise((resolve, reject) => 
+  {
+    if (!('speechSynthesis' in window)) 
+    {
       reject(new Error('Speech synthesis not supported'))
       return
     }
@@ -371,11 +436,14 @@ function speakWithSystemVoice(options: TTSOptions): Promise<void> {
     const utterance = new SpeechSynthesisUtterance(options.text)
     
     const voice = getPreferredVoice(options.language)
-    if (voice) {
+    if (voice) 
+    {
       utterance.voice = voice
       utterance.lang = voice.lang
       currentVoice = voice
-    } else {
+    }
+    else 
+    {
       utterance.lang = options.language === 'fr' ? 'fr-FR' : 'en-US'
       currentVoice = null
     }
@@ -387,11 +455,13 @@ function speakWithSystemVoice(options: TTSOptions): Promise<void> {
     isUsingClonedVoice = false
     currentVoiceProfile = null
     
-    utterance.onend = () => {
+    utterance.onend = () => 
+    {
       currentVoice = null
       resolve()
     }
-    utterance.onerror = (event) => {
+    utterance.onerror = (event) => 
+    {
       currentVoice = null
       reject(event)
     }
@@ -400,8 +470,10 @@ function speakWithSystemVoice(options: TTSOptions): Promise<void> {
   })
 }
 
-export function stopSpeaking(): void {
-  if ('speechSynthesis' in window) {
+export function stopSpeaking(): void 
+{
+  if ('speechSynthesis' in window) 
+  {
     speechSynthesis.cancel()
   }
   currentVoice = null
@@ -410,15 +482,19 @@ export function stopSpeaking(): void {
   isUsingMistralTTS = false
 }
 
-export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
-  return new Promise((resolve) => {
+export function loadVoices(): Promise<SpeechSynthesisVoice[]> 
+{
+  return new Promise((resolve) => 
+  {
     const voices = speechSynthesis.getVoices()
-    if (voices.length > 0) {
+    if (voices.length > 0) 
+    {
       resolve(voices)
       return
     }
     
-    speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.onvoiceschanged = () => 
+    {
       resolve(speechSynthesis.getVoices())
     }
   })

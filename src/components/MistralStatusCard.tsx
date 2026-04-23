@@ -25,19 +25,25 @@ interface MistralStatusCardProps {
   apiKey?: string
 }
 
-export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
-  const { language } = useLanguage()
+export function MistralStatusCard({ apiKey }: MistralStatusCardProps) 
+{
+  const { t } = useLanguage()
   const [status, setStatus] = useState<MistralStatus>({
     isConnected: false,
     isChecking: false
   })
 
-  const checkMistralStatus = useCallback(async () => {
-    if (!apiKey) return
+  const checkMistralStatus = useCallback(async () => 
+  {
+    if (!apiKey) 
+    {
+      return
+    }
 
     setStatus(prev => ({ ...prev, isChecking: true, error: undefined }))
 
-    try {
+    try 
+    {
       const response = await fetch('https://api.mistral.ai/v1/models', {
         method: 'GET',
         headers: {
@@ -46,7 +52,8 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
         }
       })
 
-      if (response.ok) {
+      if (response.ok) 
+      {
         const rateLimit = {
           limit: parseInt(response.headers.get('x-ratelimit-limit') || '0'),
           remaining: parseInt(response.headers.get('x-ratelimit-remaining') || '0'),
@@ -58,7 +65,9 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
           isChecking: false,
           rateLimit: rateLimit.limit > 0 ? rateLimit : undefined
         })
-      } else {
+      }
+      else 
+      {
         const errorData = await response.json().catch(() => ({}))
         setStatus({
           isConnected: false,
@@ -66,7 +75,9 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
           error: errorData.message || `API Error: ${response.status}`
         })
       }
-    } catch (error) {
+    }
+    catch (error) 
+    {
       setStatus({
         isConnected: false,
         isChecking: false,
@@ -75,10 +86,14 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
     }
   }, [apiKey])
 
-  useEffect(() => {
-    if (apiKey) {
+  useEffect(() => 
+  {
+    if (apiKey) 
+    {
       checkMistralStatus()
-    } else {
+    }
+    else 
+    {
       setStatus({
         isConnected: false,
         isChecking: false
@@ -86,66 +101,91 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
     }
   }, [apiKey, checkMistralStatus])
 
-  const getStatusIcon = () => {
-    if (status.isChecking) {
+  const getStatusIcon = () => 
+  {
+    if (status.isChecking) 
+    {
       return <ArrowClockwise size={20} className="animate-spin text-muted-foreground" />
     }
-    if (!apiKey) {
+    if (!apiKey) 
+    {
       return <WarningCircle size={20} weight="fill" className="text-muted-foreground" />
     }
-    if (status.error) {
+    if (status.error) 
+    {
       return <XCircle size={20} weight="fill" className="text-destructive" />
     }
-    if (status.isConnected) {
+    if (status.isConnected) 
+    {
       return <CheckCircle size={20} weight="fill" className="text-accent" />
     }
     return <WarningCircle size={20} weight="fill" className="text-muted-foreground" />
   }
 
-  const getStatusText = () => {
-    if (status.isChecking) {
-      return language === 'fr' ? 'Vérification...' : 'Checking...'
+  const getStatusText = () => 
+  {
+    if (status.isChecking) 
+    {
+      return t.mistralStatus.checking
     }
-    if (!apiKey) {
-      return language === 'fr' ? 'Non configurée' : 'Not configured'
+    if (!apiKey) 
+    {
+      return t.mistralStatus.notConfigured
     }
-    if (status.error) {
-      return language === 'fr' ? 'Erreur de connexion' : 'Connection error'
+    if (status.error) 
+    {
+      return t.mistralStatus.connectionError
     }
-    if (status.isConnected) {
-      return language === 'fr' ? 'Connectée' : 'Connected'
+    if (status.isConnected) 
+    {
+      return t.mistralStatus.connected
     }
-    return language === 'fr' ? 'Inconnue' : 'Unknown'
+    return t.mistralStatus.unknown
   }
 
-  const getStatusBadgeVariant = (): 'default' | 'secondary' | 'destructive' => {
-    if (!apiKey) return 'secondary'
-    if (status.error) return 'destructive'
-    if (status.isConnected) return 'default'
+  const getStatusBadgeVariant = (): 'default' | 'secondary' | 'destructive' => 
+  {
+    if (!apiKey) 
+    {
+      return 'secondary'
+    }
+    if (status.error) 
+    {
+      return 'destructive'
+    }
+    if (status.isConnected) 
+    {
+      return 'default'
+    }
     return 'secondary'
   }
 
-  const formatResetTime = (timestamp: number) => {
+  const formatResetTime = (timestamp: number) => 
+  {
     const date = new Date(timestamp * 1000)
     const now = new Date()
     const diff = date.getTime() - now.getTime()
     
-    if (diff < 0) return language === 'fr' ? 'Maintenant' : 'Now'
+    if (diff < 0) 
+    {
+      return t.mistralStatus.now
+    }
     
     const minutes = Math.floor(diff / 60000)
-    if (minutes < 60) {
-      return language === 'fr' ? `${minutes} min` : `${minutes} min`
+    if (minutes < 60) 
+    {
+      return `${minutes} min`
     }
     
     const hours = Math.floor(minutes / 60)
-    return language === 'fr' ? `${hours}h` : `${hours}h`
+    return `${hours}h`
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-lg">
-          <span>{language === 'fr' ? 'Statut Mistral API' : 'Mistral API Status'}</span>
+          <span>{t.mistralStatus.title}</span>
           <div className="flex items-center gap-2">
             {apiKey && (
               <Button
@@ -168,7 +208,7 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {language === 'fr' ? 'Connexion' : 'Connection'}
+            {t.mistralStatus.connection}
           </span>
           <Badge variant={getStatusBadgeVariant()}>
             {getStatusText()}
@@ -186,9 +226,7 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
         {!apiKey && (
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-xs text-muted-foreground">
-              {language === 'fr' 
-                ? 'Configurez votre clé API Mistral pour activer la transcription et la synthèse vocale avancées.'
-                : 'Configure your Mistral API key to enable advanced transcription and speech synthesis.'}
+              {t.mistralStatus.configureApiKey}
             </p>
           </div>
         )}
@@ -196,13 +234,13 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
         {status.isConnected && status.rateLimit && (
           <div className="space-y-3 pt-2 border-t">
             <h4 className="text-sm font-semibold">
-              {language === 'fr' ? 'Limites d\'utilisation' : 'Usage Limits'}
+              {t.mistralStatus.usageLimits}
             </h4>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {language === 'fr' ? 'Requêtes restantes' : 'Remaining requests'}
+                  {t.mistralStatus.remainingRequests}
                 </span>
                 <span className="font-medium">
                   {status.rateLimit.remaining} / {status.rateLimit.limit}
@@ -221,7 +259,7 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
               {status.rateLimit.reset > 0 && (
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {language === 'fr' ? 'Réinitialisation dans' : 'Resets in'}
+                    {t.mistralStatus.resetsIn}
                   </span>
                   <span>{formatResetTime(status.rateLimit.reset)}</span>
                 </div>
@@ -233,9 +271,7 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
         {status.isConnected && !status.rateLimit && (
           <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
             <p className="text-xs text-accent-foreground">
-              {language === 'fr' 
-                ? 'API connectée avec succès. Les informations de limite d\'utilisation ne sont pas disponibles.'
-                : 'API connected successfully. Usage limit information not available.'}
+              {t.mistralStatus.connectedNoLimits}
             </p>
           </div>
         )}
@@ -243,21 +279,21 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
         <div className="pt-2 border-t">
           <div className="flex flex-col gap-1 text-xs text-muted-foreground">
             <div className="flex items-center justify-between">
-              <span>{language === 'fr' ? 'Transcription (STT)' : 'Transcription (STT)'}</span>
+              <span>{t.mistralStatus.transcriptionStt}</span>
               <Badge variant="outline" className="text-xs">
-                {apiKey ? (language === 'fr' ? 'Actif' : 'Active') : (language === 'fr' ? 'Simulé' : 'Simulated')}
+                {apiKey ? t.mistralStatus.active : t.mistralStatus.simulated}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span>{language === 'fr' ? 'Synthèse vocale (TTS)' : 'Speech Synthesis (TTS)'}</span>
+              <span>{t.mistralStatus.speechSynthesisTts}</span>
               <Badge variant="outline" className="text-xs">
-                {apiKey ? (language === 'fr' ? 'Actif' : 'Active') : 'Browser'}
+                {apiKey ? t.mistralStatus.active : 'Browser'}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span>{language === 'fr' ? 'Génération de réponses' : 'Response Generation'}</span>
+              <span>{t.mistralStatus.responseGeneration}</span>
               <Badge variant="outline" className="text-xs">
-                {apiKey ? (language === 'fr' ? 'Actif' : 'Active') : (language === 'fr' ? 'Hors-ligne' : 'Offline')}
+                {apiKey ? t.mistralStatus.active : t.mistralStatus.offline}
               </Badge>
             </div>
           </div>
