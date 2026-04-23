@@ -2,18 +2,22 @@ import { ConversationTurn } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Trash } from "@phosphor-icons/react";
+import { Trash, SpeakerHigh } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { useLanguage } from "@/hooks/use-language";
 
 interface ConversationHistoryProps {
   history: ConversationTurn[];
   onDelete?: (id: string) => void;
+  onReplay?: (turn: ConversationTurn) => void;
+  disabled?: boolean;
 }
 
 export function ConversationHistory({
   history,
   onDelete,
+  onReplay,
+  disabled = false,
 }: ConversationHistoryProps) {
   const { t } = useLanguage();
 
@@ -66,13 +70,27 @@ export function ConversationHistory({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-primary uppercase tracking-wide">
-                  {t.history.you}
-                </span>
-                {turn.isCustomResponse && (
-                  <span className="text-xs text-muted-foreground italic">
-                    {t.history.custom}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-primary uppercase tracking-wide">
+                    {t.history.you}
                   </span>
+                  {turn.isCustomResponse && (
+                    <span className="text-xs text-muted-foreground italic">
+                      {t.history.custom}
+                    </span>
+                  )}
+                </div>
+                {onReplay && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onReplay(turn)}
+                    disabled={disabled}
+                    className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                    title={t.history.you}
+                  >
+                    <SpeakerHigh size={16} />
+                  </Button>
                 )}
               </div>
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">

@@ -60,6 +60,11 @@ function AppContent() {
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const analyserIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasSpeechRef = useRef(false)
+  const trailingSilenceMsRef = useRef(0)
   
   const conversationHistory = history || []
   const currentUserSettings = userSettings || {
@@ -121,6 +126,55 @@ function AppContent() {
     )
   }
 
+  const audioBufferToWavBlob = (buffer: AudioBuffer): Blob => {
+    const numChannels = buffer.numberOfChannels
+    const sampleRate = buffer.sampleRate
+    const numSamples = buffer.length
+    const dataLength = numSamples * numChannels * 2
+    const wav = new ArrayBuffer(44 + dataLength)
+    const view = new DataView(wav)
+    const str = (off: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)) }
+    str(0, 'RIFF'); view.setUint32(4, 36 + dataLength, true); str(8, 'WAVE'); str(12, 'fmt ')
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numChannels, true)
+    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * numChannels * 2, true)
+    view.setUint16(32, numChannels * 2, true); view.setUint16(34, 16, true); str(36, 'data')
+    view.setUint32(40, dataLength, true)
+    let off = 44
+    for (let i = 0; i < numSamples; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const s = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]))
+        view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2
+      }
+    }
+    return new Blob([wav], { type: 'audio/wav' })
+  }
+
+  const trimTrailingSeconds = async (blob: Blob, trimSeconds: number): Promise<Blob> => {
+    if (trimSeconds <= 0) return blob
+    try {
+      const arrayBuffer = await blob.arrayBuffer()
+      const audioCtx = new AudioContext()
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+      await audioCtx.close()
+      const newDuration = audioBuffer.duration - trimSeconds
+      if (newDuration < 0.5) return blob
+      const newSamples = Math.floor(newDuration * audioBuffer.sampleRate)
+      const trimmed = new AudioContext().createBuffer(audioBuffer.numberOfChannels, newSamples, audioBuffer.sampleRate)
+      for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+        trimmed.getChannelData(ch).set(audioBuffer.getChannelData(ch).subarray(0, newSamples))
+      }
+      return audioBufferToWavBlob(trimmed)
+    } catch {
+      return blob
+    }
+  }
+
+  const stopSilenceDetection = () => {
+    if (analyserIntervalRef.current) { clearInterval(analyserIntervalRef.current); analyserIntervalRef.current = null }
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
+    if (audioCtxRef.current) { audioCtxRef.current.close(); audioCtxRef.current = null }
+  }
+
   const handleStartRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -130,17 +184,52 @@ function AppContent() {
         : new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
+      hasSpeechRef.current = false
+      trailingSilenceMsRef.current = 0
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data)
-        }
+        if (event.data.size > 0) audioChunksRef.current.push(event.data)
       }
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop())
+        stopSilenceDetection()
         await processRecording()
       }
+
+      // Silence detection via AnalyserNode
+      const audioCtx = new AudioContext()
+      audioCtxRef.current = audioCtx
+      const analyser = audioCtx.createAnalyser()
+      analyser.fftSize = 2048
+      audioCtx.createMediaStreamSource(stream).connect(analyser)
+      const dataArray = new Uint8Array(analyser.fftSize)
+      const SILENCE_THRESHOLD = 6   // RMS (0-100 scale) below which = silence
+      const SILENCE_DELAY_MS = 3000
+
+      let silenceStart: number | null = null
+
+      analyserIntervalRef.current = setInterval(() => {
+        analyser.getByteTimeDomainData(dataArray)
+        let sum = 0
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = (dataArray[i] - 128) / 128
+          sum += v * v
+        }
+        const rms = Math.sqrt(sum / dataArray.length) * 100
+
+        if (rms >= SILENCE_THRESHOLD) {
+          hasSpeechRef.current = true
+          silenceStart = null
+          if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
+        } else if (hasSpeechRef.current && silenceStart === null) {
+          silenceStart = Date.now()
+          silenceTimerRef.current = setTimeout(() => {
+            trailingSilenceMsRef.current = Date.now() - (silenceStart ?? Date.now())
+            handleStopRecording()
+          }, SILENCE_DELAY_MS)
+        }
+      }, 100)
 
       mediaRecorder.start()
       setRecordingState('recording')
@@ -152,11 +241,13 @@ function AppContent() {
   }
 
   const handleStopRecording = () => {
+    stopSilenceDetection()
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop()
       setRecordingState('processing')
     }
   }
+
 
   const processRecording = async () => {
     setRecordingState('processing')
@@ -169,7 +260,13 @@ function AppContent() {
 
     const { mimeType, ext } = getSupportedAudioMimeType()
     const blobType = mimeType || 'audio/webm'
-    const audioBlob = new Blob(audioChunksRef.current, { type: blobType })
+    let audioBlob = new Blob(audioChunksRef.current, { type: blobType })
+
+    const trailingSec = trailingSilenceMsRef.current / 1000
+    if (trailingSec > 0) {
+      audioBlob = await trimTrailingSeconds(audioBlob, trailingSec)
+      trailingSilenceMsRef.current = 0
+    }
     
     let transcribed = ''
     const transcriptionLanguage = currentVisitorLanguage || language
@@ -412,13 +509,46 @@ function AppContent() {
     }
   }
 
+  const handleReplayFromHistory = async (turn: ConversationTurn) => {
+    if (recordingState !== 'idle') return
+    setRecordingState('speaking')
+
+    try {
+      const targetLanguage = turn.visitorLanguage || language
+      let textToSpeak = turn.userResponse
+
+      if (targetLanguage !== language && currentUserSettings.mistralApiKey) {
+        toast.info(language === 'fr' ? 'Traduction en cours...' : 'Translating...')
+        const { translateText } = await import('@/lib/mistral')
+        textToSpeak = await translateText(turn.userResponse, targetLanguage, currentUserSettings.mistralApiKey)
+      }
+
+      await speak({
+        text: textToSpeak,
+        language: targetLanguage,
+        rate: 0.9,
+        pitch: 1,
+        volume: 1,
+        voiceProfile: currentVoiceProfile,
+        apiKey: currentUserSettings.mistralApiKey
+      })
+
+      setRecordingState('idle')
+    } catch (error) {
+      setRecordingState('idle')
+      toast.error(t.recording.toastError)
+      console.error('History replay error:', error)
+    }
+  }
+
   const saveConversationTurn = (userResponse: string, isCustom: boolean) => {
     const newTurn: ConversationTurn = {
       id: Date.now().toString(),
       timestamp: Date.now(),
       visitorInput: translatedVisitorText || transcribedText,
       userResponse,
-      isCustomResponse: isCustom
+      isCustomResponse: isCustom,
+      visitorLanguage: currentVisitorLanguage || language
     }
     
     setHistory((currentHistory) => {
@@ -526,6 +656,8 @@ function AppContent() {
                     <ConversationHistory 
                       history={conversationHistory}
                       onDelete={handleDeleteConversation}
+                      onReplay={handleReplayFromHistory}
+                      disabled={recordingState !== 'idle'}
                     />
                   </div>
                 </SheetContent>

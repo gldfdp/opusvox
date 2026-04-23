@@ -4,6 +4,7 @@ export interface ConversationTurn {
   visitorInput: string
   userResponse: string
   isCustomResponse: boolean
+  visitorLanguage?: string
 }
 
 export interface ResponseSuggestion {
@@ -22,6 +23,7 @@ export interface VoiceProfile {
   createdAt: number
   duration: number
   mistralVoiceId?: string
+  mistralSyncError?: 'plan' | 'error'
 }
 
 export type VoiceRecordingState = 'idle' | 'recording' | 'processing' | 'success' | 'error'

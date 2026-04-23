@@ -21,6 +21,7 @@ import {
   Check, 
   X, 
   Play, 
+  Stop,
   Trash, 
   Eye, 
   EyeSlash,
@@ -28,6 +29,7 @@ import {
   FloppyDisk,
   CheckCircle,
   Warning,
+  ArrowsClockwise,
   Heart,
   Translate,
   Waveform
@@ -87,6 +89,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const [previewAudio, setPreviewAudio] = useState<string | null>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [testingVoice, setTestingVoice] = useState<string | null>(null)
+  const [retryingVoice, setRetryingVoice] = useState<string | null>(null)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -287,39 +290,113 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const audioDataUrl = reader.result as string
-      
-      const newProfile: VoiceProfile = {
-        id: `voice-${Date.now()}`,
-        name: profileName.trim(),
-        language,
-        audioDataUrl,
-        createdAt: Date.now(),
-        duration: audioDuration
-      }
-      
-      setProfiles((current) => {
-        const updated = [...(current || []), newProfile]
-        return updated
-      })
-      
-      setSelectedProfile(newProfile.id)
-      setRecordingState('success')
-      setProfileName('')
-      
-      toast.success(language === 'fr' 
-        ? `Profil vocal "${newProfile.name}" créé avec succès` 
-        : `Voice profile "${newProfile.name}" created successfully`)
-      
-      setTimeout(() => {
-        setRecordingState('idle')
-        setRecordingProgress(0)
-      }, 1500)
+    const audioDataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(audioBlob)
+    })
+
+    const newProfile: VoiceProfile = {
+      id: `voice-${Date.now()}`,
+      name: profileName.trim(),
+      language,
+      audioDataUrl,
+      createdAt: Date.now(),
+      duration: audioDuration
     }
-    
-    reader.readAsDataURL(audioBlob)
+
+    if (currentSettings.mistralApiKey) {
+      const { voiceId, syncError, errorDetail } = await registerVoiceWithMistral(audioDataUrl, newProfile.name, 'webm')
+      if (voiceId) {
+        newProfile.mistralVoiceId = voiceId
+      } else if (syncError) {
+        newProfile.mistralSyncError = syncError
+        if (errorDetail) toast.warning(errorDetail, { description: 'Mistral API' })
+      }
+    }
+
+    setProfiles((current) => [...(current || []), newProfile])
+    setSelectedProfile(newProfile.id)
+    setRecordingState('success')
+    setProfileName('')
+
+    toast.success(language === 'fr'
+      ? `Profil vocal "${newProfile.name}" créé avec succès`
+      : `Voice profile "${newProfile.name}" created successfully`)
+
+    setTimeout(() => {
+      setRecordingState('idle')
+      setRecordingProgress(0)
+    }, 1500)
+  }
+
+  const audioBufferToWavDataUrl = (buffer: AudioBuffer): string => {
+    const numChannels = buffer.numberOfChannels
+    const sampleRate = buffer.sampleRate
+    const numSamples = buffer.length
+    const dataLength = numSamples * numChannels * 2
+    const wavBuffer = new ArrayBuffer(44 + dataLength)
+    const view = new DataView(wavBuffer)
+    const writeStr = (offset: number, str: string) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
+    }
+    writeStr(0, 'RIFF')
+    view.setUint32(4, 36 + dataLength, true)
+    writeStr(8, 'WAVE')
+    writeStr(12, 'fmt ')
+    view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true)
+    view.setUint16(22, numChannels, true)
+    view.setUint32(24, sampleRate, true)
+    view.setUint32(28, sampleRate * numChannels * 2, true)
+    view.setUint16(32, numChannels * 2, true)
+    view.setUint16(34, 16, true)
+    writeStr(36, 'data')
+    view.setUint32(40, dataLength, true)
+    let offset = 44
+    for (let i = 0; i < numSamples; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]))
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
+        offset += 2
+      }
+    }
+    const bytes = new Uint8Array(wavBuffer)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return `data:audio/wav;base64,${btoa(binary)}`
+  }
+
+  const trimAudioMiddle30s = async (audioDataUrl: string): Promise<{ dataUrl: string; trimmed: boolean }> => {
+    const MAX_DURATION = 30
+    const base64 = audioDataUrl.split(',')[1]
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+
+    const audioCtx = new AudioContext()
+    try {
+      const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer.slice(0))
+      if (audioBuffer.duration <= MAX_DURATION) return { dataUrl: audioDataUrl, trimmed: false }
+
+      const sampleRate = audioBuffer.sampleRate
+      const numChannels = audioBuffer.numberOfChannels
+      const startTime = (audioBuffer.duration - MAX_DURATION) / 2
+      const startSample = Math.floor(startTime * sampleRate)
+      const trimSamples = Math.floor(MAX_DURATION * sampleRate)
+
+      const trimmedBuffer = audioCtx.createBuffer(numChannels, trimSamples, sampleRate)
+      for (let ch = 0; ch < numChannels; ch++) {
+        const src = audioBuffer.getChannelData(ch)
+        const dst = trimmedBuffer.getChannelData(ch)
+        for (let i = 0; i < trimSamples; i++) dst[i] = src[startSample + i]
+      }
+
+      return { dataUrl: audioBufferToWavDataUrl(trimmedBuffer), trimmed: true }
+    } finally {
+      audioCtx.close()
+    }
   }
 
   const getAudioDuration = (blob: Blob): Promise<number> => {
@@ -351,59 +428,96 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
     try {
       const audioDuration = await getAudioDuration(file)
-      
+
       if (audioDuration < MIN_RECORDING_DURATION) {
-        toast.error(language === 'fr' 
-          ? 'Audio trop court (minimum 3 secondes)' 
+        toast.error(language === 'fr'
+          ? 'Audio trop court (minimum 3 secondes)'
           : 'Audio too short (minimum 3 seconds)')
         setUploadingFile(false)
         return
       }
 
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const audioDataUrl = reader.result as string
-        
-        const newProfile: VoiceProfile = {
-          id: `voice-${Date.now()}`,
-          name: profileName.trim(),
-          language,
-          audioDataUrl,
-          createdAt: Date.now(),
-          duration: audioDuration
-        }
-        
-        setProfiles((current) => {
-          const updated = [...(current || []), newProfile]
-          return updated
-        })
-        
-        setSelectedProfile(newProfile.id)
-        setProfileName('')
-        setUploadingFile(false)
-        
-        toast.success(language === 'fr' 
-          ? `Profil vocal "${newProfile.name}" créé avec succès` 
-          : `Voice profile "${newProfile.name}" created successfully`)
+      const rawDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      let audioDataUrl = rawDataUrl
+      let finalDuration = audioDuration
+      if (audioDuration > 30000) {
+        toast.info(language === 'fr'
+          ? 'Fichier trop long — extraction des 30 secondes centrales…'
+          : 'File too long — extracting middle 30 seconds…')
+        const { dataUrl, trimmed } = await trimAudioMiddle30s(rawDataUrl)
+        audioDataUrl = dataUrl
+        if (trimmed) finalDuration = 30000
       }
-      
-      reader.readAsDataURL(file)
+
+      const newProfile: VoiceProfile = {
+        id: `voice-${Date.now()}`,
+        name: profileName.trim(),
+        language,
+        audioDataUrl,
+        createdAt: Date.now(),
+        duration: finalDuration
+      }
+
+      if (currentSettings.mistralApiKey) {
+        toast.info(language === 'fr' ? 'Enregistrement de la voix chez Mistral...' : 'Registering voice with Mistral...')
+        const ext = file.type.includes('wav') ? 'wav'
+          : file.type.includes('mp3') || file.type.includes('mpeg') ? 'mp3'
+          : file.type.includes('ogg') ? 'ogg'
+          : file.type.includes('flac') ? 'flac'
+          : 'wav'
+        const { voiceId, syncError, errorDetail } = await registerVoiceWithMistral(audioDataUrl, newProfile.name, ext)
+        if (voiceId) {
+          newProfile.mistralVoiceId = voiceId
+        } else if (syncError) {
+          newProfile.mistralSyncError = syncError
+          if (errorDetail) toast.warning(errorDetail, { description: 'Mistral API' })
+        }
+      }
+
+      setProfiles((current) => [...(current || []), newProfile])
+      setSelectedProfile(newProfile.id)
+      setProfileName('')
+      setUploadingFile(false)
+
+      toast.success(language === 'fr'
+        ? `Profil vocal "${newProfile.name}" créé avec succès`
+        : `Voice profile "${newProfile.name}" created successfully`)
     } catch {
       toast.error(language === 'fr' ? 'Erreur lors du téléchargement' : 'Upload error')
       setUploadingFile(false)
     }
   }
 
-  const deleteProfile = (profileId: string) => {
+  const deleteProfile = async (profileId: string) => {
+    const profile = (profiles || []).find(p => p.id === profileId)
+
+    if (profile?.mistralVoiceId && currentSettings.mistralApiKey) {
+      try {
+        await fetch(`https://api.mistral.ai/v1/audio/voices/${profile.mistralVoiceId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${currentSettings.mistralApiKey}` }
+        })
+        console.log('Voice deleted from Mistral:', profile.mistralVoiceId)
+      } catch (error) {
+        console.warn('Failed to delete voice from Mistral:', error)
+      }
+    }
+
     setProfiles((current) => {
       const updated = (current || []).filter(p => p.id !== profileId)
       return updated
     })
-    
+
     if (selectedProfile === profileId) {
       setSelectedProfile(null)
     }
-    
+
     toast.success(language === 'fr' ? 'Profil vocal supprimé' : 'Voice profile deleted')
   }
 
@@ -415,6 +529,65 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         : 'Default system voice activated')
     }
   }
+
+  const registerVoiceWithMistral = async (audioDataUrl: string, name: string, ext: string): Promise<{ voiceId: string | null; syncError: 'plan' | 'error' | null; errorDetail: string | null }> => {
+    if (!currentSettings.mistralApiKey) return { voiceId: null, syncError: null, errorDetail: null }
+    try {
+      const base64Audio = audioDataUrl.split(',')[1]
+      const response = await fetch('https://api.mistral.ai/v1/audio/voices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSettings.mistralApiKey}`
+        },
+        body: JSON.stringify({
+          name,
+          sample_audio: base64Audio,
+          sample_filename: `voice-${Date.now()}.${ext}`
+        })
+      })
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.warn('Mistral voice registration failed:', errorText)
+        let errorDetail: string | null = null
+        try { errorDetail = JSON.parse(errorText)?.detail ?? errorText } catch { errorDetail = errorText }
+        const isPlanError = response.status === 403 && errorText.toLowerCase().includes('paid plan')
+        return { voiceId: null, syncError: isPlanError ? 'plan' : 'error', errorDetail }
+      }
+      const data = await response.json()
+      console.log('Voice registered with Mistral, id:', data.id)
+      return { voiceId: data.id as string, syncError: null, errorDetail: null }
+    } catch (error) {
+      console.warn('Failed to register voice with Mistral:', error)
+      return { voiceId: null, syncError: 'error', errorDetail: String(error) }
+    }
+  }
+
+  const retryVoiceRegistration = async (profile: VoiceProfile) => {
+    setRetryingVoice(profile.id)
+    try {
+      const mimeMatch = profile.audioDataUrl.match(/data:audio\/([^;]+)/)
+      const ext = mimeMatch?.[1] === 'mpeg' ? 'mp3' : (mimeMatch?.[1] ?? 'wav')
+      const { voiceId, syncError, errorDetail } = await registerVoiceWithMistral(profile.audioDataUrl, profile.name, ext)
+      if (voiceId) {
+        setProfiles(current => (current || []).map(p =>
+          p.id === profile.id ? { ...p, mistralVoiceId: voiceId, mistralSyncError: undefined } : p
+        ))
+        toast.success(language === 'fr' ? 'Voix synchronisée avec Mistral' : 'Voice synced with Mistral')
+      } else {
+        setProfiles(current => (current || []).map(p =>
+          p.id === profile.id ? { ...p, mistralSyncError: syncError ?? 'error' } : p
+        ))
+        toast.error(errorDetail
+          ?? (language === 'fr' ? 'Échec de la synchronisation avec Mistral' : 'Failed to sync with Mistral'),
+          { description: language === 'fr' ? 'Erreur Mistral API' : 'Mistral API error' }
+        )
+      }
+    } finally {
+      setRetryingVoice(null)
+    }
+  }
+
 
   const playPreview = (audioDataUrl: string) => {
     if (previewAudio === audioDataUrl) {
@@ -1122,6 +1295,18 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                                     {language === 'fr' ? 'Actif' : 'Active'}
                                   </Badge>
                                 )}
+                                {currentSettings.mistralApiKey && !profile.mistralVoiceId && (
+                                  <Badge variant="outline" className={`text-xs gap-1 flex items-center ${
+                                    profile.mistralSyncError === 'plan'
+                                      ? 'text-muted-foreground border-muted-foreground/40'
+                                      : 'text-orange-500 border-orange-400'
+                                  }`}>
+                                    <Warning size={10} weight="fill" />
+                                    {profile.mistralSyncError === 'plan'
+                                      ? (language === 'fr' ? 'Plan payant requis' : 'Paid plan required')
+                                      : (language === 'fr' ? 'Non sync. Mistral' : 'Not synced')}
+                                  </Badge>
+                                )}
                               </div>
                               <p className="text-xs text-muted-foreground">
                                 {new Date(profile.createdAt).toLocaleDateString()} · {Math.round(profile.duration / 1000)}s
@@ -1131,14 +1316,18 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
-                              variant="ghost"
+                              variant={previewAudio === profile.audioDataUrl ? 'default' : 'ghost'}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 playPreview(profile.audioDataUrl)
                               }}
-                              title={language === 'fr' ? 'Écouter l\'enregistrement original' : 'Play original recording'}
+                              title={previewAudio === profile.audioDataUrl
+                                ? (language === 'fr' ? 'Arrêter la lecture' : 'Stop playback')
+                                : (language === 'fr' ? 'Écouter l\'enregistrement original' : 'Play original recording')}
                             >
-                              <Play size={16} weight={previewAudio === profile.audioDataUrl ? 'fill' : 'regular'} />
+                              {previewAudio === profile.audioDataUrl
+                                ? <Stop size={16} weight="fill" />
+                                : <Play size={16} />}
                             </Button>
                             <Button
                               size="sm"
@@ -1152,6 +1341,21 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                             >
                               <Waveform size={16} weight={testingVoice === profile.id ? 'fill' : 'regular'} className={testingVoice === profile.id ? 'animate-pulse' : ''} />
                             </Button>
+                            {currentSettings.mistralApiKey && !profile.mistralVoiceId && profile.mistralSyncError !== 'plan' && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  retryVoiceRegistration(profile)
+                                }}
+                                disabled={retryingVoice !== null}
+                                title={language === 'fr' ? 'Réessayer la synchronisation avec Mistral' : 'Retry Mistral sync'}
+                                className="text-orange-500 hover:text-orange-600"
+                              >
+                                <ArrowsClockwise size={16} className={retryingVoice === profile.id ? 'animate-spin' : ''} />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
