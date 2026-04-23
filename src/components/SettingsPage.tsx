@@ -713,6 +713,22 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     audioChunksRef.current = []
   }
 
+  const handleForceRefresh = async () => {
+    toast.info(language === 'fr' ? 'Vidage du cache en cours…' : 'Clearing cache…')
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(registrations.map(r => r.unregister()))
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map(k => caches.delete(k)))
+      }
+    } finally {
+      window.location.reload()
+    }
+  }
+
   const userName = currentSettings.firstName || (language === 'fr' ? 'Marie' : 'John')
   const sampleText = language === 'fr'
     ? `Bonjour, je m'appelle ${userName}. J'utilise cette application pour communiquer avec mes proches. Cette technologie me permet de garder ma voix et de continuer à m'exprimer.`
@@ -1375,6 +1391,29 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 </ScrollArea>
               </div>
             )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowsClockwise size={20} />
+              {language === 'fr' ? 'Application' : 'Application'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'fr'
+                ? 'Forcer le rechargement complet sans cache en cas de problème'
+                : 'Force a full reload without cache if something seems broken'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleForceRefresh}
+            >
+              <ArrowsClockwise size={16} />
+              {language === 'fr' ? 'Vider le cache et recharger' : 'Clear cache and reload'}
+            </Button>
           </CardContent>
         </Card>
       </div>
