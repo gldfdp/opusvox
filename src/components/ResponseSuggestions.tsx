@@ -26,6 +26,9 @@ export function ResponseSuggestions({
     if (disabled || suggestions.length === 0) return
 
     const handleKeyPress = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+
       const key = e.key.toLowerCase()
       const index = keyboardShortcuts.indexOf(key)
       
