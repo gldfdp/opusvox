@@ -56,11 +56,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    mistralContextTurns: 20,
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
   
-  const [profiles, setProfiles] = useKV<VoiceProfile[]>('voice-profiles', [])
+  const [profiles, setProfiles]= useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfile, setSelectedProfile] = useKV<string | null>('selected-voice-profile', null)
   
   const [firstName, setFirstName] = useState(userSettings?.firstName || '')
@@ -75,6 +76,9 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const [testingConnection, setTestingConnection] = useState(false)
   const [keyboardShortcuts, setKeyboardShortcuts] = useState<[string, string, string, string]>(
     userSettings?.keyboardShortcuts || ['q', 's', 'd', 'f']
+  )
+  const [contextTurns, setContextTurns] = useState<number>(
+    userSettings?.mistralContextTurns ?? 20
   )
   
   const [recordingState, setRecordingState] = useState<VoiceRecordingState>('idle')
@@ -103,6 +107,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    mistralContextTurns: 20,
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -120,6 +125,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     setSpecialNeeds(userSettings.specialNeeds || '')
     setApiKey(userSettings.mistralApiKey || '')
     setKeyboardShortcuts(userSettings.keyboardShortcuts)
+    setContextTurns(userSettings.mistralContextTurns ?? 20)
   }, [userSettings])
 
   const handleSaveProfile = () => {
@@ -135,6 +141,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       allergies: allergies.trim(),
       specialNeeds: specialNeeds.trim(),
       keyboardShortcuts,
+      mistralContextTurns: contextTurns,
       updatedAt: Date.now()
     }
     
@@ -879,6 +886,35 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                   )}
                 </Button>
               )}
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="contextTurns">
+                {language === 'fr' 
+                  ? 'Échanges envoyés à Mistral pour le contexte' 
+                  : 'Exchanges sent to Mistral for context'}
+              </Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="contextTurns"
+                  type="number"
+                  value={contextTurns}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value)
+                    if (!isNaN(val) && val >= 1 && val <= 100) setContextTurns(val)
+                  }}
+                  min={1}
+                  max={100}
+                  className="w-24"
+                />
+                <p className="text-sm text-muted-foreground">
+                  {language === 'fr' 
+                    ? 'Nombre de derniers échanges inclus dans chaque requête (1–100)' 
+                    : 'Number of recent exchanges included in each request (1–100)'}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

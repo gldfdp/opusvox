@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 import { useKV } from '@/hooks/use-kv'
 import { Toaster, toast } from 'sonner'
-import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, X } from '@phosphor-icons/react'
+import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise, X, Trash, ArrowsClockwise } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
 import { ResponseSuggestions } from '@/components/ResponseSuggestions'
 import { ConversationHistory } from '@/components/ConversationHistory'
@@ -11,11 +12,11 @@ import { SettingsPage } from '@/components/SettingsPage'
 import { TextInitiator } from '@/components/TextInitiator'
 import { VisitorLanguageSelector } from '@/components/VisitorLanguageSelector'
 import { OnboardingPage } from '@/components/OnboardingPage'
+import { MentionsLegales } from '@/components/MentionsLegales'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
@@ -27,6 +28,7 @@ import { AnimatePresence } from 'framer-motion'
 
 function AppContent() {
   const { t, language } = useLanguage()
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
   const [history, setHistory] = useKV<ConversationTurn[]>('conversation-history', [])
   const [userSettings] = useKV<UserSettings>('user-settings', {
     firstName: '',
@@ -39,6 +41,7 @@ function AppContent() {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    mistralContextTurns: 20,
     createdAt: Date.now(),
     updatedAt: Date.now()
   })
@@ -51,6 +54,8 @@ function AppContent() {
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [mentionsOpen, setMentionsOpen] = useState(false)
+  const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false)
   const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: string} | null>(null)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -68,6 +73,7 @@ function AppContent() {
     mistralApiKey: '',
     mistralConnected: false,
     keyboardShortcuts: ['q', 's', 'd', 'f'],
+    mistralContextTurns: 20,
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -99,6 +105,10 @@ function AppContent() {
 
   if (settingsOpen) {
     return <SettingsPage onClose={() => setSettingsOpen(false)} />
+  }
+
+  if (mentionsOpen) {
+    return <MentionsLegales onClose={() => setMentionsOpen(false)} />
   }
 
   if (!isMediaRecorderSupported()) {
@@ -220,7 +230,8 @@ function AppContent() {
         language,
         conversationHistory,
         apiKey: currentUserSettings.mistralApiKey,
-        userSettings: currentUserSettings
+        userSettings: currentUserSettings,
+        contextTurns: currentUserSettings.mistralContextTurns ?? 20
       })
       
       setSuggestions(responses)
@@ -230,6 +241,34 @@ function AppContent() {
       toast.error(responseLanguage === 'fr' 
         ? 'Erreur lors de la génération des réponses'
         : 'Error generating responses')
+    }
+  }
+
+  const loadMoreSuggestions = async () => {
+    if (!transcribedText || loadingMoreSuggestions) return
+    setLoadingMoreSuggestions(true)
+    try {
+      const { generateResponseSuggestions } = await import('@/lib/mistral')
+      const more = await generateResponseSuggestions({
+        transcribedText,
+        language,
+        conversationHistory,
+        apiKey: currentUserSettings.mistralApiKey,
+        userSettings: currentUserSettings,
+        contextTurns: currentUserSettings.mistralContextTurns ?? 20,
+        excludeTexts: suggestions.map(s => s.text)
+      })
+      setSuggestions(prev => [
+        ...prev,
+        ...more.map(s => ({ ...s, id: `more-${Date.now()}-${s.id}` }))
+      ])
+    } catch (error) {
+      console.error('Error loading more suggestions:', error)
+      toast.error(language === 'fr'
+        ? 'Erreur lors du chargement des suggestions'
+        : 'Error loading more suggestions')
+    } finally {
+      setLoadingMoreSuggestions(false)
     }
   }
 
@@ -290,8 +329,7 @@ function AppContent() {
     
     setHistory((currentHistory) => {
       const current = currentHistory || []
-      const updated = [...current, newTurn]
-      return updated.slice(-20)
+      return [...current, newTurn]
     })
   }
 
@@ -385,8 +423,7 @@ function AppContent() {
     
     setHistory((currentHistory) => {
       const current = currentHistory || []
-      const updated = [...current, newTurn]
-      return updated.slice(-20)
+      return [...current, newTurn]
     })
     
     setTranscribedText('')
@@ -402,13 +439,35 @@ function AppContent() {
     toast.success(t.history.deleteConfirm)
   }
 
+  const handleClearHistory = () => {
+    setHistory([])
+    toast.success(language === 'fr' ? 'Historique effacé' : 'History cleared')
+  }
+
 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       <Toaster position="top-center" />
+
+      {needRefresh && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between shadow-lg">
+          <span className="text-sm font-medium">
+            {language === 'fr' ? '🔄 Nouvelle version disponible' : '🔄 New version available'}
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => updateServiceWorker(true)}
+            className="ml-4"
+          >
+            <ArrowsClockwise size={16} className="mr-2" />
+            {language === 'fr' ? 'Mettre à jour' : 'Update now'}
+          </Button>
+        </div>
+      )}
       
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className={`container mx-auto px-6 py-8 max-w-7xl${needRefresh ? ' pt-20' : ''}`}>
         <header className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -448,7 +507,20 @@ function AppContent() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-lg">
                   <SheetHeader>
-                    <SheetTitle className="text-2xl">{t.history.title}</SheetTitle>
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="text-2xl">{t.history.title}</SheetTitle>
+                      {conversationHistory.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearHistory}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash size={16} className="mr-2" />
+                          {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+                        </Button>
+                      )}
+                    </div>
                   </SheetHeader>
                   <div className="mt-6 h-[calc(100vh-120px)]">
                     <ConversationHistory 
@@ -573,11 +645,7 @@ function AppContent() {
               disabled={recordingState !== 'idle'}
             />
 
-            <Alert className="bg-accent/10 border-accent/30">
-              <AlertDescription className="text-sm">
-                <strong>{t.privacy.title}</strong> {t.privacy.message}
-              </AlertDescription>
-            </Alert>
+
           </div>
 
           <div className="space-y-6">
@@ -597,6 +665,8 @@ function AppContent() {
                   suggestions={suggestions}
                   onSelectResponse={handleSelectResponse}
                   onCustomResponse={() => setCustomDialogOpen(true)}
+                  onLoadMore={loadMoreSuggestions}
+                  loadingMore={loadingMoreSuggestions}
                   disabled={recordingState !== 'idle'}
                   keyboardShortcuts={currentUserSettings.keyboardShortcuts}
                 />
@@ -632,6 +702,17 @@ function AppContent() {
         onOpenChange={setCustomDialogOpen}
         onSubmit={handleCustomResponse}
       />
+
+      <footer className="mt-10 text-center">
+        <Button
+          variant="link"
+          size="sm"
+          className="text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => setMentionsOpen(true)}
+        >
+          {language === 'fr' ? 'Mentions légales' : 'Legal Notice'}
+        </Button>
+      </footer>
     </div>
   )
 }

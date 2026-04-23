@@ -36,6 +36,7 @@ export interface UserSettings {
   specialNeeds: string
   mistralApiKey: string
   mistralConnected: boolean
+  mistralContextTurns: number
   keyboardShortcuts: [string, string, string, string]
   createdAt: number
   updatedAt: number

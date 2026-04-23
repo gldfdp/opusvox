@@ -70,10 +70,6 @@ export interface Translations {
     send: string
     tip: string
   }
-  privacy: {
-    title: string
-    message: string
-  }
   transcribed: {
     label: string
   }
@@ -168,10 +164,6 @@ export const translations: Record<Language, Translations> = {
       send: 'Send Response',
       tip: 'Tip: Press Cmd+Enter (Mac) or Ctrl+Enter (Windows) to send'
     },
-    privacy: {
-      title: 'Privacy Notice:',
-      message: 'All conversations are stored locally on your device and encrypted. Your data never leaves your browser.'
-    },
     transcribed: {
       label: 'Visitor said:'
     },
@@ -263,10 +255,6 @@ export const translations: Record<Language, Translations> = {
       cancel: 'Annuler',
       send: 'Envoyer la réponse',
       tip: 'Astuce : Appuyez sur Cmd+Entrée (Mac) ou Ctrl+Entrée (Windows) pour envoyer'
-    },
-    privacy: {
-      title: 'Avis de confidentialité :',
-      message: 'Toutes les conversations sont stockées localement sur votre appareil et chiffrées. Vos données ne quittent jamais votre navigateur.'
     },
     transcribed: {
       label: 'Le visiteur a dit :'

@@ -1,7 +1,7 @@
 import { ResponseSuggestion } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PencilSimple } from '@phosphor-icons/react'
+import { PencilSimple, ArrowsClockwise } from '@phosphor-icons/react'
 import { useLanguage } from '@/hooks/use-language'
 import { useEffect } from 'react'
 
@@ -9,6 +9,8 @@ interface ResponseSuggestionsProps {
   suggestions: ResponseSuggestion[]
   onSelectResponse: (response: string) => void
   onCustomResponse: () => void
+  onLoadMore?: () => void
+  loadingMore?: boolean
   disabled?: boolean
   keyboardShortcuts?: [string, string, string, string]
 }
@@ -17,10 +19,12 @@ export function ResponseSuggestions({
   suggestions, 
   onSelectResponse, 
   onCustomResponse,
+  onLoadMore,
+  loadingMore = false,
   disabled = false,
   keyboardShortcuts = ['q', 's', 'd', 'f']
 }: ResponseSuggestionsProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   
   useEffect(() => {
     if (disabled || suggestions.length === 0) return
@@ -72,10 +76,25 @@ export function ResponseSuggestions({
         ))}
       </div>
 
+      {onLoadMore && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full mt-2 text-muted-foreground"
+          onClick={onLoadMore}
+          disabled={disabled || loadingMore}
+        >
+          <ArrowsClockwise size={16} className={`mr-2 ${loadingMore ? 'animate-spin' : ''}`} />
+          {loadingMore
+            ? (language === 'fr' ? 'Chargement…' : 'Loading…')
+            : (language === 'fr' ? 'Voir d\'autres suggestions' : 'Load more suggestions')}
+        </Button>
+      )}
+
       <Button
         variant="outline"
         size="lg"
-        className="w-full mt-4"
+        className="w-full mt-2"
         onClick={onCustomResponse}
         disabled={disabled}
       >

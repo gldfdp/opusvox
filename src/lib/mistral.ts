@@ -6,6 +6,8 @@ interface MistralResponseContext {
   conversationHistory: ConversationTurn[]
   apiKey?: string
   userSettings?: UserSettings
+  contextTurns?: number
+  excludeTexts?: string[]
 }
 
 interface MistralMessage {
@@ -75,7 +77,7 @@ export async function translateText(text: string, targetLanguage: string, apiKey
 export async function generateResponseSuggestions(
   context: MistralResponseContext
 ): Promise<ResponseSuggestion[]> {
-  const { transcribedText, language, conversationHistory, apiKey, userSettings } = context
+  const { transcribedText, language, conversationHistory, apiKey, userSettings, contextTurns = 20, excludeTexts = [] } = context
   
   if (!apiKey) {
     console.warn('No Mistral API key provided, using fallback responses')
@@ -186,7 +188,7 @@ Return ONLY a valid JSON object with the following structure (no text before or 
     }
   ]
 
-  const recentHistory = conversationHistory.slice(-5)
+  const recentHistory = conversationHistory.slice(-contextTurns)
   for (const turn of recentHistory) {
     messages.push({
       role: 'user',
@@ -202,9 +204,15 @@ Return ONLY a valid JSON object with the following structure (no text before or 
     })
   }
 
+  const excludeClause = excludeTexts.length > 0
+    ? language === 'fr'
+      ? `\n\nATTENTION : Les suggestions suivantes ont déjà été proposées, ne les répète pas et génère des alternatives différentes :\n${excludeTexts.map(t => `- "${t}"`).join('\n')}`
+      : `\n\nIMPORTANT: The following suggestions were already shown, do not repeat them and generate different alternatives:\n${excludeTexts.map(t => `- "${t}"`).join('\n')}`
+    : ''
+
   messages.push({
     role: 'user',
-    content: `Visitor's new message: "${transcribedText}"\n\nGenerate 4 response suggestions now.`
+    content: `Visitor's new message: "${transcribedText}"\n\nGenerate 4 response suggestions now.${excludeClause}`
   })
 
   try {

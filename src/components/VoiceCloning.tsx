@@ -190,8 +190,7 @@ export function VoiceCloning() {
           body: JSON.stringify({
             name: newProfile.name,
             sample_audio: base64Audio,
-            sample_filename: `voice-${Date.now()}.webm`,
-            languages: [language]
+            sample_filename: `voice-${Date.now()}.webm`
           })
         })
 
