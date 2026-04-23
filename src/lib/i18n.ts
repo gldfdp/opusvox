@@ -267,6 +267,43 @@ export interface Translations {
     generatingVoicePreview: string
     voiceTestError: string
   }
+  home: {
+    heroTitle: string
+    heroHighlight: string
+    heroSubtitle: string
+    openApp: string
+    featuresTitle: string
+    feature1Title: string
+    feature1Desc: string
+    feature2Title: string
+    feature2Desc: string
+    feature3Title: string
+    feature3Desc: string
+    feature4Title: string
+    feature4Desc: string
+    feature5Title: string
+    feature5Desc: string
+    feature6Title: string
+    feature6Desc: string
+    howTitle: string
+    step1Title: string
+    step1Desc: string
+    step2Title: string
+    step2Desc: string
+    step3Title: string
+    step3Desc: string
+    ctaTitle: string
+    ctaSubtitle: string
+    ctaButton: string
+    footerLegal: string
+    footerTagline: string
+    freeOpenSource: string
+    installable: string
+    installApp: string
+    alreadyInstalled: string
+    installIosHint: string
+    installUnsupportedHint: string
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -534,6 +571,43 @@ export const translations: Record<Language, Translations> = {
       testText: (name: string) => `Hello, I am ${name}. This is a preview of my cloned voice.`,
       generatingVoicePreview: 'Generating voice preview...',
       voiceTestError: 'Error testing voice. Check your Mistral API key.'
+    },
+    home: {
+      heroTitle: 'Find your',
+      heroHighlight: 'voice again',
+      heroSubtitle: 'OpusVox is an augmented communication assistant powered by AI. Designed for people who have lost the ability to speak, it lets you express yourself naturally.',
+      openApp: 'Open the app',
+      featuresTitle: 'Everything you need to communicate',
+      feature1Title: 'Voice Cloning',
+      feature1Desc: 'Recreate your own voice using a recording sample. Speak with your voice, even when you can\'t.',
+      feature2Title: 'AI Response Suggestions',
+      feature2Desc: 'Mistral AI analyses the conversation context and suggests relevant, personalised responses.',
+      feature3Title: 'Real-time Transcription',
+      feature3Desc: 'Transcribe your visitor\'s speech instantly using Mistral AI\'s recognition engine.',
+      feature4Title: 'Multilingual',
+      feature4Desc: 'Communicate in several languages. Auto-translation included between you and your visitor.',
+      feature5Title: 'Installable PWA',
+      feature5Desc: 'Install OpusVox on any device like a native app. No app store needed.',
+      feature6Title: 'Your data stays yours',
+      feature6Desc: 'Everything is stored locally on your device. No account, no tracking — only Mistral API calls leave your device.',
+      howTitle: 'How it works',
+      step1Title: 'Record your visitor',
+      step1Desc: 'Press the button to capture what your visitor says. Mistral transcribes it in real time.',
+      step2Title: 'Choose your response',
+      step2Desc: 'AI suggests contextual responses. Pick one, customise it, or type your own message.',
+      step3Title: 'Speak out loud',
+      step3Desc: 'Your response is spoken with your cloned voice or the system voice. Clear and natural.',
+      ctaTitle: 'Ready to get started?',
+      ctaSubtitle: 'Free, open-source, and fully private. No account required.',
+      ctaButton: 'Launch OpusVox',
+      footerLegal: 'Legal Notice',
+      footerTagline: 'Made with ♥ for those who still have so much to say',
+      freeOpenSource: 'Free & Open Source',
+      installable: 'Installable',
+      installApp: 'Install app',
+      alreadyInstalled: 'App installed ✓',
+      installIosHint: 'To install on iPhone/iPad: tap the Share button (⎙) in Safari, then "Add to Home Screen".',
+      installUnsupportedHint: 'To install, open this page in Chrome or Edge and look for the install icon (⊕) in the address bar.',
     }
   },
   fr: {
@@ -800,6 +874,43 @@ export const translations: Record<Language, Translations> = {
       testText: (name: string) => `Bonjour, je suis ${name}. Voici un aperçu de ma voix clonée.`,
       generatingVoicePreview: "Génération de l'aperçu vocal...",
       voiceTestError: 'Erreur lors du test de la voix. Vérifiez votre clé API Mistral.'
+    },
+    home: {
+      heroTitle: 'Retrouvez',
+      heroHighlight: 'votre voix',
+      heroSubtitle: 'OpusVox est un assistant de communication augmentée propulsé par l\'IA. Conçu pour les personnes ayant perdu la capacité de parler, il vous permet de vous exprimer naturellement.',
+      openApp: 'Ouvrir l\'application',
+      featuresTitle: 'Tout ce dont vous avez besoin pour communiquer',
+      feature1Title: 'Clonage de voix',
+      feature1Desc: 'Recréez votre propre voix à partir d\'un échantillon enregistré. Parlez avec votre voix, même quand vous ne le pouvez plus.',
+      feature2Title: 'Suggestions IA',
+      feature2Desc: 'Mistral AI analyse le contexte de la conversation et vous propose des réponses pertinentes et personnalisées.',
+      feature3Title: 'Transcription en temps réel',
+      feature3Desc: 'Transcrivez instantanément ce que dit votre interlocuteur grâce au moteur de reconnaissance Mistral AI.',
+      feature4Title: 'Multi-langues',
+      feature4Desc: 'Communiquez dans plusieurs langues. Traduction automatique incluse entre vous et votre interlocuteur.',
+      feature5Title: 'PWA installable',
+      feature5Desc: 'Installez OpusVox sur n\'importe quel appareil comme une app native. Sans app store.',
+      feature6Title: 'Vos données restent les vôtres',
+      feature6Desc: 'Tout est stocké localement sur votre appareil. Aucun compte, aucun suivi — seuls les appels à Mistral quittent votre appareil.',
+      howTitle: 'Comment ça marche',
+      step1Title: 'Enregistrez votre interlocuteur',
+      step1Desc: 'Appuyez sur le bouton pour capturer ce que dit votre interlocuteur. Mistral retranscrit en temps réel.',
+      step2Title: 'Choisissez votre réponse',
+      step2Desc: "L'IA vous suggère des réponses contextuelles. Choisissez-en une, personnalisez-la ou tapez votre propre message.",
+      step3Title: 'Parlez à voix haute',
+      step3Desc: 'Votre réponse est énoncée avec votre voix clonée ou la voix système. Claire et naturelle.',
+      ctaTitle: 'Prêt à commencer ?',
+      ctaSubtitle: 'Gratuit, open-source et totalement privé. Aucun compte requis.',
+      ctaButton: 'Lancer OpusVox',
+      footerLegal: 'Mentions légales',
+      footerTagline: 'Fait avec ♥ pour ceux qui ont encore tant à dire',
+      freeOpenSource: 'Gratuit & Open Source',
+      installable: 'Installable',
+      installApp: "Installer l'application",
+      alreadyInstalled: 'Application installée ✓',
+      installIosHint: "Pour installer sur iPhone/iPad : appuyez sur le bouton Partager (⎙) dans Safari, puis « Sur l'écran d'accueil ».",
+      installUnsupportedHint: "Pour installer, ouvrez cette page dans Chrome ou Edge et cherchez l'icône d'installation (⊕) dans la barre d'adresse.",
     }
   }
 }
