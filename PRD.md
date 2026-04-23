@@ -1,169 +1,177 @@
-# Planning Guide
+# PRD — OpusVox
 
-A web-based communication assistance application called **OpusVox** for people who have lost the ability to speak, enabling them to communicate through AI-powered speech recognition, contextual response generation, and voice synthesis.
+## Vision
 
-**Experience Qualities**:
-1. **Empowering** - The interface should feel supportive and confidence-building, never condescending or limiting. Every interaction should reinforce the user's agency.
-2. **Responsive** - Lightning-fast transitions and immediate feedback are critical for natural conversation flow. Any delay breaks the communication rhythm.
-3. **Trustworthy** - Design should convey privacy, security, and reliability through clear visual hierarchy and purposeful minimalism. Users need to feel safe.
+OpusVox est une application web PWA d'aide à la communication pour les personnes ayant perdu l'usage de la parole (ALS, AVC, trachéotomie, etc.). Elle permet de capturer la voix du visiteur, de générer des suggestions de réponses contextuelles par IA, et de les synthétiser avec la voix clonée de l'utilisateur.
 
-**Complexity Level**: Light Application (multiple features with basic state)
-This application has distinct features (voice recording, contextual responses, text-to-speech, conversation history) but maintains straightforward state management. The focus is on simplicity and reliability over complex interactions.
+**Qualités d'expérience :**
+1. **Empowering** — L'interface renforce l'autonomie de l'utilisateur à chaque interaction.
+2. **Responsive** — Transitions immédiates ; tout délai brise le rythme naturel de la conversation.
+3. **Trustworthy** — Confidentialité, fiabilité et hiérarchie visuelle claire. Les données restent locales.
 
-## Essential Features
+---
 
-### Voice Recognition
-- **Functionality**: Captures audio input and transcribes it to text using Mistral's Speech-to-Text API (when configured) or simulated transcription as fallback
-- **Purpose**: Allows caregivers and visitors to speak to the user, creating natural two-way conversation with real speech recognition powered by Mistral AI
-- **Trigger**: User presses and holds a microphone button
-- **Progression**: Press microphone button → Audio recording indicator appears → Release button → Audio sent to Mistral STT API (if API key configured) or simulated transcription → Transcription displays → Response options generated
-- **Success criteria**: Audio successfully captures, real API transcription when Mistral key is configured with visual indicator showing "Mistral STT enabled", fallback to simulated mode with indicator showing "Simulation mode", transcription appears within 500ms, text is accurate, clear user feedback on which mode is active
+## État actuel de l'application
 
-### Contextual Response Generation
-- **Functionality**: Analyzes transcribed speech with conversation history using AI (GPT-4o-mini via Spark LLM API) to generate intelligent, context-aware response options
-- **Purpose**: Provides intelligent responses that feel natural, appropriate, and contextually relevant to the ongoing conversation
-- **Trigger**: Automatically after speech transcription completes
-- **Progression**: Transcription completes → Last 5 conversation turns + transcribed text sent to LLM with language-specific system prompt → AI generates 4 contextually appropriate responses covering different intents (affirmative, negative, neutral, alternative) → Response suggestions appear as buttons → User selects one or types custom → Fallback to predefined responses if API fails
-- **Success criteria**: Responses are contextually relevant to both the current input and conversation history, appear within 500ms, cover different communication intents, adapt to the selected language (English/French), gracefully fall back to predefined responses on errors
+### Architecture
 
-### Voice Synthesis
-- **Functionality**: Converts selected text response to natural-sounding speech with language-specific voices
-- **Purpose**: Enables the user to "speak" their chosen response aloud in the appropriate language
-- **Trigger**: User taps a response button or confirms custom text
-- **Progression**: Response selected → Text sent to TTS API with language setting → Audio plays through device speakers → Visual indicator shows playback with language voice details
-- **Success criteria**: Voice sounds natural, playback starts within 200ms, volume is appropriate, correct language voice is used and displayed
+| Couche | Technologie |
+|--------|-------------|
+| Framework | React 18 + Vite |
+| Langage | TypeScript strict |
+| UI | shadcn/ui + Tailwind CSS |
+| Animations | Framer Motion |
+| IA | Mistral AI (STT, LLM, TTS, clonage vocal) |
+| Mobile | Capacitor (Android/iOS) |
+| PWA | vite-plugin-pwa |
+| Persistance | localStorage via hook `use-kv` |
 
-### Conversation History
-- **Functionality**: Stores and displays past conversation exchanges locally
-- **Purpose**: Maintains context for better responses and allows review of past communications
-- **Trigger**: Automatically saved after each exchange
-- **Progression**: Exchange completes → Saved to local encrypted storage → Appears in scrollable history → Available for context in future responses
-- **Success criteria**: All exchanges persist, history loads instantly, privacy is maintained
+### Structure des fichiers
 
-### Custom Response Input
-- **Functionality**: Allows user to type or edit their own response beyond AI suggestions
-- **Purpose**: Provides full communication freedom when suggestions don't match intent
-- **Trigger**: User taps "Custom response" button
-- **Progression**: Tap custom button → Text input appears with keyboard → User types message → Confirm button → TTS speaks the message
-- **Success criteria**: Keyboard appears instantly, text is editable, works seamlessly with TTS
+```
+src/
+  App.tsx                       # Composant principal (~690 lignes)
+  components/
+    SettingsPage.tsx             # Paramètres complets (~1 280 lignes)
+    RecordingButton.tsx          # Bouton microphone animé
+    ResponseSuggestions.tsx      # Suggestions de réponses IA
+    ConversationHistory.tsx      # Historique des échanges
+    VoiceIndicator.tsx           # Indicateur voix active
+    VoiceCloning.tsx             # Clonage vocal (dialog)
+    MistralStatusCard.tsx        # Statut connexion Mistral
+    MentionsLegales.tsx          # Page mentions légales
+    OnboardingPage.tsx           # Wizard premier démarrage (3 étapes)
+    TextInitiator.tsx            # Zone de saisie manuelle
+    VisitorLanguageSelector.tsx  # Sélecteur langue visiteur
+    LanguageSwitcher.tsx         # Sélecteur langue interface
+    CustomResponseDialog.tsx     # Dialog réponse personnalisée
+  hooks/
+    use-recording.ts             # Enregistrement + détection de silence
+    use-kv.ts                    # Persistance localStorage typée
+    use-language.tsx             # Contexte i18n
+  lib/
+    i18n.ts                      # Traductions FR/EN (~130 clés, 15 sections)
+    audio.ts                     # Utilitaires audio (WAV encode, trim, duration)
+    constants.ts                 # DEFAULT_USER_SETTINGS partagé
+    types.ts                     # Types TypeScript partagés
+    tts.ts                       # Synthèse vocale (Mistral TTS + Web Speech API)
+    stt.ts                       # Transcription (Mistral STT)
+    mistral.ts                   # Génération de réponses Mistral
+    media.ts                     # Détection format MediaRecorder
+  mobile/
+    app-lifecycle.ts             # Lifecycle Android (back button, background)
+```
 
-### Language Selection
-- **Functionality**: Allows users to switch the interface language between English and French, affecting both UI text and TTS voice
-- **Purpose**: Makes the application accessible to both English and French-speaking users with appropriate voice synthesis
-- **Trigger**: User clicks language selector dropdown in settings page
-- **Progression**: Open Settings → Select language from dropdown menu → Interface immediately updates to selected language → TTS voice automatically switches to match language
-- **Success criteria**: Language persists between sessions, all text updates instantly, TTS uses correct language-specific voice, no page refresh required, accessible from centralized settings interface
+---
 
-### Voice Language Indicator
-- **Functionality**: Displays the current TTS voice being used with language flag, voice name, and cloned voice badge
-- **Purpose**: Provides clear visual feedback about which language voice will speak the response and whether it's a personalized cloned voice
-- **Trigger**: Appears automatically when TTS is speaking
-- **Progression**: TTS begins → Voice indicator card appears with flag, language label, voice name/profile name, and cloned voice badge if applicable → Animated sound bars pulse during playback → Indicator fades out when speech ends
-- **Success criteria**: Indicator appears immediately when speaking starts, shows correct language and voice name or profile name, displays "Cloned Voice" badge when using personalized voice, animations are smooth and non-distracting
+## Fonctionnalités implémentées
 
-### Voice Cloning
-- **Functionality**: Allows users to record a 10-second audio sample of their voice to create a personalized voice profile for TTS, with test functionality to preview the cloned voice
-- **Purpose**: Enables users to preserve their own voice for communication, making interactions feel more personal and authentic
-- **Trigger**: User opens Settings page and navigates to Voice Cloning section
-- **Progression**: Open Settings → Navigate to Voice Cloning section → Enter profile name → Click "Start Recording" → Read displayed sample text for 10 seconds → Recording automatically stops → Audio is processed and saved → Profile appears in saved list → User can test cloned voice with Mistral TTS → User can select profile to activate → TTS uses cloned voice for responses
-- **Success criteria**: Recording captures 10 seconds of clear audio, profile is saved locally with encryption, user can preview original recording and test cloned voice with Mistral TTS, cloned voice plays seamlessly during TTS, profile persists between sessions, supports multiple profiles per language, all voice management accessible from centralized settings interface
+### 1. Onboarding
+- Wizard 3 étapes : choix de langue → profil utilisateur → clé API Mistral
+- Skippable à chaque étape
+- Données sauvegardées en localStorage
 
-### Settings & API Configuration
-- **Functionality**: Centralized settings page where users configure their profile, select interface language, manage voice cloning profiles with test functionality, connect Mistral API key for advanced features, and customize keyboard shortcuts
-- **Purpose**: Enables users to activate real Mistral STT/TTS transcription, personalize the application, manage language preferences, and manage their voice cloning profiles
-- **Trigger**: User clicks "Settings" button in header
-- **Progression**: Click settings → Settings page opens → User can change language → User can enter first name and other profile info → User can manage voice cloning profiles and test them → User can enter Mistral API key → Test connection validates key → When connected, "Mistral STT/TTS enabled" indicators appear on main page → Real speech-to-text and text-to-speech activate automatically
-- **Success criteria**: API key persists securely, connection test provides clear feedback, settings are available without Mistral key (app works in simulation mode), user can disconnect/reconnect API, voice profiles are manageable from settings with test functionality, language selection is integrated in settings, all configuration is centralized in one location
+### 2. Enregistrement vocal visiteur
+- Bouton microphone + raccourci clavier configurable (espace par défaut)
+- Détection de silence automatique : 3 secondes de silence → arrêt automatique
+- Suppression du blanc de fin avant envoi à l'API
+- Gestion du cas « enregistrement en arrière-plan » (Android)
+- Mode simulation si pas de clé API
 
-## Edge Case Handling
+### 3. Transcription (STT)
+- Mistral `voix-large-v3` si clé API configurée
+- Fallback vers transcription simulée
+- Détection automatique de la langue visiteur
 
-- **No microphone access**: Display clear permission request with instructions to enable microphone in browser settings
-- **API failures**: Show friendly error message with retry button, automatically fall back to simulation mode for STT when Mistral API fails, cache last successful responses as fallback
-- **Network offline**: Indicate offline status clearly, automatically switch to simulation mode for transcription, allow viewing history and typing custom responses (TTS will fail gracefully)
-- **Invalid or expired API key**: Display clear error message in settings, provide link to Mistral console, gracefully fall back to simulation mode with clear indicator
-- **Empty transcription**: Prompt user to speak more clearly or adjust microphone position, suggest checking audio input
-- **Very long conversations**: Automatically trim context to last 5 exchanges to maintain performance and reduce API costs
-- **Rapid successive inputs**: Debounce microphone button to prevent overlapping recordings and API calls
-- **No API key configured**: Application works fully in simulation mode with clear indicator, prompts user to configure Mistral API for real transcription in toast messages
+### 4. Traduction
+- Traduction automatique visiteur→interface si langues différentes
+- Traduction de la réponse interface→visiteur avant synthèse
 
-## Design Direction
+### 5. Suggestions de réponses
+- Génération par `mistral-medium` avec historique de conversation (configurable, défaut 20 tours)
+- 4 suggestions couvrant différentes intentions
+- Bouton « Charger plus »
+- Réponse personnalisée via dialog
 
-The design should evoke **calm confidence and medical reliability** while feeling **modern and accessible**. Visual language should communicate dignity, clarity, and ease. Think clean medical interfaces meets thoughtful consumer tech - professional without being sterile, simple without being simplistic. The experience should feel like a trusted communication partner.
+### 6. Synthèse vocale (TTS)
+- Mistral TTS (`mistral-tts-1`) avec voix clonée si profil vocal sélectionné
+- Fallback Web Speech API
+- Contrôles : rate 0.9, pitch 1, volume 1
 
-## Color Selection
+### 7. Clonage de voix
+- Enregistrement 10 secondes de l'utilisateur avec texte guide
+- Import fichier audio (>30s → extraction des 30s centrales)
+- Durée minimum : 3 secondes
+- Envoi à `POST /v1/audio/voices` Mistral (plan payant requis)
+- Statuts : synced / plan_required / error + bouton retry
+- Prévisualisation de l'échantillon + test TTS avec la voix clonée
+- Suppression synchronisée (local + Mistral)
+- Plusieurs profils, sélection active
 
-A **medical-tech aesthetic** with warm, accessible undertones to avoid feeling clinical or cold.
+### 8. Historique des conversations
+- Sauvegarde automatique après chaque échange
+- Affichage visiteur / utilisateur avec horodatage
+- Rejeu de n'importe quelle réponse passée
+- Suppression individuelle ou globale
+- Persistance localStorage
 
-- **Primary Color**: Deep medical blue `oklch(0.45 0.12 250)` - communicates trust, reliability, and medical professionalism without harshness
-- **Secondary Colors**: 
-  - Soft cloud gray `oklch(0.96 0.01 250)` for backgrounds - creates breathing room and reduces visual strain
-  - Warm slate `oklch(0.35 0.02 250)` for secondary UI elements - adds depth without competing with primary
-- **Accent Color**: Vibrant teal `oklch(0.65 0.15 195)` - brings energy and positivity, used for active recording states and positive feedback
-- **Foreground/Background Pairings**:
-  - Primary blue on white background: `oklch(0.45 0.12 250)` on `oklch(1 0 0)` - Ratio 7.2:1 ✓ (AAA)
-  - White text on primary blue: `oklch(1 0 0)` on `oklch(0.45 0.12 250)` - Ratio 7.2:1 ✓ (AAA)
-  - Warm slate on cloud gray: `oklch(0.35 0.02 250)` on `oklch(0.96 0.01 250)` - Ratio 8.5:1 ✓ (AAA)
-  - White on accent teal: `oklch(1 0 0)` on `oklch(0.65 0.15 195)` - Ratio 5.1:1 ✓ (AA+)
+### 9. Paramètres
+- Profil utilisateur (prénom, nom, âge, style de communication, conditions médicales, allergies, besoins spéciaux)
+- Clé API Mistral avec test de connexion
+- Langue de l'interface (FR/EN)
+- Raccourcis clavier réponses (4 touches configurables)
+- Raccourci enregistrement (configurable)
+- Nombre de tours de contexte Mistral
+- Force-refresh (vide le cache service worker)
 
-## Font Selection
+### 10. Internationalisation
+- Système i18n maison (`src/lib/i18n.ts`)
+- 2 langues : FR et EN
+- ~130 clés réparties en 15 sections
+- Zéro ternaire `language === 'fr'` dans les composants React
 
-Typography should be **exceptionally legible, warm, and trustworthy** - critical for users with potential vision or cognitive challenges. **IBM Plex Sans** for UI and **JetBrains Mono** for conversation text provide technical clarity with human warmth.
+### 11. PWA & Mobile
+- Service worker via vite-plugin-pwa
+- Installation sur Android via Capacitor
+- Gestion bouton retour Android
+- Mise en arrière-plan : arrêt automatique de l'enregistrement
 
-- **Typographic Hierarchy**:
-  - H1 (Main header): IBM Plex Sans Bold / 32px / -0.02em letter spacing / 1.2 line height
-  - H2 (Section titles): IBM Plex Sans Semibold / 20px / -0.01em letter spacing / 1.3 line height
-  - Body (UI labels): IBM Plex Sans Regular / 16px / 0em letter spacing / 1.5 line height
-  - Conversation text: JetBrains Mono Regular / 18px / 0.01em letter spacing / 1.6 line height
-  - Button labels: IBM Plex Sans Medium / 16px / 0em letter spacing / 1.4 line height
-  - Small labels: IBM Plex Sans Regular / 14px / 0em letter spacing / 1.4 line height
+### 12. Déploiement
+- Dockerfile + nginx pour la production
+- docker-compose.yml
 
-## Animations
+---
 
-Animations should **reduce cognitive load and provide clear feedback** without creating distraction. Every motion should feel purposeful and calm - **subtle transitions for UI changes (200-250ms)**, **satisfying feedback for button presses (100-150ms)**, and **gentle pulsing for active recording state**. Avoid flashy effects; prioritize clarity and reassurance. The recording indicator should have a gentle breathing animation to show active listening.
+## Règles de code
 
-## Component Selection
+- **Linting** : ESLint avec `curly: all`, `brace-style: allman`, `indent: 2`, `react-hooks/exhaustive-deps: error`
+- **Build** : `yarn build` (eslint + tsc + vite)
+- **Formatage** : `npx eslint --fix "src/**/*.{ts,tsx}"`
+- **Constantes partagées** : toujours utiliser `DEFAULT_USER_SETTINGS` de `src/lib/constants.ts`
+- **Traductions** : toujours ajouter les chaînes dans `src/lib/i18n.ts` (FR + EN), jamais de ternaire inline dans les composants
 
-- **Components**:
-  - **Button** (shadcn) - Primary interaction for response selection, customized with larger touch targets (min 60px height) and rounded corners
-  - **Card** (shadcn) - Container for response options and conversation history items, with subtle shadows for depth
-  - **Textarea** (shadcn) - Custom response input with auto-resize and clear focus states
-  - **ScrollArea** (shadcn) - Conversation history with smooth scrolling and fade indicators
-  - **Alert** (shadcn) - Error messages and system notifications with appropriate severity styling
-  - **Separator** (shadcn) - Visual breaks between conversation turns
+---
 
-- **Customizations**:
-  - **Microphone button** - Custom large circular button with animated recording state (pulsing ring), uses primary color with white icon
-  - **Response cards** - Card variants with hover states that slightly lift and change border color, tap feedback with quick scale animation
-  - **Conversation bubbles** - Custom styled divs with directional styling (user responses vs. visitor input), rounded heavily with tail indicators
-  - **Recording indicator** - Custom component with animated concentric circles in accent color, pulsing smoothly at 1.5s intervals
-  - **Voice language indicator** - Custom card component showing language flag emoji, voice name, and animated sound bars during TTS playback; uses accent color highlights when active
+## Cas limites gérés
 
-- **States**:
-  - Buttons: Default (solid primary), Hover (slightly darker with subtle lift), Active (scale 0.98 with deeper shadow), Disabled (50% opacity, no interaction)
-  - Recording button: Idle (primary blue), Recording (accent teal with pulsing animation), Processing (muted with spinner)
-  - Response cards: Default (white with border), Hover (lifted shadow + accent border), Selected (accent background with white text), Disabled (muted)
-  - Text inputs: Default (border-input), Focus (ring-2 ring-accent with border-accent), Error (border-destructive with red ring), Success (border-accent)
+| Cas | Comportement |
+|-----|-------------|
+| Pas de microphone | Message d'erreur clair |
+| Clé API absente | Mode simulation avec indicateur |
+| Clé API invalide | Erreur dans paramètres + fallback simulation |
+| Enregistrement trop court | Message d'erreur, retour idle |
+| Fichier audio >30s | Extraction automatique des 30s centrales |
+| Réseau offline | Fallback simulation STT ; TTS échoue proprement |
+| Mistral plan gratuit (clonage vocal) | Badge `plan_required` + message explicatif |
+| Enregistrement en arrière-plan (Android) | Arrêt automatique |
 
-- **Icon Selection**: 
-  - Microphone (filled) - primary action for voice input
-  - Stop/Square - stop recording
-  - Play/Speaker - TTS playback
-  - PencilSimple - custom text input
-  - ClockCounterClockwise - conversation history
-  - Warning - error states
-  - CheckCircle - success confirmations
+---
 
-- **Spacing**:
-  - Page margins: p-6 (24px) on mobile, p-8 (32px) on tablet+
-  - Component gaps: gap-4 (16px) for related elements, gap-6 (24px) for distinct sections
-  - Card padding: p-5 (20px) for comfortable breathing room
-  - Button padding: px-6 py-4 (24px horizontal, 16px vertical) for easy touch targets
-  - Stack spacing: space-y-3 (12px) for compact lists, space-y-6 (24px) for major sections
+## Améliorations possibles
 
-- **Mobile**:
-  - Single column layout on mobile (< 768px), two-column on desktop for conversation + responses
-  - Microphone button fixed at bottom center on mobile for thumb access, integrated into layout on desktop
-  - Response cards stack vertically on mobile with full width, grid layout (2 columns) on tablet
-  - Font sizes increase slightly on mobile for readability (body 17px vs 16px)
-  - History drawer slides from bottom on mobile, sidebar on desktop
-  - Touch targets minimum 60x60px on mobile, 48x48px acceptable on desktop
+- Détection adaptative du niveau de bruit (seuil dynamique au lieu de fixe 0.01 RMS)
+- Export de l'historique (PDF, CSV)
+- Support de langues supplémentaires (ES, DE…)
+- Mode hors-ligne complet avec modèle STT embarqué
+- Accessibilité WCAG AA complète
+- Tests automatisés (unit + e2e)

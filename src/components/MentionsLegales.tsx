@@ -15,7 +15,7 @@ export function MentionsLegales({ onClose }: MentionsLegalesProps)
   const fr = language === 'fr'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-6">
+    <div className="min-h-screen bg-linear-to-br from-background via-secondary/30 to-background p-6">
       <div className="max-w-3xl mx-auto space-y-6">
 
         <div className="flex items-center justify-between">

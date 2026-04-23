@@ -47,7 +47,7 @@ export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, p
             }}
           >
             {isMistralTTS ? (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-linear-to-br from-accent to-primary flex items-center justify-center">
                 <Sparkle size={20} weight="fill" className="text-white" />
               </div>
             ) : isClonedVoice ? (
@@ -70,7 +70,7 @@ export function VoiceIndicator({ language, voiceName, isActive, isClonedVoice, p
                 {isClonedVoice && profileName ? profileName : languageLabels[language]}
               </span>
               {isMistralTTS && (
-                <Badge className="bg-gradient-to-r from-accent to-primary text-white text-xs">
+                <Badge className="bg-linear-to-r from-accent to-primary text-white text-xs">
                   {t.voiceIndicator.mistralTts}
                 </Badge>
               )}

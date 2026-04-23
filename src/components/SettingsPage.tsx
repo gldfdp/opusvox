@@ -744,7 +744,7 @@ export function SettingsPage({ onClose }: SettingsPageProps)
   const sampleText = t.userProfile.sampleText(userName)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-3 sm:p-6">
+    <div className="min-h-screen bg-linear-to-br from-background via-secondary/30 to-background p-3 sm:p-6">
       <audio ref={audioRef} className="hidden" />
       <audio ref={testAudioRef} className="hidden" />
       <input

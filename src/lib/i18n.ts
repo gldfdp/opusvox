@@ -39,6 +39,10 @@ export interface Translations {
     toastSpeaking: string
     toastError: string
     listenTitle: string
+    toastTranscribing: string
+    toastTranscriptionSuccess: string
+    toastTranscriptionError: string
+    toastSimulationMode: string
   }
   replay: {
     button: string
@@ -111,6 +115,7 @@ export interface Translations {
     visitorsMessage: string
     dismiss: string
     legalNotice: string
+    playingAudio: string
   }
   voiceIndicator: {
     mistralTts: string
@@ -301,7 +306,11 @@ export const translations: Record<Language, Translations> = {
       toastPermissionDenied: 'Microphone access denied. Please enable microphone permissions.',
       toastSpeaking: 'Speaking response...',
       toastError: 'Speech synthesis failed',
-      listenTitle: 'Listen to visitor'
+      listenTitle: 'Listen to visitor',
+      toastTranscribing: 'Transcribing with Mistral API...',
+      toastTranscriptionSuccess: 'Transcription successful!',
+      toastTranscriptionError: 'Transcription error — using simulated mode',
+      toastSimulationMode: 'Simulation mode (configure Mistral API in settings for real transcription)'
     },
     replay: {
       button: 'Replay last response',
@@ -373,7 +382,8 @@ export const translations: Record<Language, Translations> = {
       simulationMode: 'Simulation mode',
       visitorsMessage: "Visitor's message",
       dismiss: 'Dismiss — no response needed',
-      legalNotice: 'Legal Notice'
+      legalNotice: 'Legal Notice',
+      playingAudio: 'Playing audio...'
     },
     voiceIndicator: {
       mistralTts: 'Mistral TTS',
@@ -562,7 +572,11 @@ export const translations: Record<Language, Translations> = {
       toastPermissionDenied: 'Accès au microphone refusé. Veuillez activer les autorisations du microphone.',
       toastSpeaking: 'Énonciation de la réponse...',
       toastError: 'Échec de la synthèse vocale',
-      listenTitle: 'Écouter le visiteur'
+      listenTitle: 'Écouter le visiteur',
+      toastTranscribing: 'Transcription avec Mistral API...',
+      toastTranscriptionSuccess: 'Transcription réussie !',
+      toastTranscriptionError: 'Erreur de transcription — utilisation du mode simulé',
+      toastSimulationMode: 'Mode simulation (configurez Mistral API dans les paramètres pour une vraie transcription)'
     },
     replay: {
       button: 'Rejouer la dernière réponse',
@@ -634,7 +648,8 @@ export const translations: Record<Language, Translations> = {
       simulationMode: 'Mode simulation',
       visitorsMessage: 'Ce que dit votre interlocuteur',
       dismiss: 'Ignorer — pas de réponse nécessaire',
-      legalNotice: 'Mentions légales'
+      legalNotice: 'Mentions légales',
+      playingAudio: 'Lecture en cours...'
     },
     voiceIndicator: {
       mistralTts: 'Mistral TTS',
