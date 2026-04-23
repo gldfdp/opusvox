@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { Toaster, toast } from 'sonner'
 import { ClockCounterClockwise, SpeakerHigh, Gear, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { RecordingButton } from '@/components/RecordingButton'
@@ -10,6 +10,7 @@ import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { SettingsPage } from '@/components/SettingsPage'
 import { TextInitiator } from '@/components/TextInitiator'
 import { VisitorLanguageSelector } from '@/components/VisitorLanguageSelector'
+import { OnboardingPage } from '@/components/OnboardingPage'
 import { LanguageProvider, useLanguage } from '@/hooks/use-language'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConversationTurn, ResponseSuggestion, RecordingState, VoiceProfile, UserSettings } from '@/lib/types'
-import { Language } from '@/lib/i18n'
 import { speak, loadVoices, getCurrentVoice, getCurrentVoiceProfile, isClonedVoice, isMistralTTS, isTTSAvailable } from '@/lib/tts'
 import { transcribeAudio, isTranscriptionAvailable, getSimulatedTranscription } from '@/lib/stt'
 import { getLanguageDisplayName } from '@/lib/languages'
@@ -50,7 +50,6 @@ function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lastSpokenResponse, setLastSpokenResponse] = useState<{text: string, language: string} | null>(null)
   
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   
@@ -570,10 +569,32 @@ function AppContent() {
   )
 }
 
+function AppRouter() {
+  const [onboardingCompleted, setOnboardingCompleted] = useKV<boolean>('onboarding-completed', false)
+
+  // Still loading from IDB – render nothing to avoid flashing onboarding for returning users
+  if (onboardingCompleted === undefined) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background" />
+    )
+  }
+
+  if (!onboardingCompleted) {
+    return (
+      <>
+        <Toaster position="top-center" />
+        <OnboardingPage onComplete={() => setOnboardingCompleted(true)} />
+      </>
+    )
+  }
+
+  return <AppContent />
+}
+
 function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <AppRouter />
     </LanguageProvider>
   )
 }

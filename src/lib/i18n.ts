@@ -7,6 +7,26 @@ export interface Translations {
     title: string
     subtitle: string
   }
+  onboarding: {
+    step1Title: string
+    step1Subtitle: string
+    step2Title: string
+    step2Subtitle: string
+    firstNameLabel: string
+    firstNamePlaceholder: string
+    lastNameLabel: string
+    lastNamePlaceholder: string
+    step3Title: string
+    step3Subtitle: string
+    mistralKeyLabel: string
+    mistralKeyPlaceholder: string
+    mistralKeyHint: string
+    back: string
+    next: string
+    skip: string
+    getStarted: string
+    stepOf: (current: number, total: number) => string
+  }
   recording: {
     buttonStartLabel: string
     buttonStopLabel: string
@@ -85,6 +105,26 @@ export const translations: Record<Language, Translations> = {
       title: 'OpusVox',
       subtitle: 'Communication assistant for enhanced conversation'
     },
+    onboarding: {
+      step1Title: 'Welcome to OpusVox',
+      step1Subtitle: 'Choose the language of the interface.',
+      step2Title: 'Tell us about you',
+      step2Subtitle: 'This information helps OpusVox personalise your experience.',
+      firstNameLabel: 'First name',
+      firstNamePlaceholder: 'Your first name',
+      lastNameLabel: 'Last name (optional)',
+      lastNamePlaceholder: 'Your last name',
+      step3Title: 'Connect Mistral AI',
+      step3Subtitle: 'Add your Mistral API key to enable real speech-to-text and AI responses. You can skip this step and configure it later in Settings.',
+      mistralKeyLabel: 'Mistral API key',
+      mistralKeyPlaceholder: 'Enter your Mistral API key…',
+      mistralKeyHint: 'Get a free key at console.mistral.ai',
+      back: 'Back',
+      next: 'Next',
+      skip: 'Skip for now',
+      getStarted: 'Get started',
+      stepOf: (c, t) => `Step ${c} of ${t}`,
+    },
     recording: {
       buttonStartLabel: 'Start recording',
       buttonStopLabel: 'Stop recording',
@@ -160,6 +200,26 @@ export const translations: Record<Language, Translations> = {
     app: {
       title: 'OpusVox',
       subtitle: 'Assistant de communication pour conversations enrichies'
+    },
+    onboarding: {
+      step1Title: 'Bienvenue sur OpusVox',
+      step1Subtitle: "Choisissez la langue de l'interface.",
+      step2Title: 'Parlez-nous de vous',
+      step2Subtitle: 'Ces informations aident OpusVox à personnaliser votre expérience.',
+      firstNameLabel: 'Prénom',
+      firstNamePlaceholder: 'Votre prénom',
+      lastNameLabel: 'Nom (facultatif)',
+      lastNamePlaceholder: 'Votre nom',
+      step3Title: 'Connecter Mistral AI',
+      step3Subtitle: "Ajoutez votre clé API Mistral pour activer la transcription vocale et les réponses IA. Vous pouvez ignorer cette étape et la configurer plus tard dans les Paramètres.",
+      mistralKeyLabel: 'Clé API Mistral',
+      mistralKeyPlaceholder: 'Entrez votre clé API Mistral…',
+      mistralKeyHint: 'Obtenez une clé gratuite sur console.mistral.ai',
+      back: 'Retour',
+      next: 'Suivant',
+      skip: "Ignorer pour l'instant",
+      getStarted: 'Commencer',
+      stepOf: (c, t) => `Étape ${c} sur ${t}`,
     },
     recording: {
       buttonStartLabel: 'Démarrer l\'enregistrement',

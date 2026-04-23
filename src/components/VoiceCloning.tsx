@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { Microphone, Play, Trash, Check, X, Plus, User, Waveform } from '@phosphor-icons/react'
+import { useState, useRef } from 'react'
+import { useKV } from '@/hooks/use-kv'
+import { Microphone, Play, Trash, Check, X, User, Waveform } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -13,13 +13,13 @@ import { Badge } from '@/components/ui/badge'
 import { VoiceProfile, VoiceRecordingState, UserSettings } from '@/lib/types'
 import { useLanguage } from '@/hooks/use-language'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 const RECORDING_DURATION = 10000
 const MIN_RECORDING_DURATION = 3000
 
 export function VoiceCloning() {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const [profiles, setProfiles] = useKV<VoiceProfile[]>('voice-profiles', [])
   const [selectedProfile, setSelectedProfile] = useKV<string | null>('selected-voice-profile', null)
   const [userSettings] = useKV<UserSettings>('user-settings', {

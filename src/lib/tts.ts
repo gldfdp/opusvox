@@ -245,11 +245,6 @@ function getDefaultMistralVoice(language: string): string {
   return voiceMap[language] || 'alloy'
 }
 
-async function base64ToBlob(base64: string): Promise<Blob> {
-  const response = await fetch(`data:audio/webm;base64,${base64}`)
-  return response.blob()
-}
-
 async function playAudio(audioBlob: Blob, volume: number): Promise<void> {
   const audioUrl = URL.createObjectURL(audioBlob)
 
@@ -299,7 +294,7 @@ async function speakWithClonedVoice(options: TTSOptions): Promise<void> {
       resolve()
     }
     
-    audio.onerror = (event) => {
+    audio.onerror = () => {
       currentVoiceProfile = null
       isUsingClonedVoice = false
       console.warn('Cloned voice playback failed, falling back to system voice')

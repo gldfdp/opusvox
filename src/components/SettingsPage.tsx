@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { UserSettings, VoiceProfile, VoiceRecordingState } from '@/lib/types'
 import { useLanguage } from '@/hooks/use-language'
 import { Language } from '@/lib/i18n'
@@ -33,7 +33,7 @@ import {
   Waveform
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { MistralStatusCard } from '@/components/MistralStatusCard'
 
 const RECORDING_DURATION = 10000
@@ -44,7 +44,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onClose }: SettingsPageProps) {
-  const { t, language, setLanguage } = useLanguage()
+  const { language, setLanguage } = useLanguage()
   const [userSettings, setUserSettings] = useKV<UserSettings>('user-settings', {
     firstName: '',
     lastName: '',
@@ -110,16 +110,17 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   const currentProfiles = profiles || []
 
   useEffect(() => {
-    setFirstName(currentSettings.firstName || '')
-    setLastName(currentSettings.lastName || '')
-    setAge(currentSettings.age?.toString() || '')
-    setCommunicationStyle(currentSettings.preferredCommunicationStyle || '')
-    setMedicalConditions(currentSettings.medicalConditions || '')
-    setAllergies(currentSettings.allergies || '')
-    setSpecialNeeds(currentSettings.specialNeeds || '')
-    setApiKey(currentSettings.mistralApiKey || '')
-    setKeyboardShortcuts(currentSettings.keyboardShortcuts)
-  }, [currentSettings])
+    if (!userSettings) return
+    setFirstName(userSettings.firstName || '')
+    setLastName(userSettings.lastName || '')
+    setAge(userSettings.age?.toString() || '')
+    setCommunicationStyle(userSettings.preferredCommunicationStyle || '')
+    setMedicalConditions(userSettings.medicalConditions || '')
+    setAllergies(userSettings.allergies || '')
+    setSpecialNeeds(userSettings.specialNeeds || '')
+    setApiKey(userSettings.mistralApiKey || '')
+    setKeyboardShortcuts(userSettings.keyboardShortcuts)
+  }, [userSettings])
 
   const handleSaveProfile = () => {
     const ageNumber = age.trim() ? parseInt(age, 10) : null
@@ -161,7 +162,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       
       setUserSettings(updated)
       toast.success(language === 'fr' ? 'Connexion Mistral réussie !' : 'Mistral connection successful!')
-    } catch (error) {
+    } catch {
       toast.error(language === 'fr' ? 'Échec de la connexion Mistral' : 'Mistral connection failed')
     } finally {
       setTestingConnection(false)
@@ -380,7 +381,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
       }
       
       reader.readAsDataURL(file)
-    } catch (error) {
+    } catch {
       toast.error(language === 'fr' ? 'Erreur lors du téléchargement' : 'Upload error')
       setUploadingFile(false)
     }
@@ -659,7 +660,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               <Label htmlFor="communicationStyle">
                 {language === 'fr' ? 'Style de communication préféré' : 'Preferred Communication Style'}
               </Label>
-              <Select value={communicationStyle} onValueChange={(value) => setCommunicationStyle(value as any)}>
+              <Select value={communicationStyle} onValueChange={(value) => setCommunicationStyle(value as UserSettings['preferredCommunicationStyle'])}>
                 <SelectTrigger id="communicationStyle">
                   <SelectValue placeholder={language === 'fr' ? 'Sélectionnez un style' : 'Select a style'} />
                 </SelectTrigger>

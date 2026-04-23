@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useLanguage } from '@/hooks/use-language'
-import { MISTRAL_SUPPORTED_LANGUAGES, getLanguageName } from '@/lib/languages'
+import { MISTRAL_SUPPORTED_LANGUAGES } from '@/lib/languages'
 
 interface VisitorLanguageSelectorProps {
   selectedLanguage: string | null

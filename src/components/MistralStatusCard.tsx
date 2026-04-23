@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,24 +26,13 @@ interface MistralStatusCardProps {
 }
 
 export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const [status, setStatus] = useState<MistralStatus>({
     isConnected: false,
     isChecking: false
   })
 
-  useEffect(() => {
-    if (apiKey) {
-      checkMistralStatus()
-    } else {
-      setStatus({
-        isConnected: false,
-        isChecking: false
-      })
-    }
-  }, [apiKey])
-
-  const checkMistralStatus = async () => {
+  const checkMistralStatus = useCallback(async () => {
     if (!apiKey) return
 
     setStatus(prev => ({ ...prev, isChecking: true, error: undefined }))
@@ -84,7 +73,18 @@ export function MistralStatusCard({ apiKey }: MistralStatusCardProps) {
         error: error instanceof Error ? error.message : 'Connection failed'
       })
     }
-  }
+  }, [apiKey])
+
+  useEffect(() => {
+    if (apiKey) {
+      checkMistralStatus()
+    } else {
+      setStatus({
+        isConnected: false,
+        isChecking: false
+      })
+    }
+  }, [apiKey, checkMistralStatus])
 
   const getStatusIcon = () => {
     if (status.isChecking) {

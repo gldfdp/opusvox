@@ -1,5 +1,4 @@
 import { ResponseSuggestion, ConversationTurn, UserSettings } from './types'
-import { Language } from './i18n'
 
 interface MistralResponseContext {
   transcribedText: string

@@ -10,7 +10,7 @@ const languageNames: Record<Language, string> = {
 }
 
 export function LanguageSwitcher() {
-  const { language, setLanguage, t } = useLanguage()
+  const { language, setLanguage } = useLanguage()
 
   return (
     <DropdownMenu>
